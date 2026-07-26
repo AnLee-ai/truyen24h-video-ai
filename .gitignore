@@ -1,0 +1,22 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Output and temp files
+output/
+*.mp3
+*.wav
+*.mp4
+*.srt
+*.vtt
+test_ssml.mp3
+.coverage
+.mypy_cache/
+.ruff_cache/
+
+# IDE configurations
+.vscode/
+.idea/

@@ -1,0 +1,40 @@
+name: Scheduled Chapter Writer
+
+on:
+  schedule:
+    - cron: '0 */3 * * *'                      # Chạy vào các khung giờ chẵn: 00:00, 03:00, 06:00, 09:00, 12:00, 15:00, 18:00, 21:00
+    - cron: '30 1,4,7,10,13,16,19,22 * * *'    # Chạy xen kẽ lệch 1h30: 01:30, 04:30, 07:30, 10:30, 13:30, 16:30, 19:30, 22:30
+  workflow_dispatch:      # Allows manual trigger từ giao diện GitHub
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Writing & Audio Pipeline
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GROQ_MODEL_WRITER: ${{ secrets.GROQ_MODEL_WRITER }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          python -u -m src.main --action run-pipeline --novel-id ${{ secrets.NOVEL_ID }}
