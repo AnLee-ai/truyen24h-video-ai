@@ -70,7 +70,7 @@ Constraints:
    - If failure_flag is False, the protagonist must face challenging obstacles, struggle, or experience setbacks without a breakthrough. Keep their powers exactly as is.
 4. Dialogue: Make the conversation between characters dynamic and teenager-friendly (50% dialogue/action, 50% description).
 
-Write the chapter in Vietnamese. Keep the output as the raw novel content only (do not include conversational chat filler or introduction like "Here is the chapter...", but DO write the prologue/story introduction if it is part of the chapter content).
+Write the chapter in Vietnamese. Keep the output as the raw novel content only (do NOT include conversational chat filler, headers, or section titles like 'Dẫn lược:', 'Chương X:', 'Giới thiệu:'). Write directly into the story narrative.
 """
 
 EXTRACT_ENTITIES_PROMPT = """

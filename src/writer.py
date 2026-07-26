@@ -89,8 +89,10 @@ def remove_repetitive_sentences(text: str) -> str:
 def clean_chapter_content(text: str) -> str:
     """Clean draft content, stripping markdown and prefix headers like 'Dẫn lược:', 'Chương X:', etc."""
     cleaned = text.strip()
-    pattern = r"^\s*(?:\*\*|\*|__|_)*\s*(?:Dẫn lược|Giới thiệu|Phần dẫn lược|Tóm tắt bối cảnh|Prologue|Introduction|Chương\s*\d+|Giới thiệu bối cảnh)\s*(?:\*\*|\*|__|_)*\s*[:：\-–—\n]?\s*(?:\*\*|\*|__|_)*\s*"
+    pattern = r"(?m)^\s*(?:\*\*|\*|__|_)*\s*(?:Dẫn lược|Giới thiệu|Phần dẫn lược|Tóm tắt bối cảnh|Prologue|Introduction|Giới thiệu bối cảnh)\s*(?:\*\*|\*|__|_)*\s*[:：\-–—\n]?\s*(?:\*\*|\*|__|_)*\s*"
     cleaned = re.sub(pattern, "", cleaned, flags=re.IGNORECASE).strip()
+    inline_pattern = r"(?:\*\*|\*|__|_)*\s*(?:Dẫn lược|Phần dẫn lược|Giới thiệu bối cảnh|Prologue)\s*(?:\*\*|\*|__|_)*\s*[:：\-–—]\s*"
+    cleaned = re.sub(inline_pattern, "", cleaned, flags=re.IGNORECASE).strip()
     cleaned = remove_repetitive_sentences(cleaned)
     return cleaned
 
