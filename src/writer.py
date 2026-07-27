@@ -217,11 +217,12 @@ def call_pollinations_free_llm(prompt: str) -> str:
     import urllib.parse, urllib.request
     print("[INFO] Fallback to Pollinations 100% Free LLM Engine (Zero API Key needed)...")
     try:
-        url = "https://text.pollinations.ai/" + urllib.parse.quote(prompt[:3000])
+        encoded = urllib.parse.quote(prompt[:2000])
+        url = f"https://text.pollinations.ai/{encoded}?model=openai"
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        with urllib.request.urlopen(req, timeout=60) as response:
+        with urllib.request.urlopen(req, timeout=30) as response:
             res_text = response.read().decode('utf-8')
-            if res_text and len(res_text) > 20:
+            if res_text and len(res_text) > 20 and "402" not in res_text:
                 return res_text.strip()
     except Exception as e:
         print(f"[WARNING] Pollinations Free LLM failed: {e}")

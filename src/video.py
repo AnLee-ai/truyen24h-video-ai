@@ -81,15 +81,21 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
     else:
         vf_filter += ";[bg]null[out]"
         
-    # 5. Chạy FFmpeg concat demuxer ghép nhạc + đổi ảnh mỗi 7s (Tự động ưu tiên GPU NVENC)
+    # 5. Chạy FFmpeg concat demuxer ghép nhạc + đổi ảnh mỗi 7s (Tự động kiểm tra thực tế GPU NVENC)
     codec = "libx264"
     try:
-        chk = subprocess.run(["ffmpeg", "-encoders"], capture_output=True, text=True)
-        if "h264_nvenc" in chk.stdout:
+        # Test thực tế xem GPU NVENC có chạy được không (tránh treo trên GitHub Actions Ubuntu Runner)
+        test_nvenc = subprocess.run(
+            ["ffmpeg", "-y", "-f", "lavfi", "-i", "color=s=16x16:d=0.1", "-c:v", "h264_nvenc", "-f", "null", "-"],
+            capture_output=True, text=True, timeout=5
+        )
+        if test_nvenc.returncode == 0:
             codec = "h264_nvenc"
-            print("[INFO] Phát hiện GPU NVIDIA! Tự động sử dụng phần cứng GPU NVENC (Render gấp 4x)...")
+            print("[INFO] GPU NVIDIA khả dụng! Tự động sử dụng phần cứng GPU NVENC (Render gấp 4x)...")
+        else:
+            print("[INFO] Sử dụng CPU H.264 Encoder (libx264)...")
     except Exception:
-        pass
+        codec = "libx264"
 
     cmd = [
         "ffmpeg", "-y",
