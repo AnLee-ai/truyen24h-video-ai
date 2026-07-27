@@ -42,6 +42,10 @@ def send_audio_to_telegram(audio_path: str, caption: str, title: str | None = No
                 data['title'] = title
                 
             response = requests.post(url, data=data, files=files, timeout=300)
+            if response.status_code != 200 and "can't parse entities" in response.text:
+                # Fallback to plain text caption if markdown format fails
+                data.pop('parse_mode', None)
+                response = requests.post(url, data=data, files=files, timeout=300)
             
         if response.status_code == 200:
             print("[INFO] Audio uploaded successfully to Telegram.")
@@ -104,6 +108,10 @@ def send_video_to_telegram(video_path: str, caption: str) -> bool:
                 'parse_mode': 'Markdown'
             }
             response = requests.post(url, data=data, files=files, timeout=600)
+            if response.status_code != 200 and "can't parse entities" in response.text:
+                data.pop('parse_mode', None)
+                response = requests.post(url, data=data, files=files, timeout=600)
+                
             if response.status_code == 200:
                 print("[INFO] Video MP4 uploaded successfully to Telegram!")
                 return True

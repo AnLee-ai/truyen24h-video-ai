@@ -407,13 +407,15 @@ def write_next_chapter(novel_id: str) -> dict:
     world_lore_text = "\n".join([f"- {lore['keyword']}: {lore['description']}" for lore in lores])
     
     query_embed = get_embedding(blueprint_text)
-    semantic_history = database.search_episodes(novel_id, query_embed, limit=3)
+    semantic_history = database.search_episodes(novel_id, query_embed, limit=7)
     history_text = "\n".join([f"- Chapter {h['chapter_id']}: {h['event_summary']}" for h in semantic_history])
     
     previous_chapters = [c for c in all_chapters if c["chapter_number"] < next_ch_number and not c["content"].startswith("BLUEPRINT:")]
     working_memory_text = ""
-    for ch in previous_chapters[-2:]:
-        working_memory_text += f"\n--- Chapter {ch['chapter_number']}: {ch['title']} ---\n{ch['content'][:800]}...\n"
+    # Tăng tham chiếu từ 2-3 chương lên 7 chương gần nhất (5 - 10 chương) để đảm bảo mạch truyện cực kỳ nhất quán
+    for ch in previous_chapters[-7:]:
+        ch_snippet = ch['content'][:600] + "\n...\n" + ch['content'][-600:] if len(ch['content']) > 1200 else ch['content']
+        working_memory_text += f"\n--- Chương {ch['chapter_number']}: {ch['title']} ---\n{ch_snippet}\n"
         
     attempt = 0
     max_attempts = 3
