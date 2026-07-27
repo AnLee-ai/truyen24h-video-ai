@@ -47,22 +47,17 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
     scenes = parse_srt_scenes(srt_path, interval_seconds=interval)
     print(f"[INFO] Tổng số phân cảnh cần sinh ảnh AI (mỗi {interval}s đổi ảnh): {len(scenes)}")
     
-    # 2. Sinh ảnh AI cho từng phân cảnh (tự động đính kèm Visual Memory 50-Feature)
-    image_files = []
-    for idx, scene_text in enumerate(scenes[:30]): # Giới hạn tối đa 30 ảnh cho mỗi tập
-        img_path = os.path.join(img_dir, f"scene_{idx + 1:03d}.jpg")
-        if not os.path.exists(img_path) or os.path.getsize(img_path) < 1000:
-            print(f"[INFO] Sinh ảnh AI cảnh {idx + 1}/{len(scenes)}: {scene_text[:50]}...")
-            generate_scene_image(f"{title}: {scene_text}", img_path, width=1920, height=1080)
-            
-        if os.path.exists(img_path) and os.path.getsize(img_path) > 1000:
-            image_files.append(img_path)
+    # 2. Sinh ảnh AI ĐA LUỒNG cho từng phân cảnh (Nhanh gấp 4x)
+    from src.image_generator import batch_generate_scene_images
+    chapter_id = os.path.basename(out_dir)
+    image_files = batch_generate_scene_images(scenes[:30], chapter_id=chapter_id, max_workers=4)
             
     if not image_files:
         # Fallback ảnh gốc nếu lỗi
         bg_image = os.path.join(out_dir, "background.jpg")
         generate_scene_image(title, bg_image, width=1920, height=1080)
-        image_files.append(bg_image)
+        if os.path.exists(bg_image):
+            image_files.append(bg_image)
         
     # 3. Tạo file danh sách FFmpeg concat
     concat_list_path = os.path.join(out_dir, "concat_list.txt")
