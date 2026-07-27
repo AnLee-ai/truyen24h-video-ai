@@ -68,7 +68,8 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
             f.write(f"duration {interval}\n")
         # Lặp lại ảnh cuối
         if image_files:
-            f.write(f"file '{os.path.abspath(image_files[-1]).replace('\\', '/')}'\n")
+            last_img_clean = os.path.abspath(image_files[-1]).replace("\\", "/")
+            f.write(f"file '{last_img_clean}'\n")
             
     # 4. Định dạng phụ đề chuẩn: Chữ Trắng (&H00FFFFFF&), Viền Đen Mỏng (Outline=1), Cỡ chữ vừa nhỏ (FontSize=16), 1 hàng (WrapStyle=2)
     srt_escaped = srt_path.replace("\\", "/").replace(":", "\\:") if srt_path and os.path.exists(srt_path) else ""
