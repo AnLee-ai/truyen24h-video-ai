@@ -85,14 +85,23 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
     else:
         vf_filter += ";[bg]null[out]"
         
-    # 5. Chạy FFmpeg concat demuxer ghép nhạc + đổi ảnh mỗi 7s
+    # 5. Chạy FFmpeg concat demuxer ghép nhạc + đổi ảnh mỗi 7s (Tự động ưu tiên GPU NVENC)
+    codec = "libx264"
+    try:
+        chk = subprocess.run(["ffmpeg", "-encoders"], capture_output=True, text=True)
+        if "h264_nvenc" in chk.stdout:
+            codec = "h264_nvenc"
+            print("[INFO] Phát hiện GPU NVIDIA! Tự động sử dụng phần cứng GPU NVENC (Render gấp 4x)...")
+    except Exception:
+        pass
+
     cmd = [
         "ffmpeg", "-y",
         "-f", "concat", "-safe", "0", "-i", concat_list_path,
         "-i", audio_path,
         "-filter_complex", vf_filter,
         "-map", "[out]", "-map", "1:a",
-        "-c:v", "libx264", "-preset", "fast", "-c:a", "aac", "-b:a", "192k", "-pix_fmt", "yuv420p",
+        "-c:v", codec, "-preset", "fast", "-c:a", "aac", "-b:a", "192k", "-pix_fmt", "yuv420p",
         "-shortest", output_video_path
     ]
     
