@@ -50,10 +50,11 @@ def send_audio_to_telegram(audio_path: str, caption: str, title: str | None = No
         if response.status_code == 200:
             print("[INFO] Audio uploaded successfully to Telegram.")
             
-            # If SRT subtitle is provided, send it as a document next
+            # If SRT subtitle is provided, send it as a document next with human-readable filename
             if srt_path and os.path.exists(srt_path):
                 print(f"[INFO] Uploading subtitle SRT: {srt_path}...")
-                send_document_to_telegram(srt_path, f"Phụ đề chương: {title or 'SRT'}")
+                srt_name = f"{title or 'Subtitle'}.srt"
+                send_document_to_telegram(srt_path, f"Phụ đề chương: {title or 'SRT'}", custom_filename=srt_name)
             
             return True
         else:
@@ -64,13 +65,14 @@ def send_audio_to_telegram(audio_path: str, caption: str, title: str | None = No
         print(f"[ERROR] Error during Telegram upload: {e}")
         return False
 
-def send_document_to_telegram(doc_path: str, caption: str) -> bool:
+def send_document_to_telegram(doc_path: str, caption: str, custom_filename: str = None) -> bool:
     """Send any document (like SRT file) to the Telegram channel."""
     url = f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}/sendDocument"
+    filename = custom_filename or os.path.basename(doc_path)
     try:
         with open(doc_path, 'rb') as doc_file:
             files = {
-                'document': (os.path.basename(doc_path), doc_file, 'application/octet-stream')
+                'document': (filename, doc_file, 'application/octet-stream')
             }
             data = {
                 'chat_id': config.TELEGRAM_CHAT_ID,
