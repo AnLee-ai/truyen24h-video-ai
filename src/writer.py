@@ -100,18 +100,17 @@ def clean_chapter_content(text: str) -> str:
     return cleaned
 
 def call_gemini(prompt: str, json_mode: bool = False, retries: int = 10) -> str:
-    """Helper to call LLM (Groq multi-model pool with fallback, otherwise Gemini API) with backoff."""
-    use_groq = bool(config.GROQ_API_KEY)
+    """Helper to call LLM (Groq multi-model pool with fallback, otherwise Gemini API) with automatic key rotator & fast 401 failover."""
+    groq_key = key_rotator.get_groq_key() or config.GROQ_API_KEY
     
-    if use_groq:
+    if groq_key:
         import requests
         url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {
-            "Authorization": f"Bearer {config.GROQ_API_KEY}",
+            "Authorization": f"Bearer {groq_key}",
             "Content-Type": "application/json"
         }
         
-        # Fallback list of Groq models if primary model hits rate limit / quota
         groq_models = [
             config.GROQ_MODEL_WRITER,      # "llama-3.3-70b-versatile"
             "llama-3.1-8b-instant",
@@ -141,27 +140,35 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 10) -> str:
                     content = resp_json["choices"][0]["message"]["content"]
                     if content:
                         return content.strip()
+                        
+                if response.status_code in (401, 403, 429):
+                    key_rotator.mark_groq_key_failed(groq_key)
+                    # Chuyển sang key Groq mới
+                    groq_key = key_rotator.get_groq_key()
+                    headers["Authorization"] = f"Bearer {groq_key}"
                 
-                print(f"[WARNING] Groq ({current_model}) status {response.status_code}: {response.text[:120]}. Switching model or retrying (Attempt {attempt+1}/{retries})...")
-                wait_time = 15 if (attempt + 1) % len(groq_models) != 0 else 60
-                time.sleep(wait_time)
+                print(f"[WARNING] Groq ({current_model}) status {response.status_code}: {response.text[:120]}. Retrying (Attempt {attempt+1}/{retries})...")
+                time.sleep(5)
                 continue
             except Exception as e:
-                print(f"[WARNING] Groq ({current_model}) error: {e}. Switching model (Attempt {attempt+1}/{retries})...")
-                time.sleep(15)
+                print(f"[WARNING] Groq ({current_model}) error: {e}. Retrying (Attempt {attempt+1}/{retries})...")
+                time.sleep(5)
                 continue
         
-        print("[WARNING] All Groq model retries failed. Falling back to Gemini API...")
-    else:
-        print("[WARNING] GROQ_API_KEY is not configured! Falling back to Gemini API...")
+        print("[WARNING] All Groq retries failed. Switching to Gemini API...")
 
-    # Fallback to Gemini API
+    # Fallback to Gemini API với Key Rotator
     model_name = config.GEMINI_MODEL_WRITER
     
     for attempt in range(retries):
+        g_key = key_rotator.get_gemini_key() or config.GEMINI_API_KEY
+        if not g_key:
+            print("[ERROR] No Gemini API key available.")
+            break
+            
         try:
             if USE_NEW_GENAI:
-                client = get_genai_client()
+                client = get_genai_client(api_key=g_key)
                 generation_config = types.GenerateContentConfig(
                     max_output_tokens=8192,
                     response_mime_type="application/json" if json_mode else None
@@ -172,7 +179,7 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 10) -> str:
                     config=generation_config
                 )
             else:
-                genai.configure(api_key=config.GEMINI_API_KEY)
+                genai.configure(api_key=g_key)
                 g_config = {"max_output_tokens": 8192}
                 if json_mode:
                     g_config["response_mime_type"] = "application/json"
@@ -183,12 +190,18 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 10) -> str:
                 return response.text.strip()
             raise ValueError("Empty response from Gemini API.")
         except Exception as e:
-            wait_time = 30 + (attempt * 15)
-            print(f"[WARNING] Gemini call failed: {e}. Retrying in {wait_time}s...")
-            time.sleep(wait_time)
+            err_str = str(e)
+            if "401" in err_str or "UNAUTHENTICATED" in err_str or "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
+                print(f"[WARNING] Gemini Key bị lỗi {err_str[:80]}. Đang tự động chuyển sang Key tiếp theo...")
+                key_rotator.mark_gemini_key_failed(g_key)
+                time.sleep(2)
+                continue
+                
+            print(f"[WARNING] Gemini call failed: {e}. Retrying in 10s...")
+            time.sleep(10)
             
-    print("[WARNING] All Gemini retries failed due to quota. Retrying with Groq pool...")
-    return call_gemini(prompt, json_mode=json_mode, retries=5)
+    print("[WARNING] All Gemini retries failed. Retrying with Groq pool...")
+    return call_gemini(prompt, json_mode=json_mode, retries=3)
 
 def get_embedding(text: str) -> list:
     """Generate vector embedding for semantic search using text-embedding-004."""
