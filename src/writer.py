@@ -32,13 +32,16 @@ def safe_print(*args, **kwargs):
 
 print = safe_print
 
-def get_genai_client():
-    if not config.GEMINI_API_KEY:
-        raise ValueError("GEMINI_API_KEY must be configured in environment variables.")
+from src import key_rotator
+
+def get_genai_client(api_key: str = None):
+    current_key = api_key or key_rotator.get_gemini_key() or config.GEMINI_API_KEY
+    if not current_key:
+        raise ValueError("GEMINI_API_KEY / GEMINI_API_KEYS must be configured in environment variables.")
     if USE_NEW_GENAI:
-        return genai.Client(api_key=config.GEMINI_API_KEY)
+        return genai.Client(api_key=current_key)
     else:
-        genai.configure(api_key=config.GEMINI_API_KEY)
+        genai.configure(api_key=current_key)
         return genai
 
 def safe_loads(text: str):
