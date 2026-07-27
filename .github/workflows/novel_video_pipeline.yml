@@ -1,14 +1,14 @@
-name: Auto AI Novel Video & YouTube Publishing Pipeline
+name: Auto AI Novel Video & YouTube Publishing Pipeline (Every 12 Hours)
 
 on:
   schedule:
-    # Tự động chạy hàng ngày lúc 12:00 UTC (19:00 giờ Việt Nam - Giờ Vàng YouTube)
-    - cron: '0 12 * * *'
+    # Tự động chạy cứ mỗi 12 tiếng một lần (07:00 Sáng & 19:00 Tối giờ Việt Nam)
+    - cron: '0 */12 * * *'
   workflow_dispatch:
     # Cho phép bấm nút chạy thủ công từ tab Actions trên GitHub
     inputs:
       novel_id:
-        description: 'Novel ID (UUID từ Supabase)'
+        description: 'Novel ID (UUID từ Supabase, để trống để tự động lấy chương chờ)'
         required: false
         default: ''
 
@@ -49,7 +49,7 @@ jobs:
             npm install
           fi
 
-      - name: 7. Run AI Video & Publishing Pipeline
+      - name: 7. Run High-Quality AI Video Pipeline (Every 12 Hours)
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
@@ -61,13 +61,29 @@ jobs:
         run: |
           python -c "
           import os
-          from src.main import run_chapter_pipeline
-          novel_id = os.getenv('NOVEL_ID') or os.getenv('DEFAULT_NOVEL_ID', '')
-          if novel_id:
-              print(f'Starting workflow pipeline for Novel ID: {novel_id}')
-              run_chapter_pipeline(novel_id)
+          from src import database, main
+          
+          input_novel_id = os.getenv('NOVEL_ID', '').strip()
+          
+          if input_novel_id:
+              print(f'[INFO] Manual trigger for Novel ID: {input_novel_id}')
+              main.run_chapter_pipeline(input_novel_id)
           else:
-              print('No Novel ID provided. Skipping automated run.')
+              print('[INFO] 12-Hour Scheduled Trigger: Checking Supabase for pending video chapters...')
+              # Tìm chương mới nhất chưa tạo video do Scheduled Chapter Writer sinh ra
+              pending_chap = database.get_pending_video_chapter()
+              if pending_chap:
+                  n_id = pending_chap.get('novel_id')
+                  chap_num = pending_chap.get('chapter_number')
+                  print(f'[INFO] Found pending chapter #{chap_num} for Novel ID: {n_id}')
+                  main.run_chapter_pipeline(n_id)
+              else:
+                  print('[INFO] No pending chapters found. Running default pipeline...')
+                  active_novels = database.get_active_novels()
+                  if active_novels:
+                      main.run_chapter_pipeline(active_novels[0]['id'])
+                  else:
+                      print('[WARNING] No active novels found in database.')
           "
 
       - name: 8. Upload Video Artifacts (Backup)

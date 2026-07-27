@@ -93,6 +93,24 @@ def update_chapter_video_status(chapter_id: str, status: str = "completed", vide
         print(f"[WARNING] Could not update video_status in Supabase: {e}")
         return {}
 
+def get_pending_video_chapter(novel_id: str = "") -> dict:
+    """Fetch the oldest chapter that has not had a video created yet (video_status='pending' or NULL)."""
+    client = get_client()
+    try:
+        query = client.table("chapters").select("*")
+        if novel_id:
+            query = query.eq("novel_id", novel_id)
+        res = query.or_("video_status.is.null,video_status.eq.pending")\
+            .order("chapter_number", desc=False)\
+            .limit(1)\
+            .execute()
+        if res.data:
+            return res.data[0]
+    except Exception as e:
+        print(f"[WARNING] Query pending video chapter failed: {e}")
+        
+    return {}
+
 # Episode Summary & Vector Search
 def create_episode_summary(chapter_id: str, event_summary: str, embedding: list) -> dict:
     """Save the episodic summary and its embedding vector."""

@@ -94,12 +94,12 @@ def _run_chapter_pipeline_impl(novel_id: str):
         if shorts_path:
             print(f"[INFO] Video Shorts đã được tạo tại: {shorts_path}")
             
-        # 6. Upload Video tự động lên YouTube Channel (100% Free API)
-        if video_path and os.path.exists(video_path):
-            youtube_url = youtube_uploader.upload_video_to_youtube(video_path, chapter_title, chapter_num)
-            if youtube_url:
-                print(f"[INFO] Video đã xuất bản thành công trên YouTube: {youtube_url}")
-                database.update_chapter_video_status(chapter_id, status="published", video_url=youtube_url)
+        # 6. (Tạm thời bỏ qua Upload YouTube - Đã tắt theo yêu cầu)
+        # print(f"[INFO] Bỏ qua upload YouTube. Tập trung gửi Telegram Channel...")
+        # if video_path and os.path.exists(video_path):
+        #     youtube_url = youtube_uploader.upload_video_to_youtube(video_path, chapter_title, chapter_num)
+        #     if youtube_url:
+        #         database.update_chapter_video_status(chapter_id, status="published", video_url=youtube_url)
         
         # 7. Upload file Audio, Subtitles & Video MP4 lên kênh Telegram
         caption_markdown = (
