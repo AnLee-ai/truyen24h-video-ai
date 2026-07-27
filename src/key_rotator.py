@@ -42,7 +42,7 @@ class APIKeyRotator:
         self.failed_keys = set()
         print(f"[INFO] API Key Rotator [{provider}]: Đã nạp thành công {len(self.keys)} tài khoản API Key.")
 
-    def get_key((self) -> str:
+    def get_key(self) -> str:
         """Lấy API key tiếp theo theo cơ chế Round-Robin."""
         valid_keys = [k for k in self.keys if k not in self.failed_keys]
         if not valid_keys:
