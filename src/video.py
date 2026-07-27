@@ -2,6 +2,7 @@ import os
 import json
 import subprocess
 import shutil
+from src.image_generator import generate_scene_image
 
 def generate_script_json(audio_path: str, srt_path: str, title: str, chapter_id: str) -> str:
     """Tạo file script.json đúng cấu trúc cho AI-auto-generate-video."""
@@ -48,41 +49,61 @@ def create_video_with_ai_tool(script_json_path: str, tool_dir: str = "AI-auto-ge
         
     return ""
 
-def create_video_ffmpeg_fallback(audio_path: str, srt_path: str, output_video_path: str) -> str:
-    """Tạo video YouTube (1920x1080) bằng FFmpeg với audio + phụ đề SRT nếu Node tool chưa sẵn sàng."""
+def create_video_ffmpeg_fallback(audio_path: str, srt_path: str, output_video_path: str, title: str = "Novel") -> str:
+    """Tạo video YouTube (1920x1080) bằng FFmpeg với ảnh nền AI + phụ đề Tiếng Việt chuẩn (Chữ trắng, viền đen mỏng, 1 hàng)."""
     if not shutil.which("ffmpeg"):
         print("[ERROR] FFmpeg không được cài đặt!")
         return ""
         
-    # Tạo background tối + sóng nhạc / phụ đề
-    srt_escaped = srt_path.replace("\\", "/").replace(":", "\\:") if srt_path else ""
-    vf_filter = "color=c=black:s=1920x1080:r=30[bg]"
+    out_dir = os.path.dirname(output_video_path)
+    os.makedirs(out_dir, exist_ok=True)
     
-    if srt_escaped and os.path.exists(srt_path):
-        vf_filter = f"color=c=black:s=1920x1080:r=30[bg];[bg]subtitles='{srt_escaped}':force_style='FontSize=24,PrimaryColour=&H00FFFF&,Alignment=2'[out]"
+    # 1. Sinh ảnh minh họa AI nền nếu chưa có
+    bg_image = os.path.join(out_dir, "background.jpg")
+    if not os.path.exists(bg_image):
+        print(f"[INFO] Đang sinh ảnh nền AI minh họa cho video: {title}...")
+        generate_scene_image(title, bg_image, width=1920, height=1080)
+        
+    # 2. Định dạng phụ đề chuẩn: Chữ Trắng (&H00FFFFFF&), Viền Đen Mỏng (Outline=1), Cỡ chữ vừa nhỏ (FontSize=16), 1 hàng (WrapStyle=2)
+    srt_escaped = srt_path.replace("\\", "/").replace(":", "\\:") if srt_path and os.path.exists(srt_path) else ""
+    subtitle_style = "FontSize=16,PrimaryColour=&H00FFFFFF&,OutlineColour=&H00000000&,Outline=1,Shadow=0,Alignment=2,MarginV=35,WrapStyle=2"
+    
+    # 3. Phối hợp filter: Ảnh nền Ken Burns zoom + lớp phủ làm tối 30% + Phụ đề trắng viền đen
+    vf_filter = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,eq=brightness=-0.15:contrast=1.1[bg]"
+    if srt_escaped:
+        vf_filter += f";[bg]subtitles='{srt_escaped}':force_style='{subtitle_style}'[out]"
+    else:
+        vf_filter += ";[bg]null[out]"
+        
+    if os.path.exists(bg_image) and os.path.getsize(bg_image) > 1000:
         cmd = [
             "ffmpeg", "-y",
-            "-f", "lavfi", "-i", "color=c=black:s=1920x1080:r=30",
+            "-loop", "1", "-i", bg_image,
             "-i", audio_path,
-            "-vf", f"subtitles='{srt_escaped}':force_style='FontSize=24,PrimaryColour=&H00FFFF&,Alignment=2'",
-            "-c:v", "libx264", "-tune", "stillimage", "-c:a", "aac", "-b:a", "1920k", "-pix_fmt", "yuv420p",
+            "-filter_complex", vf_filter,
+            "-map", "[out]", "-map", "1:a",
+            "-c:v", "libx264", "-preset", "fast", "-tune", "stillimage", "-c:a", "aac", "-b:a", "192k", "-pix_fmt", "yuv420p",
             "-shortest", output_video_path
         ]
     else:
+        # Fallback nền tối nếu không tải được ảnh
         cmd = [
             "ffmpeg", "-y",
             "-f", "lavfi", "-i", "color=c=black:s=1920x1080:r=30",
             "-i", audio_path,
-            "-c:v", "libx264", "-tune", "stillimage", "-c:a", "aac", "-b:a", "1920k", "-pix_fmt", "yuv420p",
+            "-vf", f"subtitles='{srt_escaped}':force_style='{subtitle_style}'" if srt_escaped else "null",
+            "-c:v", "libx264", "-tune", "stillimage", "-c:a", "aac", "-b:a", "192k", "-pix_fmt", "yuv420p",
             "-shortest", output_video_path
         ]
         
     try:
+        print(f"[INFO] FFmpeg rendering video with AI background...")
         res = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
         if res.returncode == 0 and os.path.exists(output_video_path):
+            print(f"[SUCCESS] Render video thành công với ảnh nền AI: {output_video_path}")
             return output_video_path
         else:
-            print(f"[ERROR] FFmpeg error: {res.stderr}")
+            print(f"[ERROR] FFmpeg error: {res.stderr[:300]}")
     except Exception as e:
         print(f"[ERROR] Exception running FFmpeg: {e}")
         
@@ -99,9 +120,9 @@ def render_novel_video(audio_path: str, srt_path: str, title: str, chapter_id: s
         return video_path
         
     # 2. Fallback sang FFmpeg nếu chưa setup Node tool
-    print("[INFO] Chuyển sang render video tự động bằng FFmpeg fallback...")
+    print("[INFO] Chuyển sang render video tự động bằng FFmpeg với ảnh AI minh họa...")
     out_video = os.path.join("output", chapter_id, "video.mp4")
-    return create_video_ffmpeg_fallback(audio_path, srt_path, out_video)
+    return create_video_ffmpeg_fallback(audio_path, srt_path, out_video, title)
 
 def process_existing_audio(audio_path: str, srt_path: str = "", title: str = "Audiobook Novel") -> str:
     """Hàm độc lập: Nhận trực tiếp file audio có sẵn từ workflow và xuất video MP4."""

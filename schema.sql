@@ -18,9 +18,15 @@ CREATE TABLE IF NOT EXISTS chapters (
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
     audio_url TEXT,
+    video_status VARCHAR(50) DEFAULT 'pending', -- 'pending', 'processing', 'completed', 'failed'
+    video_url TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     UNIQUE (novel_id, chapter_number)
 );
+
+-- Migration SQL for existing databases:
+-- ALTER TABLE chapters ADD COLUMN IF NOT EXISTS video_status VARCHAR(50) DEFAULT 'pending';
+-- ALTER TABLE chapters ADD COLUMN IF NOT EXISTS video_url TEXT;
 
 -- Table: episodes_summary
 CREATE TABLE IF NOT EXISTS episodes_summary (

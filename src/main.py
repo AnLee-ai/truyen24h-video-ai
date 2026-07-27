@@ -86,6 +86,7 @@ def _run_chapter_pipeline_impl(novel_id: str):
         video_path = video.render_novel_video(final_audio_path, srt_path, chapter_title, chapter_id)
         if video_path:
             print(f"[INFO] Video dài đã được tạo tại: {video_path}")
+            database.update_chapter_video_status(chapter_id, status="completed", video_url=video_path)
             
         # 5. Render Video Shorts (9:16) 45s cao trào cho YouTube Shorts / TikTok
         print(f"[INFO] Bắt đầu render Video Shorts (9:16) cho Chương {chapter_num}...")
@@ -98,8 +99,9 @@ def _run_chapter_pipeline_impl(novel_id: str):
             youtube_url = youtube_uploader.upload_video_to_youtube(video_path, chapter_title, chapter_num)
             if youtube_url:
                 print(f"[INFO] Video đã xuất bản thành công trên YouTube: {youtube_url}")
+                database.update_chapter_video_status(chapter_id, status="published", video_url=youtube_url)
         
-        # 7. Upload file Audio & Subtitles lên kênh Telegram
+        # 7. Upload file Audio, Subtitles & Video MP4 lên kênh Telegram
         caption_markdown = (
             f"🎙️ *Truyện 24h Audio - Tập {chapter_num}*\n\n"
             f"📖 *Chương {chapter_num}: {chapter_title}*\n\n"
@@ -112,6 +114,12 @@ def _run_chapter_pipeline_impl(novel_id: str):
             title=f"Chương {chapter_num} - {chapter_title}",
             srt_path=srt_path
         )
+        
+        # Gửi video MP4 dài (16:9) và Video Shorts (9:16) lên Telegram
+        if video_path and os.path.exists(video_path):
+            telegram_uploader.send_video_to_telegram(video_path, f"🎬 *Video Full 16:9 - Chương {chapter_num}: {chapter_title}*")
+        if shorts_path and os.path.exists(shorts_path):
+            telegram_uploader.send_video_to_telegram(shorts_path, f"📱 *Video Shorts 9:16 - Chương {chapter_num}: {chapter_title}*")
         
         if success:
             print(f"[INFO] Pipeline execution complete for Chapter {chapter_num}!")

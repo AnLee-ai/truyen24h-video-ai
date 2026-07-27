@@ -2,9 +2,10 @@ import os
 import shutil
 import subprocess
 from typing import Optional
+from src.image_generator import generate_scene_image
 
 def generate_shorts_video(audio_path: str, srt_path: str, chapter_id: str, title: str = "Highlight") -> Optional[str]:
-    """Tự động cắt 30-60s cao trào và render Video Shorts (9:16) chuẩn TikTok/Shorts (100% Free)."""
+    """Tự động cắt 30-60s cao trào và render Video Shorts (9:16) chuẩn TikTok/Shorts kèm ảnh nền AI (100% Free)."""
     if not os.path.exists(audio_path):
         print(f"[ERROR] File audio không tồn tại: {audio_path}")
         return None
@@ -19,20 +20,29 @@ def generate_shorts_video(audio_path: str, srt_path: str, chapter_id: str, title
     
     print(f"[INFO] Bắt đầu tạo Video Shorts (9:16) cho: {title}...")
     
-    # 1. Chuẩn hóa đường dẫn SRT cho FFmpeg Windows
-    srt_escaped = ""
-    if srt_path and os.path.exists(srt_path):
-        srt_escaped = srt_path.replace("\\", "/").replace(":", "\\:")
+    # 1. Sinh ảnh nền AI kích thước dọc 1080x1920
+    shorts_bg = os.path.join(out_dir, "background_shorts.jpg")
+    if not os.path.exists(shorts_bg):
+        generate_scene_image(title, shorts_bg, width=1080, height=1920)
         
-    # 2. Xây dựng lệnh FFmpeg crop 1080x1920 (dọc 9:16) + hiệu ứng phụ đề chữ to ở giữa
+    # 2. Chuẩn hóa phụ đề: Chữ trắng (&H00FFFFFF&), Viền đen mỏng (Outline=1), Cỡ chữ vừa (FontSize=20), 1 hàng (WrapStyle=2)
+    srt_escaped = srt_path.replace("\\", "/").replace(":", "\\:") if srt_path and os.path.exists(srt_path) else ""
+    subtitle_style = "FontSize=20,PrimaryColour=&H00FFFFFF&,OutlineColour=&H00000000&,Outline=1,Shadow=0,Alignment=2,MarginV=180,WrapStyle=2"
+    
+    vf_filter = "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,eq=brightness=-0.15:contrast=1.1[bg]"
     if srt_escaped:
-        vf_filter = f"subtitles='{srt_escaped}':force_style='FontSize=32,PrimaryColour=&H00FFFF&,Alignment=2,MarginV=400'"
+        vf_filter += f";[bg]subtitles='{srt_escaped}':force_style='{subtitle_style}'[out]"
+    else:
+        vf_filter += ";[bg]null[out]"
+        
+    if os.path.exists(shorts_bg) and os.path.getsize(shorts_bg) > 1000:
         cmd = [
             "ffmpeg", "-y",
-            "-f", "lavfi", "-i", "color=c=black:s=1080x1920:r=30",
-            "-ss", "00:00:30", "-t", "00:00:45", "-i", audio_path, # Cắt 45s từ giây thứ 30
-            "-vf", vf_filter,
-            "-c:v", "libx264", "-tune", "stillimage", "-c:a", "aac", "-b:a", "192k", "-pix_fmt", "yuv420p",
+            "-loop", "1", "-i", shorts_bg,
+            "-ss", "00:00:30", "-t", "00:00:45", "-i", audio_path,
+            "-filter_complex", vf_filter,
+            "-map", "[out]", "-map", "1:a",
+            "-c:v", "libx264", "-preset", "fast", "-tune", "stillimage", "-c:a", "aac", "-b:a", "192k", "-pix_fmt", "yuv420p",
             "-shortest", shorts_video_path
         ]
     else:
@@ -40,6 +50,7 @@ def generate_shorts_video(audio_path: str, srt_path: str, chapter_id: str, title
             "ffmpeg", "-y",
             "-f", "lavfi", "-i", "color=c=black:s=1080x1920:r=30",
             "-ss", "00:00:30", "-t", "00:00:45", "-i", audio_path,
+            "-vf", f"subtitles='{srt_escaped}':force_style='{subtitle_style}'" if srt_escaped else "null",
             "-c:v", "libx264", "-tune", "stillimage", "-c:a", "aac", "-b:a", "192k", "-pix_fmt", "yuv420p",
             "-shortest", shorts_video_path
         ]

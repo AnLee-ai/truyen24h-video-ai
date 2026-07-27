@@ -77,6 +77,22 @@ def update_chapter_audio(chapter_id: str, audio_url: str) -> dict:
         .execute()
     return response.data[0] if response.data else {}  # type: ignore[return-value]
 
+def update_chapter_video_status(chapter_id: str, status: str = "completed", video_url: str = "") -> dict:
+    """Update video creation status and video URL of a chapter in Supabase."""
+    client = get_client()
+    update_data = {"video_status": status}
+    if video_url:
+        update_data["video_url"] = video_url
+    try:
+        response = client.table("chapters")\
+            .update(update_data)\
+            .eq("id", chapter_id)\
+            .execute()
+        return response.data[0] if response.data else {}  # type: ignore[return-value]
+    except Exception as e:
+        print(f"[WARNING] Could not update video_status in Supabase: {e}")
+        return {}
+
 # Episode Summary & Vector Search
 def create_episode_summary(chapter_id: str, event_summary: str, embedding: list) -> dict:
     """Save the episodic summary and its embedding vector."""
