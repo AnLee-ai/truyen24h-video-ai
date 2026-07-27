@@ -79,3 +79,37 @@ def send_document_to_telegram(doc_path: str, caption: str) -> bool:
     except Exception as e:
         print(f"[ERROR] Subtitle upload failed: {e}")
         return False
+
+def send_video_to_telegram(video_path: str, caption: str) -> bool:
+    """Send a video MP4 file to Telegram channel using sendVideo API."""
+    if not config.TELEGRAM_BOT_TOKEN or not config.TELEGRAM_CHAT_ID:
+        print("[WARNING] Telegram credentials not configured for video upload.")
+        return False
+        
+    if not os.path.exists(video_path):
+        print(f"[ERROR] Video file does not exist: {video_path}")
+        return False
+        
+    url = f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}/sendVideo"
+    print(f"[INFO] Uploading Video MP4 to Telegram chat/channel: {config.TELEGRAM_CHAT_ID}...")
+    
+    try:
+        with open(video_path, 'rb') as video_file:
+            files = {
+                'video': (os.path.basename(video_path), video_file, 'video/mp4')
+            }
+            data = {
+                'chat_id': config.TELEGRAM_CHAT_ID,
+                'caption': caption,
+                'parse_mode': 'Markdown'
+            }
+            response = requests.post(url, data=data, files=files, timeout=600)
+            if response.status_code == 200:
+                print("[INFO] Video MP4 uploaded successfully to Telegram!")
+                return True
+            else:
+                print(f"[ERROR] Telegram video upload failed: {response.status_code} - {response.text}")
+                return False
+    except Exception as e:
+        print(f"[ERROR] Error uploading video to Telegram: {e}")
+        return False
