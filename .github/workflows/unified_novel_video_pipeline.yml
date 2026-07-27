@@ -88,4 +88,5 @@ jobs:
         with:
           name: unified-studio-media
           path: output/
+          if-no-files-found: ignore
           retention-days: 7
