@@ -141,10 +141,16 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 10) -> str:
                     if content:
                         return content.strip()
                         
-                if response.status_code in (401, 403, 429):
+                if response.status_code in (401, 403):
+                    print(f"[WARNING] Groq API Key invalid ({response.status_code}). Switching directly to Gemini API...")
                     key_rotator.mark_groq_key_failed(groq_key)
-                    # Chuyển sang key Groq mới
+                    break
+                    
+                if response.status_code == 429:
+                    key_rotator.mark_groq_key_failed(groq_key)
                     groq_key = key_rotator.get_groq_key()
+                    if not groq_key:
+                        break
                     headers["Authorization"] = f"Bearer {groq_key}"
                 
                 print(f"[WARNING] Groq ({current_model}) status {response.status_code}: {response.text[:120]}. Retrying (Attempt {attempt+1}/{retries})...")

@@ -19,11 +19,7 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 # Environment variables
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-_p1 = "gsk_9QlAkg0M6I2maN"
-_p2 = "3P7RYNWGdyb3FYODK"
-_p3 = "gpBPWJnjef2bhtjPmhhzJ"
-_DEFAULT_GROQ_KEY = _p1 + _p2 + _p3
-GROQ_API_KEY = os.getenv("GROQ_API_KEY") or _DEFAULT_GROQ_KEY
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
