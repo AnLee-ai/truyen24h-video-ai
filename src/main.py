@@ -117,9 +117,18 @@ def _run_chapter_pipeline_impl(novel_id: str):
         
         # Gửi video MP4 dài (16:9) và Video Shorts (9:16) lên Telegram
         if video_path and os.path.exists(video_path):
-            telegram_uploader.send_video_to_telegram(video_path, f"🎬 *Video Full 16:9 - Chương {chapter_num}: {chapter_title}*")
+            print(f"[INFO] Uploading Full 16:9 Video to Telegram ({os.path.getsize(video_path)} bytes)...")
+            v_ok = telegram_uploader.send_video_to_telegram(video_path, f"🎬 *Video Full 16:9 - Chương {chapter_num}: {chapter_title}*")
+            print(f"[INFO] Full Video Telegram upload result: {v_ok}")
+        else:
+            print(f"[WARNING] Video 16:9 path invalid or not found: {video_path}")
+            
         if shorts_path and os.path.exists(shorts_path):
-            telegram_uploader.send_video_to_telegram(shorts_path, f"📱 *Video Shorts 9:16 - Chương {chapter_num}: {chapter_title}*")
+            print(f"[INFO] Uploading Shorts 9:16 Video to Telegram ({os.path.getsize(shorts_path)} bytes)...")
+            s_ok = telegram_uploader.send_video_to_telegram(shorts_path, f"📱 *Video Shorts 9:16 - Chương {chapter_num}: {chapter_title}*")
+            print(f"[INFO] Shorts Video Telegram upload result: {s_ok}")
+        else:
+            print(f"[WARNING] Shorts 9:16 video path invalid or not found: {shorts_path}")
         
         if success:
             print(f"[INFO] Pipeline execution complete for Chapter {chapter_num}!")
