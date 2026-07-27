@@ -37,4 +37,8 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          python -u -m src.main --action run-pipeline --novel-id ${{ secrets.NOVEL_ID }}
+          if [ -n "${{ secrets.NOVEL_ID }}" ]; then
+            python -u -m src.main --action run-pipeline --novel-id "${{ secrets.NOVEL_ID }}"
+          else
+            python -u -m src.main --action run-pipeline
+          fi

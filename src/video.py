@@ -1,128 +1,118 @@
 import os
 import json
+import re
 import subprocess
 import shutil
 from src.image_generator import generate_scene_image
 
-def generate_script_json(audio_path: str, srt_path: str, title: str, chapter_id: str) -> str:
-    """Tạo file script.json đúng cấu trúc cho AI-auto-generate-video."""
-    work_dir = os.path.join("output", chapter_id)
-    os.makedirs(work_dir, exist_ok=True)
-    
-    script_data = {
-        "id": chapter_id,
-        "title": title,
-        "audio": os.path.abspath(audio_path),
-        "srt": os.path.abspath(srt_path) if srt_path and os.path.exists(srt_path) else "",
-        "scenes": [
-            {
-                "text": title,
-                "audio": os.path.abspath(audio_path),
-                "duration": 0
-            }
-        ]
-    }
-    
-    script_path = os.path.join(work_dir, "script.json")
-    with open(script_path, "w", encoding="utf-8") as f:
-        json.dump(script_data, f, ensure_ascii=False, indent=2)
+def parse_srt_scenes(srt_path: str, interval_seconds: int = 7) -> list:
+    """Đọc file SRT và phân chia thành các đoạn cảnh 5-10 giây kèm văn bản thoại."""
+    if not os.path.exists(srt_path):
+        return []
         
-    return script_path
-
-def create_video_with_ai_tool(script_json_path: str, tool_dir: str = "AI-auto-generate-video") -> str:
-    """Gọi pipeline AI-auto-generate-video (Node.js/HyperFrames) nếu có."""
-    if not os.path.exists(tool_dir):
-        return ""
-        
+    scenes = []
     try:
-        cmd = ["npm", "run", "pipeline", "--", os.path.abspath(script_json_path)]
-        print(f"[INFO] Running AI-auto-generate-video: {' '.join(cmd)}")
-        res = subprocess.run(cmd, cwd=tool_dir, capture_output=True, text=True, timeout=600)
+        with open(srt_path, "r", encoding="utf-8") as f:
+            content = f.read()
+            
+        blocks = re.split(r'\n\s*\n', content.strip())
+        current_text = []
         
-        if res.returncode == 0:
-            out_dir = os.path.dirname(script_json_path)
-            video_path = os.path.join(out_dir, "video.mp4")
-            if os.path.exists(video_path):
-                return video_path
+        for idx, block in enumerate(blocks):
+            lines = [l.strip() for l in block.split('\n') if l.strip()]
+            if len(lines) >= 2:
+                text_lines = " ".join(lines[2:]) if lines[0].isdigit() else " ".join(lines[1:])
+                current_text.append(text_lines)
+                
+                # Cứ 3-4 câu thoại (khoảng 7 giây) gộp thành 1 phân cảnh
+                if len(current_text) >= 3 or idx == len(blocks) - 1:
+                    scenes.append(" ".join(current_text))
+                    current_text = []
     except Exception as e:
-        print(f"[WARNING] AI-auto-generate-video failed: {e}")
+        print(f"[WARNING] Lỗi đọc SRT phân cảnh: {e}")
         
-    return ""
+    return scenes if scenes else ["Mở đầu chương tiểu thuyết"]
 
-def create_video_ffmpeg_fallback(audio_path: str, srt_path: str, output_video_path: str, title: str = "Novel") -> str:
-    """Tạo video YouTube (1920x1080) bằng FFmpeg với ảnh nền AI + phụ đề Tiếng Việt chuẩn (Chữ trắng, viền đen mỏng, 1 hàng)."""
+def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_video_path: str, title: str = "Novel", interval: int = 7) -> str:
+    """Tự động sinh ảnh AI cứ mỗi 5-10 giây và ghép thành video slideshow chuyển cảnh sinh động 100% Free."""
     if not shutil.which("ffmpeg"):
         print("[ERROR] FFmpeg không được cài đặt!")
         return ""
         
     out_dir = os.path.dirname(output_video_path)
-    os.makedirs(out_dir, exist_ok=True)
+    img_dir = os.path.join(out_dir, "scenes")
+    os.makedirs(img_dir, exist_ok=True)
     
-    # 1. Sinh ảnh minh họa AI nền nếu chưa có
-    bg_image = os.path.join(out_dir, "background.jpg")
-    if not os.path.exists(bg_image):
-        print(f"[INFO] Đang sinh ảnh nền AI minh họa cho video: {title}...")
+    # 1. Phân đoạn cảnh từ SRT
+    scenes = parse_srt_scenes(srt_path, interval_seconds=interval)
+    print(f"[INFO] Tổng số phân cảnh cần sinh ảnh AI (mỗi {interval}s đổi ảnh): {len(scenes)}")
+    
+    # 2. Sinh ảnh AI cho từng phân cảnh (tự động đính kèm Visual Memory 50-Feature)
+    image_files = []
+    for idx, scene_text in enumerate(scenes[:30]): # Giới hạn tối đa 30 ảnh cho mỗi tập
+        img_path = os.path.join(img_dir, f"scene_{idx + 1:03d}.jpg")
+        if not os.path.exists(img_path) or os.path.getsize(img_path) < 1000:
+            print(f"[INFO] Sinh ảnh AI cảnh {idx + 1}/{len(scenes)}: {scene_text[:50]}...")
+            generate_scene_image(f"{title}: {scene_text}", img_path, width=1920, height=1080)
+            
+        if os.path.exists(img_path) and os.path.getsize(img_path) > 1000:
+            image_files.append(img_path)
+            
+    if not image_files:
+        # Fallback ảnh gốc nếu lỗi
+        bg_image = os.path.join(out_dir, "background.jpg")
         generate_scene_image(title, bg_image, width=1920, height=1080)
+        image_files.append(bg_image)
         
-    # 2. Định dạng phụ đề chuẩn: Chữ Trắng (&H00FFFFFF&), Viền Đen Mỏng (Outline=1), Cỡ chữ vừa nhỏ (FontSize=16), 1 hàng (WrapStyle=2)
+    # 3. Tạo file danh sách FFmpeg concat
+    concat_list_path = os.path.join(out_dir, "concat_list.txt")
+    with open(concat_list_path, "w", encoding="utf-8") as f:
+        for img in image_files:
+            img_clean = os.path.abspath(img).replace("\\", "/")
+            f.write(f"file '{img_clean}'\n")
+            f.write(f"duration {interval}\n")
+        # Lặp lại ảnh cuối
+        if image_files:
+            f.write(f"file '{os.path.abspath(image_files[-1]).replace('\\', '/')}'\n")
+            
+    # 4. Định dạng phụ đề chuẩn: Chữ Trắng (&H00FFFFFF&), Viền Đen Mỏng (Outline=1), Cỡ chữ vừa nhỏ (FontSize=16), 1 hàng (WrapStyle=2)
     srt_escaped = srt_path.replace("\\", "/").replace(":", "\\:") if srt_path and os.path.exists(srt_path) else ""
     subtitle_style = "FontSize=16,PrimaryColour=&H00FFFFFF&,OutlineColour=&H00000000&,Outline=1,Shadow=0,Alignment=2,MarginV=35,WrapStyle=2"
     
-    # 3. Phối hợp filter: Ảnh nền Ken Burns zoom + lớp phủ làm tối 30% + Phụ đề trắng viền đen
     vf_filter = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,eq=brightness=-0.15:contrast=1.1[bg]"
     if srt_escaped:
         vf_filter += f";[bg]subtitles='{srt_escaped}':force_style='{subtitle_style}'[out]"
     else:
         vf_filter += ";[bg]null[out]"
         
-    if os.path.exists(bg_image) and os.path.getsize(bg_image) > 1000:
-        cmd = [
-            "ffmpeg", "-y",
-            "-loop", "1", "-i", bg_image,
-            "-i", audio_path,
-            "-filter_complex", vf_filter,
-            "-map", "[out]", "-map", "1:a",
-            "-c:v", "libx264", "-preset", "fast", "-tune", "stillimage", "-c:a", "aac", "-b:a", "192k", "-pix_fmt", "yuv420p",
-            "-shortest", output_video_path
-        ]
-    else:
-        # Fallback nền tối nếu không tải được ảnh
-        cmd = [
-            "ffmpeg", "-y",
-            "-f", "lavfi", "-i", "color=c=black:s=1920x1080:r=30",
-            "-i", audio_path,
-            "-vf", f"subtitles='{srt_escaped}':force_style='{subtitle_style}'" if srt_escaped else "null",
-            "-c:v", "libx264", "-tune", "stillimage", "-c:a", "aac", "-b:a", "192k", "-pix_fmt", "yuv420p",
-            "-shortest", output_video_path
-        ]
-        
+    # 5. Chạy FFmpeg concat demuxer ghép nhạc + đổi ảnh mỗi 7s
+    cmd = [
+        "ffmpeg", "-y",
+        "-f", "concat", "-safe", "0", "-i", concat_list_path,
+        "-i", audio_path,
+        "-filter_complex", vf_filter,
+        "-map", "[out]", "-map", "1:a",
+        "-c:v", "libx264", "-preset", "fast", "-c:a", "aac", "-b:a", "192k", "-pix_fmt", "yuv420p",
+        "-shortest", output_video_path
+    ]
+    
     try:
-        print(f"[INFO] FFmpeg rendering video with AI background...")
-        res = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+        print(f"[INFO] FFmpeg rendering multi-image video slideshow (Cứ {interval}s đổi 1 ảnh)...")
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=900)
         if res.returncode == 0 and os.path.exists(output_video_path):
-            print(f"[SUCCESS] Render video thành công với ảnh nền AI: {output_video_path}")
+            print(f"[SUCCESS] Render video đa ảnh AI thành công: {output_video_path}")
             return output_video_path
         else:
-            print(f"[ERROR] FFmpeg error: {res.stderr[:300]}")
+            print(f"[WARNING] Concat slideshow warning: {res.stderr[:200]}")
     except Exception as e:
-        print(f"[ERROR] Exception running FFmpeg: {e}")
+        print(f"[ERROR] Exception running FFmpeg slideshow: {e}")
         
     return ""
 
 def render_novel_video(audio_path: str, srt_path: str, title: str, chapter_id: str) -> str:
-    """Tự động render video từ audio & SRT."""
-    script_json = generate_script_json(audio_path, srt_path, title, chapter_id)
-    
-    # 1. Thử render bằng AI-auto-generate-video
-    video_path = create_video_with_ai_tool(script_json)
-    if video_path and os.path.exists(video_path):
-        print(f"[INFO] Video render thành công qua AI-auto-generate-video: {video_path}")
-        return video_path
-        
-    # 2. Fallback sang FFmpeg nếu chưa setup Node tool
-    print("[INFO] Chuyển sang render video tự động bằng FFmpeg với ảnh AI minh họa...")
+    """Tự động render video từ audio & SRT (cứ 7 giây tự sinh 1 ảnh AI mới)."""
     out_video = os.path.join("output", chapter_id, "video.mp4")
-    return create_video_ffmpeg_fallback(audio_path, srt_path, out_video, title)
+    return create_multi_image_slideshow_video(audio_path, srt_path, out_video, title, interval=7)
 
 def process_existing_audio(audio_path: str, srt_path: str = "", title: str = "Audiobook Novel") -> str:
     """Hàm độc lập: Nhận trực tiếp file audio có sẵn từ workflow và xuất video MP4."""

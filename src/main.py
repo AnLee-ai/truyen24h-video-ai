@@ -167,7 +167,7 @@ def main():
                         default="serve", help="Action to perform. Default is 'serve' web app.")
     parser.add_argument("--title", help="Novel title for 'init-novel'")
     parser.add_argument("--desc", help="Novel description for 'init-novel'")
-    parser.add_argument("--novel-id", help="Novel UUID for 'run-pipeline'")
+    parser.add_argument("--novel-id", nargs="?", default="", help="Novel UUID for 'run-pipeline'")
     parser.add_argument("--chapter-id", help="Chapter UUID for 'export-audio'")
     
     args = parser.parse_args()
