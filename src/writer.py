@@ -203,11 +203,29 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 10) -> str:
                 time.sleep(2)
                 continue
                 
-            print(f"[WARNING] Gemini call failed: {e}. Retrying in 10s...")
-            time.sleep(10)
+            print(f"[WARNING] Gemini call failed: {e}. Retrying in 5s...")
+            time.sleep(5)
             
-    print("[WARNING] All Gemini retries failed. Retrying with Groq pool...")
-    return call_gemini(prompt, json_mode=json_mode, retries=3)
+    print("[WARNING] All API Keys failed (401/429). Switching to Pollinations 100% Free LLM Fallback Engine...")
+    free_res = call_pollinations_free_llm(prompt)
+    if free_res:
+        return free_res
+    return "Tiếp tục diễn biến câu chuyện."
+
+def call_pollinations_free_llm(prompt: str) -> str:
+    """100% Free Emergency LLM Fallback via Pollinations.ai (Zero API Key needed)."""
+    import urllib.parse, urllib.request
+    print("[INFO] Fallback to Pollinations 100% Free LLM Engine (Zero API Key needed)...")
+    try:
+        url = "https://text.pollinations.ai/" + urllib.parse.quote(prompt[:3000])
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=60) as response:
+            res_text = response.read().decode('utf-8')
+            if res_text and len(res_text) > 20:
+                return res_text.strip()
+    except Exception as e:
+        print(f"[WARNING] Pollinations Free LLM failed: {e}")
+    return ""
 
 def get_embedding(text: str) -> list:
     """Generate vector embedding for semantic search using text-embedding-004."""
