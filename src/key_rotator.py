@@ -40,7 +40,7 @@ class APIKeyRotator:
                     
         self.current_index = 0
         self.failed_keys = set()
-        print(f"[INFO] API Key Rotator [{provider}]: Đã nạp thành công {len(self.keys)} tài khoản API Key.")
+        print(f"[INFO] API Key Rotator [{provider}]: Loaded {len(self.keys)} API Key account(s).")
 
     def get_key(self) -> str:
         """Lấy API key tiếp theo theo cơ chế Round-Robin."""
