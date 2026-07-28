@@ -109,38 +109,49 @@ def get_pending_video_chapter(novel_id: str = "") -> dict:
         
     return {}
 
+_created_buckets = set()
+
 def upload_file_to_supabase(file_path: str, bucket_name: str = "media", destination_path: str = None) -> str:
-    """Tải tệp media (Ảnh AI, Video MP4, Audio MP3) lên Supabase Storage và trả về URL công khai."""
+    """Tải tệp media (Ảnh AI, Video MP4, Audio MP3) lên Supabase Storage với cơ chế Retry 3 lần & Cache Bucket."""
     import os
+    import time
     if not file_path or not os.path.exists(file_path):
         return ""
-    try:
-        client = get_client()
-        # 1. Tạo Storage Bucket nếu chưa tồn tại
+    
+    client = get_client()
+    # 1. Cache kiểm tra Bucket để tránh gọi API thừa
+    if bucket_name not in _created_buckets:
         try:
             client.storage.create_bucket(bucket_name, options={"public": True})
+            _created_buckets.add(bucket_name)
         except Exception:
-            pass
+            _created_buckets.add(bucket_name)
             
-        rel_path = destination_path or os.path.basename(file_path)
-        
-        # 2. Đọc dữ liệu file và upload
-        with open(file_path, "rb") as f:
-            file_data = f.read()
+    rel_path = destination_path or os.path.basename(file_path)
+    
+    # 2. Đọc file
+    with open(file_path, "rb") as f:
+        file_data = f.read()
+
+    # 3. Upload với cơ chế Retry 3 lần (chống đứt mạng khi upload video dung lượng lớn)
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            client.storage.from_(bucket_name).upload(
+                path=rel_path,
+                file=file_data,
+                file_options={"x-upsert": "true"}
+            )
+            public_url = client.storage.from_(bucket_name).get_public_url(rel_path)
+            print(f"[SUCCESS] Uploaded {os.path.basename(file_path)} to Supabase Storage: {public_url}")
+            return public_url
+        except Exception as e:
+            if attempt == max_retries - 1:
+                print(f"[WARNING] Supabase Storage upload failed for {file_path}: {e}")
+                return ""
+            time.sleep(2 * (attempt + 1))
             
-        client.storage.from_(bucket_name).upload(
-            path=rel_path,
-            file=file_data,
-            file_options={"x-upsert": "true"}
-        )
-        
-        # 3. Trả về URL công khai
-        public_url = client.storage.from_(bucket_name).get_public_url(rel_path)
-        print(f"[SUCCESS] Uploaded {os.path.basename(file_path)} to Supabase Storage: {public_url}")
-        return public_url
-    except Exception as e:
-        print(f"[WARNING] Could not upload {file_path} to Supabase Storage: {e}")
-        return ""
+    return ""
 
 # Episode Summary & Vector Search
 def create_episode_summary(chapter_id: str, event_summary: str, embedding: list) -> dict:

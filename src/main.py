@@ -96,12 +96,10 @@ def _run_chapter_pipeline_impl(novel_id: str):
             video_public_url = database.upload_file_to_supabase(video_path, bucket_name="media", destination_path=f"videos/full/{chapter_id}_16_9.mp4")
             database.update_chapter_video_status(chapter_id, status="completed", video_url=video_public_url or video_path)
             
-        # 5. Render Video Shorts (9:16) 45s cao trào cho YouTube Shorts / TikTok
-        print(f"[INFO] Bắt đầu render Video Shorts (9:16) cho Chương {chapter_num}...")
-        shorts_path = shorts_generator.generate_shorts_video(final_audio_path, srt_path, chapter_id, chapter_title)
-        if shorts_path:
-            print(f"[INFO] Video Shorts đã được tạo tại: {shorts_path}")
-            database.upload_file_to_supabase(shorts_path, bucket_name="media", destination_path=f"videos/shorts/{chapter_id}_9_16.mp4")
+        # 5. (Đã tắt phần render Video Shorts 9:16 theo yêu cầu người dùng)
+        shorts_path = ""
+        # print(f"[INFO] Bắt đầu render Video Shorts (9:16) cho Chương {chapter_num}...")
+        # shorts_path = shorts_generator.generate_shorts_video(final_audio_path, srt_path, chapter_id, chapter_title)
 
         # 5b. Tải toàn bộ Ảnh AI 2D của chương lên Supabase Storage
         img_dir = os.path.join("output", chapter_id, "images")
@@ -118,7 +116,7 @@ def _run_chapter_pipeline_impl(novel_id: str):
         #     if youtube_url:
         #         database.update_chapter_video_status(chapter_id, status="published", video_url=youtube_url)
         
-        # 7. Upload file Audio, Subtitles & Video MP4 lên kênh Telegram
+        # 7. Upload file Audio, Subtitles & Video MP4 16:9 lên kênh Telegram
         caption_markdown = (
             f"🎙️ *Truyện 24h Audio - Tập {chapter_num}*\n\n"
             f"📖 *Chương {chapter_num}: {chapter_title}*\n\n"
@@ -132,20 +130,13 @@ def _run_chapter_pipeline_impl(novel_id: str):
             srt_path=srt_path
         )
         
-        # Gửi video MP4 dài (16:9) và Video Shorts (9:16) lên Telegram
+        # Gửi video MP4 dài (16:9) lên Telegram
         if video_path and os.path.exists(video_path):
             print(f"[INFO] Uploading Full 16:9 Video to Telegram ({os.path.getsize(video_path)} bytes)...")
             v_ok = telegram_uploader.send_video_to_telegram(video_path, f"🎬 *Video Full 16:9 - Chương {chapter_num}: {chapter_title}*")
             print(f"[INFO] Full Video Telegram upload result: {v_ok}")
         else:
             print(f"[WARNING] Video 16:9 path invalid or not found: {video_path}")
-            
-        if shorts_path and os.path.exists(shorts_path):
-            print(f"[INFO] Uploading Shorts 9:16 Video to Telegram ({os.path.getsize(shorts_path)} bytes)...")
-            s_ok = telegram_uploader.send_video_to_telegram(shorts_path, f"📱 *Video Shorts 9:16 - Chương {chapter_num}: {chapter_title}*")
-            print(f"[INFO] Shorts Video Telegram upload result: {s_ok}")
-        else:
-            print(f"[WARNING] Shorts 9:16 video path invalid or not found: {shorts_path}")
         
         if success:
             print(f"[INFO] Pipeline execution complete for Chapter {chapter_num}!")

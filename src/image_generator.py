@@ -20,9 +20,10 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     
     print(f"[INFO] Generating Free AI Image with prompt:\n > {prompt_str[:100]}...")
     
-    # 2. Định dạng URL Pollinations.ai (không tốn API key, 100% Free)
+    # 2. Định dạng URL Pollinations.ai (Model flux-anime, Seed Hashing cố định nhân vật, enhance=true, 100% Free)
+    seed = int(compiled_data.get("hash", "0")[:8], 16) % 1000000
     encoded_prompt = urllib.parse.quote(prompt_str)
-    url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={width}&height={height}&model=flux&nologo=true"
+    url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={width}&height={height}&model=flux-anime&seed={seed}&enhance=true&nologo=true"
     
     # 3. Tải và lưu ảnh với cơ chế Retry & Fallback
     max_retries = 3

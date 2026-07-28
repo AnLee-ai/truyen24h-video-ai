@@ -71,9 +71,9 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
             last_img_clean = os.path.abspath(image_files[-1]).replace("\\", "/")
             f.write(f"file '{last_img_clean}'\n")
             
-    # 4. Định dạng phụ đề chuẩn: Chữ Trắng (&H00FFFFFF&), Viền Đen Mỏng (Outline=1), Cỡ chữ vừa nhỏ (FontSize=16), 1 hàng (WrapStyle=2)
+    # 4. Định dạng phụ đề chuẩn YouTube CC: Chữ Trắng (&H00FFFFFF&), Viền Đen Nổi (Outline=2), Cỡ chữ 15, Căn giữa lề (MarginL=80, MarginR=80)
     srt_escaped = srt_path.replace("\\", "/").replace(":", "\\:") if srt_path and os.path.exists(srt_path) else ""
-    subtitle_style = "FontSize=16,PrimaryColour=&H00FFFFFF&,OutlineColour=&H00000000&,Outline=1,Shadow=0,Alignment=2,MarginV=35,WrapStyle=2"
+    subtitle_style = "Fontname=Arial,FontSize=15,PrimaryColour=&H00FFFFFF&,OutlineColour=&H00000000&,Outline=2,Shadow=1,Alignment=2,MarginV=35,MarginL=80,MarginR=80,WrapStyle=2"
     
     vf_filter = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,eq=brightness=-0.15:contrast=1.1[bg]"
     if srt_escaped:

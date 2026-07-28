@@ -25,12 +25,15 @@ class Ultimate50FeatureMemoryEngine:
         {"shot": "panoramic aerial overhead shot, vast atmospheric perspective", "focal": "16mm ultra-wide lens", "dof": "infinite depth"}
     ]
 
-    # Category 4: Negative Prompting & Quality Guardrails (Features 31-40)
+    # Category 4: Negative Prompting & Quality Guardrails (Features 31-40 - Hardened Defect Removal)
     MASTER_NEGATIVE_PROMPT = (
         "3D render, photorealistic, realistic 3D photo, CGI, octane render, 3D model, "
+        "middle-aged man, old man, facial hair, beard, mustache, wrinkles, aging face, "
         "blurry, low quality, extra limbs, bad hands, deformed fingers, extra fingers, "
-        "mutated body, distorted face, bad anatomy, text, watermark, signature, cropped, "
-        "out of frame, duplicate character, color bleeding, oversaturated, ugly, jpeg artifacts"
+        "fused fingers, missing limbs, malformed hands, asymmetric eyes, cross-eyed, "
+        "deformed eyes, bad proportions, unnatural body posture, mutated body, distorted face, "
+        "bad anatomy, text, watermark, signature, cropped, out of frame, duplicate character, "
+        "color bleeding, oversaturated, ugly, jpeg artifacts, low resolution blur"
     )
 
     def __init__(self, memory_file: str = "output/ultimate_50_memory.json"):
@@ -57,6 +60,16 @@ class Ultimate50FeatureMemoryEngine:
         self.current_chapter_arc: str = "Arc 1"
         
         self.load_memory()
+        
+        # Register core main characters with explicit age lock (Youth / Thanh niên 18-20 t)
+        if "trần lam" not in self.characters:
+            self.register_character(
+                name="Trần Lam",
+                aliases=["trần lam", "lam", "thanh niên", "cậu"],
+                base_appearance="handsome young male cultivator, 18-20 years old youthful face, athletic young man, short black hair, clean shaven",
+                outfit="ancient blue cultivator robes",
+                color_palette="cyan and silver"
+            )
 
     def load_memory(self):
         """Feature 43: Disk-backed Persistent JSON State"""
@@ -91,14 +104,29 @@ class Ultimate50FeatureMemoryEngine:
         base_appearance: str,
         outfit: str,
         weapon: str = "",
-        color_palette: str = ""
+        color_palette: str = "",
+        age_group: str = ""
     ):
-        """Feature 1: Multi-Alias Graph | Feature 9: Color Palette Locker | Feature 10: Distinctive Mark"""
+        """Feature 1: Multi-Alias Graph | Feature 9: Color Palette Locker | Explicit Universal Age Group Lock"""
         key = name.lower()
+        
+        # Tự động nhận diện độ tuổi chuẩn nếu chưa khai báo (Auto Age Group Inference)
+        if not age_group:
+            search_str = (name + " " + " ".join(aliases) + " " + base_appearance).lower()
+            if any(w in search_str for w in ["lão", "ông", "bà", "trưởng lão", "elder", "veteran"]):
+                age_group = "65-75 years old elderly person"
+            elif any(w in search_str for w in ["chú", "bác", "trung niên", "sư phụ", "chủ quán", "trung niên"]):
+                age_group = "40-50 years old middle-aged adult"
+            elif any(w in search_str for w in ["tiểu", "thiếu niên", "em bé", "bé"]):
+                age_group = "14-16 years old young teenager"
+            else:
+                age_group = "18-20 years old youthful young person"
+
         self.characters[key] = {
             "name": name,
             "aliases": [a.lower() for a in aliases] + [key],
             "appearance": base_appearance,
+            "age_group": age_group,   # Ép độ tuổi chuẩn cố định cho MỌI nhân vật
             "outfit": outfit,
             "weapon": weapon,
             "color_palette": color_palette,
@@ -141,54 +169,88 @@ class Ultimate50FeatureMemoryEngine:
         if environmental_damage: env["environmental_damage"] = environmental_damage
         self.save_memory()
 
-    # --- CATEGORY 3, 4 & 5: PROMPT COMPILER & ADAPTIVE INTELLIGENCE (Features 21-50) ---
+    # UNIVERSAL MULTI-GENRE MASTER ART SYSTEM
+    # Tự động hóa Prompt chuẩn nghệ thuật 2D Manhwa / Webtoon / Anime 8K đỉnh cao cho MỌI THỂ LOẠI TRUYỆN
+    GENRE_STYLE_PRESETS = {
+        "xianxia": "ancient eastern Xianxia fantasy, traditional Pagodas, ethereal misty bamboo valley, flying sword, martial robes, glowing energy aura",
+        "scifi": "futuristic cyberpunk metropolis, glowing neon lights, holographic billboards, high-tech armor, mecha sci-fi aesthetic",
+        "urban": "modern city street, realistic high school / university campus, aesthetic urban fashion, cozy natural lighting",
+        "fantasy": "epic medieval high fantasy, gothic stone castle, mystical enchanted forest, glowing magic runes, knight armor",
+        "mystery": "dark noir mystery, rain-slicked cobblestone alley, dramatic shadow contrast, foggy night, vintage detective aesthetic"
+    }
+
+    # PROMPT COMPILER CHUYÊN NGHIỆP CHO MỌI TIỂU THUYẾT
     def compile_master_prompt(self, scene_text: str, target_aspect_ratio: str = "16:9") -> Dict[str, str]:
-        """Features 31-40: Compile master prompt with weights, negative prompt, aspect ratio and camera sequence."""
+        """
+        Compiler Prompt đa năng: Tự động phân tích thể loại, loại bỏ độ tuổi già,
+        ép góc máy điện ảnh và khống chế chuẩn nét vẽ 2D Manhwa 8K sắc nét cho mọi tiểu thuyết.
+        """
         text_lower = scene_text.lower()
-        
-        # 1. Feature 1 & 8: Character Detection & Group Proximity Memory
+
+        # 1. Tự động nhận diện Thể loại truyện (Genre Auto-Detection)
+        selected_genre = "xianxia"  # Mặc định tiên hiệp / huyền huyễn
+        if any(w in text_lower for w in ["cyberpunk", "robot", "phi thuyền", "công nghệ", "laser", "tương lai"]):
+            selected_genre = "scifi"
+        elif any(w in text_lower for w in ["trường học", "lớp học", "xe máy", "điện thoại", "đô thị", "phố"]):
+            selected_genre = "urban"
+        elif any(w in text_lower for w in ["lâu đài", "pháp sư", "quái vật", "rồng", "hiệp sĩ", "ma thuật"]):
+            selected_genre = "fantasy"
+        elif any(w in text_lower for w in ["mưa", "đêm", "vết máu", "bí ẩn", "sát thủ", "trinh thám"]):
+            selected_genre = "mystery"
+
+        genre_prompt = self.GENRE_STYLE_PRESETS[selected_genre]
+
+        # 2. BỘ NHỚ SIÊU CẤP NHÂN VẬT & ĐỐI TƯỢNG (Super Visual Memory Engine)
+        # Nạp tự động: Trang phục, Thần thái (Cảm xúc), Vết thương, Bảo khí vũ khí & Màu sắc đặc trưng
         matched_chars_prompts = []
         for key, char in self.characters.items():
             if any(alias in text_lower for alias in char["aliases"]):
-                c_str = f"({char['appearance']}:1.2), wearing {char['outfit']}"
-                if char["color_palette"]:
-                    c_str += f" with {char['color_palette']} color accents"
-                if char["transformation"]:
-                    c_str += f" in {char['transformation']} form"
-                if char["injuries"]:
-                    c_str += f", with {', '.join(char['injuries'])}"
-                if char["weapon"]:
-                    c_str += f", wielding {char['weapon']}"
-                matched_chars_prompts.append(c_str)
+                # Tạo bộ mô tả nhân vật chi tiết nhất ĐÓNG BĂNG ĐỘ TUỔI CHUẨN (Universal Age Lock Weight: 1.3)
+                c_details = [
+                    f"({char['appearance']}:1.25)",
+                    f"({char.get('age_group', '18-20 years old youthful person')}:1.3)",
+                    f"wearing {char['outfit']}"
+                ]
+                if char.get("color_palette"):
+                    c_details.append(f"{char['color_palette']} color accents")
+                if char.get("weapon"):
+                    c_details.append(f"wielding {char['weapon']}")
+                if char.get("emotion"):
+                    c_details.append(f"{char['emotion']} expression")
+                if char.get("injuries"):
+                    c_details.append(f"with {', '.join(char['injuries'])}")
+                if char.get("transformation"):
+                    c_details.append(f"in {char['transformation']} mode")
+                    
+                matched_chars_prompts.append(", ".join(c_details))
 
-        # 2. Features 21-30: Cinematic Camera Matrix
+        # Nếu không có nhân vật chính xác trong thoại, ép giữ bộ nhớ nam chính 18t thanh niên
+        character_anchor = " AND ".join(matched_chars_prompts) if matched_chars_prompts else "handsome 18 years old young male protagonist hero, youthful face, clean shaven, short black hair"
+
+        # 3. Ép Góc máy điện ảnh lặp (Cinematic Camera Sequence)
         cam = self.CINEMATIC_SHOT_MATRIX[self.camera_step % len(self.CINEMATIC_SHOT_MATRIX)]
         self.camera_step += 1
-        
-        # 3. Features 11-20: Environment Prompting
-        env = self.environment_context
-        env_str = f"location: {env['location']}, style: {env['architecture']}, time: {env['time_of_day']}, weather: {env['weather']}, lighting: {env['lighting']}"
-        if env["environmental_damage"] != "pristine":
-            env_str += f", environment state: {env['environmental_damage']}"
-            
-        # 4. Feature 29 & 37: Aspect Ratio & Resolution Optimization
-        aspect_note = "16:9 widescreen orientation" if target_aspect_ratio == "16:9" else "9:16 vertical orientation for mobile"
 
-        # 5. Feature 38: Prompt Weight Balancing (Epic 2D Manhwa Webtoon Comic Art Style)
+        # 4. Trích xuất 10 từ hành động chính để tránh rác Prompt
+        clean_words = re.sub(r"[^\w\s]", "", scene_text).split()
+        scene_action_clean = " ".join(clean_words[:12]) if clean_words else "dynamic moment"
+
+        # 5. GHÉP PROMPT NGHỆ THUẬT HOÀN HẢO CHO AI VẼ TRANH (ULTRA ENHANCED 8K ARTIST ENGINE)
         positive_prompt = (
-            f"2D manhwa webtoon style, vibrant digital comic book art, clean anime line art, "
-            f"high detail 2D webtoon illustration, colored manhwa comic page, sharp 2D lines, "
-            f"{cam['shot']}, {cam['focal']}, {cam['dof']}, "
-            f"{', '.join(matched_chars_prompts) if matched_chars_prompts else scene_text}, "
-            f"{env_str}, {env['color_palette']}, {aspect_note}, masterpiece, 8k resolution"
+            f"masterpiece 2D manhwa webtoon illustration, vibrant digital comic book art, "
+            f"ultra sharp focus, crisp clean anime line art, sharp 2D contours, cinematic volumetric lighting, "
+            f"{cam['shot']}, {cam['focal']}, {cam['dof']}, {character_anchor}, "
+            f"action: {scene_action_clean}, setting: {genre_prompt}, "
+            f"floating glowing particle effects, vivid color grading, 16:9 widescreen orientation, "
+            f"trending on ArtStation, award-winning webtoon panel, 8k resolution"
         )
-        
-        # 6. Feature 41: MD5 Hash Caching
+
+        # MD5 Hash Caching
         prompt_hash = hashlib.md5(positive_prompt.encode("utf-8")).hexdigest()
-        
+
         return {
             "positive_prompt": positive_prompt,
-            "negative_prompt": self.MASTER_NEGATIVE_PROMPT, # Feature 31
+            "negative_prompt": self.MASTER_NEGATIVE_PROMPT,
             "hash": prompt_hash,
             "camera_info": cam
         }
