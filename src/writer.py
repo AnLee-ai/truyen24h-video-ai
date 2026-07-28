@@ -166,10 +166,10 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 10) -> str:
     # Fallback to Gemini API với Key Rotator
     model_name = config.GEMINI_MODEL_WRITER
     
-    for attempt in range(retries):
+    for attempt in range(min(retries, 2)):
         g_key = key_rotator.get_gemini_key() or config.GEMINI_API_KEY
         if not g_key:
-            print("[ERROR] No Gemini API key available.")
+            print("[ERROR] No valid Gemini API key available.")
             break
             
         try:

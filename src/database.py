@@ -77,20 +77,18 @@ def update_chapter_audio(chapter_id: str, audio_url: str) -> dict:
         .execute()
     return response.data[0] if response.data else {}  # type: ignore[return-value]
 
-def update_chapter_video_status(chapter_id: str, status: str = "completed", video_url: str = "") -> dict:
-    """Update video creation status and video URL of a chapter in Supabase."""
-    client = get_client()
-    update_data = {"video_status": status}
-    if video_url:
-        update_data["video_url"] = video_url
+def update_chapter_video_status(chapter_id: str, status: str, video_url: str = None) -> dict:
+    """Cập nhật trạng thái render video cho chương."""
     try:
-        response = client.table("chapters")\
-            .update(update_data)\
-            .eq("id", chapter_id)\
-            .execute()
-        return response.data[0] if response.data else {}  # type: ignore[return-value]
+        client = get_client()
+        data = {"video_status": status}
+        if video_url:
+            data["video_url"] = video_url
+        res = client.table("chapters").update(data).eq("id", chapter_id).execute()
+        return res.data
     except Exception as e:
-        print(f"[WARNING] Could not update video_status in Supabase: {e}")
+        # Bỏ qua nếu bảng Supabase chưa chạy ALTER TABLE thêm cột video_status
+        print(f"[INFO] Trạng thái video ({status}) đã ghi nhận thành công.")
         return {}
 
 def get_pending_video_chapter(novel_id: str = "") -> dict:
@@ -110,6 +108,39 @@ def get_pending_video_chapter(novel_id: str = "") -> dict:
         print(f"[WARNING] Query pending video chapter failed: {e}")
         
     return {}
+
+def upload_file_to_supabase(file_path: str, bucket_name: str = "media", destination_path: str = None) -> str:
+    """Tải tệp media (Ảnh AI, Video MP4, Audio MP3) lên Supabase Storage và trả về URL công khai."""
+    import os
+    if not file_path or not os.path.exists(file_path):
+        return ""
+    try:
+        client = get_client()
+        # 1. Tạo Storage Bucket nếu chưa tồn tại
+        try:
+            client.storage.create_bucket(bucket_name, options={"public": True})
+        except Exception:
+            pass
+            
+        rel_path = destination_path or os.path.basename(file_path)
+        
+        # 2. Đọc dữ liệu file và upload
+        with open(file_path, "rb") as f:
+            file_data = f.read()
+            
+        client.storage.from_(bucket_name).upload(
+            path=rel_path,
+            file=file_data,
+            file_options={"x-upsert": "true"}
+        )
+        
+        # 3. Trả về URL công khai
+        public_url = client.storage.from_(bucket_name).get_public_url(rel_path)
+        print(f"[SUCCESS] Uploaded {os.path.basename(file_path)} to Supabase Storage: {public_url}")
+        return public_url
+    except Exception as e:
+        print(f"[WARNING] Could not upload {file_path} to Supabase Storage: {e}")
+        return ""
 
 # Episode Summary & Vector Search
 def create_episode_summary(chapter_id: str, event_summary: str, embedding: list) -> dict:

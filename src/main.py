@@ -84,15 +84,26 @@ def _run_chapter_pipeline_impl(novel_id: str):
         # 4. Render Video Dài (16:9) qua AI-auto-generate-video / FFmpeg
         print(f"[INFO] Bắt đầu render video dài (16:9) cho Chương {chapter_num}...")
         video_path = video.render_novel_video(final_audio_path, srt_path, chapter_title, chapter_id)
+        video_public_url = ""
         if video_path:
             print(f"[INFO] Video dài đã được tạo tại: {video_path}")
-            database.update_chapter_video_status(chapter_id, status="completed", video_url=video_path)
+            video_public_url = database.upload_file_to_supabase(video_path, bucket_name="media", destination_path=f"videos/full/{chapter_id}_16_9.mp4")
+            database.update_chapter_video_status(chapter_id, status="completed", video_url=video_public_url or video_path)
             
         # 5. Render Video Shorts (9:16) 45s cao trào cho YouTube Shorts / TikTok
         print(f"[INFO] Bắt đầu render Video Shorts (9:16) cho Chương {chapter_num}...")
         shorts_path = shorts_generator.generate_shorts_video(final_audio_path, srt_path, chapter_id, chapter_title)
         if shorts_path:
             print(f"[INFO] Video Shorts đã được tạo tại: {shorts_path}")
+            database.upload_file_to_supabase(shorts_path, bucket_name="media", destination_path=f"videos/shorts/{chapter_id}_9_16.mp4")
+
+        # 5b. Tải toàn bộ Ảnh AI 2D của chương lên Supabase Storage
+        img_dir = os.path.join("output", chapter_id, "images")
+        if os.path.exists(img_dir):
+            for img_name in os.listdir(img_dir):
+                if img_name.endswith((".jpg", ".png", ".jpeg")):
+                    img_p = os.path.join(img_dir, img_name)
+                    database.upload_file_to_supabase(img_p, bucket_name="media", destination_path=f"images/{chapter_id}/{img_name}")
             
         # 6. (Tạm thời bỏ qua Upload YouTube - Đã tắt theo yêu cầu)
         # print(f"[INFO] Bỏ qua upload YouTube. Tập trung gửi Telegram Channel...")
