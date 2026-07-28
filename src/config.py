@@ -17,13 +17,19 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 BGM_DIR.mkdir(parents=True, exist_ok=True)
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
+def _clean_env(var_name: str) -> str:
+    val = os.getenv(var_name, "")
+    if not val:
+        return ""
+    return val.strip().strip("'").strip('"').replace('\r', '').replace('\n', '')
+
 # Environment variables
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+GEMINI_API_KEY = _clean_env("GEMINI_API_KEY")
+GROQ_API_KEY = _clean_env("GROQ_API_KEY")
+SUPABASE_URL = _clean_env("SUPABASE_URL")
+SUPABASE_KEY = _clean_env("SUPABASE_KEY")
+TELEGRAM_BOT_TOKEN = _clean_env("TELEGRAM_BOT_TOKEN")
+TELEGRAM_CHAT_ID = _clean_env("TELEGRAM_CHAT_ID")
 
 # Model configurations
 # Using gemini-flash-latest as the primary fast and free model
