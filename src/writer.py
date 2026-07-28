@@ -230,9 +230,12 @@ def call_pollinations_free_llm(prompt: str) -> str:
 
 def get_embedding(text: str) -> list:
     """Generate vector embedding for semantic search using text-embedding-004."""
+    g_key = key_rotator.get_gemini_key() or config.GEMINI_API_KEY
+    if not g_key:
+        return [0.0] * 1536
     try:
         if USE_NEW_GENAI:
-            client = get_genai_client()
+            client = get_genai_client(api_key=g_key)
             result = client.models.embed_content(
                 model=config.GEMINI_MODEL_EMBED,
                 contents=text,
@@ -242,7 +245,7 @@ def get_embedding(text: str) -> list:
             )
             emb = result.embeddings[0].values
         else:
-            genai.configure(api_key=config.GEMINI_API_KEY)
+            genai.configure(api_key=g_key)
             result = genai.embed_content(
                 model=f"models/{config.GEMINI_MODEL_EMBED}",
                 content=text,
@@ -256,7 +259,10 @@ def get_embedding(text: str) -> list:
             return emb + [0.0] * (1536 - len(emb))
         return emb
     except Exception as e:
-        print(f"[ERROR] Failed to generate embedding: {e}")
+        err_str = str(e)
+        if "401" in err_str or "UNAUTHENTICATED" in err_str:
+            key_rotator.mark_gemini_key_failed(g_key)
+        print(f"[WARNING] Skipping embedding generation due to API key error.")
         return [0.0] * 1536
 
 # Novel Lifecycle Operations
