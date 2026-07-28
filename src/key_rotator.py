@@ -68,10 +68,16 @@ class APIKeyRotator:
         if key:
             key_mask = f"...{key[-6:]}" if len(key) >= 6 else key
             if is_permanent:
-                print(f"[WARNING] API Key [{self.provider}] {key_mask} bị lỗi 401 (Vô hiệu hóa vĩnh viễn trong lượt chạy này).")
+                try:
+                    print(f"[WARNING] API Key [{self.provider}] {key_mask} is invalid (401). Permanently disabled for this run.")
+                except Exception:
+                    pass
                 self.invalid_keys.add(key)
             else:
-                print(f"[WARNING] API Key [{self.provider}] {key_mask} bị tạm hết Quota (429). Đã chuyển sang key khác.")
+                try:
+                    print(f"[WARNING] API Key [{self.provider}] {key_mask} rate limited (429). Switched key.")
+                except Exception:
+                    pass
                 self.rate_limited_keys.add(key)
 
 # Khởi tạo hai bộ xoay vòng API Keys cho Gemini và Groq
