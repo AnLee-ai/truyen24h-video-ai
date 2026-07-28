@@ -500,8 +500,13 @@ def write_next_chapter(novel_id: str) -> dict:
         while draft_attempt < 3:
             draft_attempt += 1
             final_content = call_gemini(current_prompt)
-            word_count = len(final_content.split())
+            word_count = len(final_content.split()) if final_content else 0
             print(f"[INFO] Generated draft length: {word_count} words.")
+            
+            if word_count < 200:
+                print(f"[WARNING] API Key issue or failed response (words: {word_count}). Aborting draft attempts.")
+                break
+                
             ends_abruptly = not final_content.strip().endswith((".", "?", "!", '"', "”", "»", "*"))
             
             if ends_abruptly and word_count >= 1500:
