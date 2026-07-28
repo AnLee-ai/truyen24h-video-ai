@@ -111,12 +111,8 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 10) -> str:
             "Content-Type": "application/json"
         }
         
-        groq_models = [
-            config.GROQ_MODEL_WRITER,      # "llama-3.3-70b-versatile"
-            "llama-3.1-8b-instant",
-            "llama3-70b-8192",
-            "llama3-8b-8192"
-        ]
+        raw_groq = [config.GROQ_MODEL_WRITER, "llama-3.3-70b-versatile", "llama-3.1-8b-instant"]
+        groq_models = [m for m in raw_groq if m]
         
         max_tokens_options = [3200, 2400, 1800] if not json_mode else [1000]
         
@@ -164,11 +160,8 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 10) -> str:
         print("[WARNING] All Groq retries failed. Switching to Gemini API...")
 
     # Fallback to Gemini API với Key Rotator & Multi-Model Pool
-    gemini_models = [
-        config.GEMINI_MODEL_WRITER,     # "gemini-2.0-flash"
-        "gemini-2.0-flash-lite",
-        "gemini-1.5-flash-latest"
-    ]
+    raw_gemini = [config.GEMINI_MODEL_WRITER, "gemini-2.0-flash", "gemini-2.0-flash-lite"]
+    gemini_models = [m for m in raw_gemini if m]
     
     for attempt in range(min(retries, 3)):
         g_key = key_rotator.get_gemini_key() or config.GEMINI_API_KEY
@@ -627,7 +620,7 @@ def sync_story_bible(novel_id: str, chapter: dict, current_chars: list):
                 combat_stats=combat_stats,
                 relationships=relationships,
                 failure_flag=new_failure_flag,
-                last_breakthrough_chapter=last_breakthrough_ch
+                last_breakthrough_chapter=last_bt
             )
             
         for lore in data.get("new_lore", []):
