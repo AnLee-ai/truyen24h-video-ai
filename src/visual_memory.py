@@ -15,6 +15,69 @@ class Ultimate50FeatureMemoryEngine:
     5. Performance, Caching & Adaptive Intelligence (Features 41-50)
     """
 
+    # BỘ 50 QUY TẮC THIẾT KẾ ĐỒ HỌA, KỂ CHUYỆN & RENDER VIDEO TRIỆU VIEW (50 MASTER RULES)
+    MASTER_50_DESIGN_AND_STORYTELLING_RULES = [
+        # Domain 1: Visual & Thumbnail Design (Rules 1-10)
+        "Rule 1: Rule of Thirds Hero Anchoring (Đặt tầm mắt nhân vật ở đường 1/3 ngang phía trên)",
+        "Rule 2: High Contrast Rim Lighting (Viền sáng xanh cyan/vàng bóc tách chủ thể khỏi nền tối)",
+        "Rule 3: Gold & Crimson Typography (Tiêu đề Vàng Hoàng Kim #FFD700 + Badge Đỏ Crimson #DC2626)",
+        "Rule 4: Multi-Layer Stroke Outline (Chữ có viền đen 4px + bóng đổ mờ chống chói 100%)",
+        "Rule 5: Floating Particle Energy Elements (Hạt bụi năng lượng và đốm lửa huyền ảo)",
+        "Rule 6: Volumetric Fog & Depth (Sương mù tầm thấp tạo độ sâu 3D cho nét vẽ 2D)",
+        "Rule 7: Eye Contact & Expression Locking (Ánh mắt sắc sảo có thần thái nhìn hơi chệch tâm)",
+        "Rule 8: Color Temperature Contrast (Nền tone lạnh xanh lam vs Hào quang tone nóng vàng đỏ)",
+        "Rule 9: Speed Lines & Motion Blur (Tia tốc độ tạo cảm giác hành động kịch tính)",
+        "Rule 10: 16:9 Widescreen Framing Lock (Ép tỷ lệ 1920x1080 không bị viền đen thừa)",
+
+        # Domain 2: Novel Writing & Storytelling (Rules 11-20)
+        "Rule 11: 5-Stage Cinematic Arc (Mở đầu -> Mâu thuẫn -> Đỉnh điểm -> Dư âm -> Cliffhanger)",
+        "Rule 12: High-Stakes Cliffhanger Lock (Kết chương bằng biến cố lấp lửng ép nghe tập sau)",
+        "Rule 13: Sensory Multi-Layering (Miêu tả âm thanh, mùi hương, nhịp tim, ánh sáng giác quan)",
+        "Rule 14: 50/50 Dialogue to Description Ratio (Cân bằng 50% thoại/hành động & 50% suy nghĩ nội tâm)",
+        "Rule 15: Pure 2-Word Vietnamese Names (Dùng tên thuần Việt 2 từ: Trần Lam, Linh Vy, Minh Đức)",
+        "Rule 16: Zero 3-Word Full Name Violation (Tuyệt đối không dùng tên 3 từ: Nguyễn Minh Đức)",
+        "Rule 17: Zero English Name Hallucination (Không dùng tên tiếng Anh hay danh từ Tây phương)",
+        "Rule 18: Protagonist Struggle Constraint (Nhân vật chính giữ nguyên sức mạnh trừ khi failure_flag=True)",
+        "Rule 19: Micro-Facial & Body Language (Miêu tả nheo mắt, siết chặt tay, nhịp thở dồn dập)",
+        "Rule 20: Word Count Lock (>2200 Words) (Đảm bảo độ dài >2200 từ cho 10+ phút nghe audio)",
+
+        # Domain 3: Audio & Subtitle Timing (Rules 21-30)
+        "Rule 21: Exact SRT Timestamp Scene Sync (Đổi ảnh AI khớp chính xác theo mốc thời gian phụ đề)",
+        "Rule 22: Max 34 Characters Per Subtitle Line (Ngắt dòng phụ đề tối đa 34 ký tự tránh tràn màn)",
+        "Rule 23: Centered YouTube Subtitle Box (Căn giữa lề dưới MarginV=35, MarginL=80, MarginR=80)",
+        "Rule 24: High-Contrast White/Black Subtitle Outline (Chữ trắng viền đen nổi Outline=2, Shadow=1)",
+        "Rule 25: Speech Rate Pacing (+10%) (Tốc độ nói 1.1x vừa vặn giữ chân khán giả trẻ)",
+        "Rule 26: Voice Pitch Tuning (+0Hz) (Giữ chất giọng tự nhiên không bị méo tiếng)",
+        "Rule 27: Multi-Chunk Speech Synthesis (Chia nhỏ text <3000 ký tự tránh ngắt kết nối TTS)",
+        "Rule 28: Seamless Audio Chunk Stitching (Nối các đoạn audio mượt mà không có quãng lặng)",
+        "Rule 29: Audio Duration Probing (ffprobe) (Đo độ dài MP3 chính xác đến millisecond)",
+        "Rule 30: Audio Peak Normalization (Giữ âm lượng ổn định chuẩn YouTube -14 LUFS)",
+
+        # Domain 4: Video Slideshow & Motion (Rules 31-40)
+        "Rule 31: Subtle Ken Burns Motion (Phóng to/thu nhỏ lia máy nhẹ nhàng không méo nét)",
+        "Rule 32: Dynamic Multi-Image Rotation (Sinh tới 40 ảnh AI đa dạng phân cảnh mỗi chương)",
+        "Rule 33: Seamless Loop Extension (Tự lặp chuỗi ảnh mượt mà cho video dài 8-10 phút)",
+        "Rule 34: NVENC Hardware Acceleration (Ưu tiên GPU NVIDIA NVENC render gấp 4 lần)",
+        "Rule 35: Concat Demuxer Frame Precision (Tính toán d=interval*fps khớp thời lượng thoại)",
+        "Rule 36: Brightness & Contrast Balancing (Cân bằng eq=brightness=-0.15:contrast=1.1 nổi chữ)",
+        "Rule 37: Aspect Ratio Enforcement (Tự động scale & crop về chuẩn Widescreen 1920x1080)",
+        "Rule 38: Video Quality Validation (Tự động kiểm tra file size và độ dài trước khi upload)",
+        "Rule 39: YUV420P Pixel Format (Tương thích 100% trên mọi thiết bị di động và trình duyệt)",
+        "Rule 40: AAC 192k High-Fidelity Audio (Xuất âm thanh chất lượng cao 192kbps)",
+
+        # Domain 5: Engine Infrastructure & Resilience (Rules 41-50)
+        "Rule 41: Multi-Provider Key Rotator (Tự xoay vòng key Groq & Gemini khi chạm Quota 429)",
+        "Rule 42: Instant 401 Unauthenticated Failover (Vô hiệu hóa vĩnh viễn key hỏng 401 lập tức)",
+        "Rule 43: Supabase Storage Retry (3 Attempts) (Thử lại 3 lần khi upload file MP4 lớn)",
+        "Rule 44: Storage Bucket Caching (Ghi nhớ cache bucket media giảm 50% request thừa)",
+        "Rule 45: Environmental Variable Sanitization (Làm sạch ký tự ẩn \\n, \\r, dấu ngoặc trong Secrets)",
+        "Rule 46: Auto SEO Tags & Metadata (Tự sinh tiêu đề YouTube, Tags & Hashtags triệu view)",
+        "Rule 47: Auto Chapter Summary Recap (Tóm tắt chương 2-3 câu lôi cuốn cho bài đăng)",
+        "Rule 48: Automated Disk Hygiene (Tự dọn dẹp ảnh tạm sau khi render video xong)",
+        "Rule 49: GitHub Actions 30-Minute Timeout (Đảm bảo video 10 phút render không bị timeout)",
+        "Rule 50: Deterministic Visual Seed Hashing (Khóa seed MD5 giữ ngoại hình nhân vật nhất quán)"
+    ]
+
     # Category 3: Cinematic Camera Sequences (Features 21-30)
     CINEMATIC_SHOT_MATRIX = [
         {"shot": "cinematic establishing wide shot, breathtaking environment, golden ratio composition", "focal": "24mm wide lens", "dof": "deep depth of field"},
