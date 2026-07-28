@@ -63,30 +63,7 @@ jobs:
           GROQ_MODEL_WRITER: ${{ secrets.GROQ_MODEL_WRITER }}
           INPUT_NOVEL_ID: ${{ github.event.inputs.novel_id }}
           SECRET_NOVEL_ID: ${{ secrets.NOVEL_ID }}
-        run: |
-          python -u -c "
-          import os
-          from src import database, main
-          
-          g_raw = os.getenv('GEMINI_API_KEY', '').strip()
-          mask_g = f"{g_raw[:4]}...{g_raw[-6:]}" if len(g_raw) >= 10 else "EMPTY"
-          print(f"[DEBUG] GitHub Secret GEMINI_API_KEY value: {mask_g}")
-          
-          input_novel_id = os.getenv('INPUT_NOVEL_ID', '').strip() or os.getenv('SECRET_NOVEL_ID', '').strip()
-          
-          if input_novel_id:
-              print(f'[INFO] UNIFIED PIPELINE: Running for Novel ID: {input_novel_id}')
-              main.run_chapter_pipeline(input_novel_id)
-          else:
-              print('[INFO] UNIFIED PIPELINE: Checking active novel from Supabase...')
-              novels = database.get_active_novels()
-              if novels:
-                  target_id = novels[0]['id']
-                  print(f'[INFO] Selected active novel: {novels[0].get(\"title\", \"Untitled\")} (ID: {target_id})')
-                  main.run_chapter_pipeline(target_id)
-              else:
-                  print('[WARNING] No active novel found in Supabase database.')
-          "
+        run: python -u -m src.main
 
       - name: 8. Upload Artifacts (Audio, Subtitles & Videos Backup)
         uses: actions/upload-artifact@v4

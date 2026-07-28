@@ -287,8 +287,11 @@ def main():
         print("SUCCESS: Audio exported and sent.")
 
 if __name__ == "__main__":
-    # If no arguments provided and not in terminal CLI context, default to serve
+    g_raw = os.getenv("GEMINI_API_KEY", "").strip()
+    mask_g = f"{g_raw[:4]}...{g_raw[-6:]}" if len(g_raw) >= 10 else "EMPTY"
+    safe_print(f"[DEBUG] GitHub Secret GEMINI_API_KEY value: {mask_g}")
+    
     if len(sys.argv) == 1:
         sys.argv.append("--action")
-        sys.argv.append("serve")
+        sys.argv.append("run-pipeline")
     main()
