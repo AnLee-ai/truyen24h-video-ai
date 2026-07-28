@@ -102,10 +102,11 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
     srt_escaped = srt_path.replace("\\", "/").replace(":", "\\:") if srt_path and os.path.exists(srt_path) else ""
     subtitle_style = "Fontname=Arial,FontSize=15,PrimaryColour=&H00FFFFFF&,OutlineColour=&H00000000&,Outline=2,Shadow=1,Alignment=2,MarginV=35,MarginL=80,MarginR=80,WrapStyle=2"
     
-    # Hiệu ứng Pan & Zoom di chuyển lên xuống nhẹ nhàng (Ken Burns Slow Motion)
+    # Hiệu ứng Pan & Zoom di chuyển lên xuống nhẹ nhàng (Ken Burns Slow Motion: 25fps, d=interval*25 frames)
+    frames_per_image = interval * 25
     kb_effect = (
         "scale=8000:-1,"
-        "zoompan=z='min(zoom+0.0008,1.08)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)+sin(time*0.5)*15':d=1:s=1920x1080,"
+        f"zoompan=z='min(zoom+0.0008,1.08)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)+sin(time*0.5)*15':fps=25:d={frames_per_image}:s=1920x1080,"
         "crop=1920:1080,eq=brightness=-0.15:contrast=1.1[bg]"
     )
     
