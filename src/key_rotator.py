@@ -9,7 +9,12 @@ class APIKeyRotator:
         self.provider = provider
         self.keys = []
         
-        # 1. Đọc từ biến môi trường phân cách bằng dấu phẩy, chấm phẩy hoặc xuống dòng
+        # 1. Đọc biến đơn lẻ chuẩn (GEMINI_API_KEY / GROQ_API_KEY - Ưu tiên key mới nhất)
+        single_val = os.getenv(env_var_single, "").strip().strip("'").strip('"')
+        if single_val and single_val not in self.keys:
+            self.keys.append(single_val)
+
+        # 2. Đọc từ biến môi trường phân cách bằng dấu phẩy, chấm phẩy hoặc xuống dòng (GEMINI_API_KEYS)
         multi_val = os.getenv(env_var_multi, "").strip()
         if multi_val:
             raw_tokens = re.split(r'[,;\n\r]+', multi_val)
@@ -18,7 +23,7 @@ class APIKeyRotator:
                 if k_clean and k_clean not in self.keys:
                     self.keys.append(k_clean)
                     
-        # 2. Đọc các biến đánh số (VD: GEMINI_API_KEY_1, GEMINI_API_KEY_2, ...)
+        # 3. Đọc các biến đánh số (VD: GEMINI_API_KEY_1, GEMINI_API_KEY_2, ...)
         idx = 1
         while True:
             k = os.getenv(f"{env_var_single}_{idx}", "").strip().strip("'").strip('"')
@@ -27,11 +32,6 @@ class APIKeyRotator:
             if k not in self.keys:
                 self.keys.append(k)
             idx += 1
-            
-        # 3. Đọc biến đơn lẻ chuẩn (GEMINI_API_KEY / GROQ_API_KEY)
-        single_val = os.getenv(env_var_single, "").strip().strip("'").strip('"')
-        if single_val and single_val not in self.keys:
-            self.keys.append(single_val)
             
         # 4. Sử dụng mặc định nếu có
         if not self.keys and default_keys:
