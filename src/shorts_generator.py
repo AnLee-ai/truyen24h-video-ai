@@ -35,11 +35,22 @@ def generate_shorts_video(audio_path: str, srt_path: str, chapter_id: str, title
     else:
         vf_filter += ";[bg]null[out]"
         
+    # 3. Tính toán thời gian bắt đầu an toàn (tránh seek vượt quá độ dài audio gây treo FFmpeg)
+    start_ss = "00:00:10"
+    try:
+        prob = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", audio_path], capture_output=True, text=True)
+        dur = float(prob.stdout.strip())
+        if dur <= 30.0:
+            start_ss = "00:00:00"
+    except Exception:
+        pass
+
     if os.path.exists(shorts_bg) and os.path.getsize(shorts_bg) > 1000:
         cmd = [
             "ffmpeg", "-y",
             "-loop", "1", "-i", shorts_bg,
-            "-ss", "00:00:30", "-t", "00:00:45", "-i", audio_path,
+            "-i", audio_path,
+            "-ss", start_ss, "-t", "00:00:45",
             "-filter_complex", vf_filter,
             "-map", "[out]", "-map", "1:a",
             "-c:v", "libx264", "-preset", "fast", "-tune", "stillimage", "-c:a", "aac", "-b:a", "192k", "-pix_fmt", "yuv420p",
@@ -49,7 +60,8 @@ def generate_shorts_video(audio_path: str, srt_path: str, chapter_id: str, title
         cmd = [
             "ffmpeg", "-y",
             "-f", "lavfi", "-i", "color=c=black:s=1080x1920:r=30",
-            "-ss", "00:00:30", "-t", "00:00:45", "-i", audio_path,
+            "-i", audio_path,
+            "-ss", start_ss, "-t", "00:00:45",
             "-vf", f"subtitles='{srt_escaped}':force_style='{subtitle_style}'" if srt_escaped else "null",
             "-c:v", "libx264", "-tune", "stillimage", "-c:a", "aac", "-b:a", "192k", "-pix_fmt", "yuv420p",
             "-shortest", shorts_video_path

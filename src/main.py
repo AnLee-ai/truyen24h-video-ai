@@ -73,8 +73,14 @@ def _run_chapter_pipeline_impl(novel_id: str):
         chapter_title = chapter["title"]
         chapter_content = chapter["content"]
         
-        print(f"[INFO] Chapter {chapter_num} written successfully: '{chapter_title}'")
+        print(f"[INFO] Chapter {chapter_num} written successfully: '{chapter_title}' (Words: {len(chapter_content.split())})")
         
+        # BỘ KIỂM DUYỆT BẢO VỆ TUYỆT ĐỐI (Strict Quality Guardrail):
+        # Nếu bài viết dưới 300 từ (do API key lỗi 401/429), dừng ngay pipeline an toàn, không render video hỏng!
+        if not chapter_content or len(chapter_content.split()) < 200:
+            print("[WARNING] Nội dung chương chưa đạt tiêu chuẩn (>200 từ) do API Key hết Quota/Lỗi 401. Tự động dừng tiến trình an toàn để tránh sinh video lỗi.")
+            return
+            
         # 2. Convert chapter text to raw speech audio & subtitles
         raw_audio_path, srt_path = tts.generate_voice_and_subs(chapter_content, chapter_id)
         

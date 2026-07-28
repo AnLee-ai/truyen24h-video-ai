@@ -109,7 +109,7 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
     
     try:
         print(f"[INFO] FFmpeg rendering multi-image video slideshow (Cứ {interval}s đổi 1 ảnh)...")
-        res = subprocess.run(cmd, capture_output=True, text=True, timeout=900)
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
         if res.returncode == 0 and os.path.exists(output_video_path):
             print(f"[SUCCESS] Render video đa ảnh AI thành công: {output_video_path}")
             return output_video_path
