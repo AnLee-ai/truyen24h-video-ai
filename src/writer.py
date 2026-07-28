@@ -114,8 +114,8 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 10) -> str:
         groq_models = [
             config.GROQ_MODEL_WRITER,      # "llama-3.3-70b-versatile"
             "llama-3.1-8b-instant",
-            "qwen-2.5-coder-32b",
-            "llama-3.2-11b-vision-preview"
+            "llama3-70b-8192",
+            "llama3-8b-8192"
         ]
         
         max_tokens_options = [3200, 2400, 1800] if not json_mode else [1000]
@@ -166,12 +166,11 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 10) -> str:
     # Fallback to Gemini API với Key Rotator & Multi-Model Pool
     gemini_models = [
         config.GEMINI_MODEL_WRITER,     # "gemini-2.0-flash"
-        "gemini-1.5-flash",
         "gemini-2.0-flash-lite",
-        "gemini-1.5-pro"
+        "gemini-1.5-flash-latest"
     ]
     
-    for attempt in range(min(retries, 4)):
+    for attempt in range(min(retries, 3)):
         g_key = key_rotator.get_gemini_key() or config.GEMINI_API_KEY
         if not g_key:
             print("[ERROR] No valid Gemini API key available.")
@@ -229,7 +228,7 @@ def call_pollinations_free_llm(prompt: str) -> str:
     print("[INFO] Fallback to Pollinations 100% Free LLM Engine (Zero API Key needed)...")
     try:
         encoded = urllib.parse.quote(prompt[:2000])
-        url = f"https://text.pollinations.ai/{encoded}?model=openai"
+        url = f"https://text.pollinations.ai/{encoded}"
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
         with urllib.request.urlopen(req, timeout=30) as response:
             res_text = response.read().decode('utf-8')
