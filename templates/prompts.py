@@ -1,80 +1,85 @@
-# Templates for AI Novel Writing Engine
-
 OUTLINE_PROMPT = """
-You are an expert story planner. Design a global outline for a web novel of at least 150 chapters.
-The novel is targeted at teenagers (13-19 years old).
+You are a master web novel architect and bestselling storyteller. Design a global master outline for an epic web novel spanning at least 150 chapters.
+Target Audience: Teenagers and young adults (13-25 years old).
 Title: {title}
 Description: {description}
 
-Requirements:
-1. Divide the story into 6-8 major Story Arcs, totaling 150+ chapters.
-2. Ensure slow-burn pacing, deep world-building, and character growth.
-3. Avoid English names and English proper nouns. Use short 2-word Vietnamese names (e.g., Minh Đức, Thùy Linh, Linh Vy, Trần Lam). STRICTLY avoid using 3-word full names (e.g. do NOT use Nguyễn Minh Đức, Lê Thùy Linh). Keep all names natural and simple to Vietnamese readers.
-4. Output the outline as a structured JSON object with the following schema:
+Master Requirements:
+1. Break down the entire story into 6-8 major Story Arcs (spanning 150+ chapters total).
+2. Pacing: Deep world-building, slow-burn character growth, emotional resonance, and escalating stakes. Avoid rushing main plot points.
+3. Character Naming Protocol: Use natural 2-word Vietnamese names ONLY (e.g. Minh Đức, Thùy Linh, Linh Vy, Trần Lam, Cao Bá). STRICTLY avoid using 3-word full names (do NOT use Nguyễn Minh Đức, Lê Thùy Linh) and NEVER use English proper nouns.
+4. Output a strictly formatted JSON object (no markdown wrappers):
 {{
   "title": "Novel Title",
   "arcs": [
     {{
       "arc_number": 1,
       "title": "Arc Title",
-      "summary": "Detailed summary of what happens in this arc",
+      "summary": "Detailed summary of major conflicts, character transformations, and world revelations in this arc",
       "start_chapter": 1,
       "end_chapter": 25,
-      "key_milestones": ["Milestone 1", "Milestone 2"]
+      "key_milestones": ["Major Milestone 1", "Major Milestone 2", "Arc Climax"]
     }}
   ]
 }}
-Ensure the JSON is strictly formatted and valid. Do not wrap in markdown quotes.
 """
 
 ARC_PROMPT = """
-You are a detailed storyteller. Develop a chapter-by-chapter blueprint outline for Arc {arc_number}: {arc_title} of the novel "{novel_title}".
-Novel Description: {novel_description}
-Arc Summary: {arc_summary}
-This arc spans chapters {start_chapter} to {end_chapter}.
-Global story status: {global_status}
+You are a master web novel storyteller. Create a detailed chapter-by-chapter blueprint outline for Arc {arc_number}: {arc_title} of the novel "{novel_title}".
+Premise: {novel_description}
+Arc Overview: {arc_summary}
+Chapter Range: {start_chapter} to {end_chapter}
+Global Story State: {global_status}
 
 Requirements:
-1. Break down the arc into individual chapters. For each chapter, outline the main event, key characters present, and narrative goals.
-2. Maintain slow-burn, detailed pacing.
-3. Avoid English names. Use short 2-word Vietnamese names for all characters (e.g. Minh Đức, Thùy Linh, Linh Vy, Trần Lam). STRICTLY avoid using 3-word full names (e.g. do NOT use Nguyễn Minh Đức, Lê Thùy Linh).
-4. Output as a JSON array of chapters:
+1. Break down the arc into chapter blueprints. Each blueprint must specify the core conflict, characters involved, emotional beats, and a compelling hook.
+2. Maintain slow-burn progression, realistic struggles, and high engagement.
+3. Use natural 2-word Vietnamese names for all characters (e.g. Minh Đức, Thùy Linh, Linh Vy, Trần Lam). Strictly avoid 3-word full names and English proper nouns.
+4. Output as a strictly formatted JSON array of chapters (no markdown wrappers):
 [
   {{
     "chapter_number": 1,
     "chapter_title": "Chapter Title",
-    "blueprint": "Detailed description of what needs to happen in this chapter",
-    "characters_present": ["Jack", "Alex"],
-    "narrative_goal": "Goal of this chapter"
+    "blueprint": "Detailed breakdown of the chapter events, character interactions, atmosphere, and cliffhanger setup",
+    "characters_present": ["Trần Lam", "Linh Vy"],
+    "narrative_goal": "Primary emotional or plot objective of this chapter"
   }}
 ]
-Ensure the JSON is valid.
 """
 
 WRITING_PROMPT = """
-You are an elite novelist. Write Chapter {chapter_number}: {chapter_title} of the novel {title}.
-The target audience is teenagers. The pacing must be detailed, slow-burn, focusing on deep scene descriptions, atmospheric building, and detailed dialogues. Do not rush the plot.
+You are an elite bestselling web novelist. Write Chapter {chapter_number}: {chapter_title} of the novel "{title}".
 
-Context and Resources:
+STORY CONTEXT & RESOURCES:
 - Chapter Blueprint: {blueprint}
-- World Rules & Lore: {world_lore}
-- Character Bible: {characters}
-- Episodic History (Previous Arcs): {history}
+- World Lore & Rules: {world_lore}
+- Character Bible & Status: {characters}
+- Episodic History: {history}
 - Previous Chapters Context: {previous_content}
 
-Constraints:
-1. Word count: Write a massive chapter of at least 2500 to 3500 words (MUST exceed 2200 words at all costs to ensure a full 10+ minutes speaking time). Describe environments, character body language, internal thoughts, and detailed conversations in great depth. Avoid summarizing any action or event. Write out every single interaction in detailed, paragraph-by-paragraph scenes.
-2. Tone & Vocabulary: Avoid English proper nouns and English names. Use short 2-word Vietnamese names for characters (e.g., Minh Đức, Thùy Linh, Linh Vy, Trần Lam) and avoid using 3-word full names (do NOT use Nguyễn Minh Đức, Lê Thùy Linh). Keep all Vietnamese terminology natural.
-3. Protagonist Progression: The protagonist ({protagonist_name}) currently has power level: {protagonist_power} and stats: {protagonist_stats}.
-   - **CRITICAL**: The protagonist CANNOT level up or obtain new powers in this chapter unless the failure flag is TRUE (failure_flag = {failure_flag}).
-   - If failure_flag is False, the protagonist must face challenging obstacles, struggle, or experience setbacks without a breakthrough. Keep their powers exactly as is.
-4. Dialogue: Make the conversation between characters dynamic and teenager-friendly (50% dialogue/action, 50% description).
+CORE WRITING DIRECTIVES (MUST FOLLOW ALL AT ALL COSTS):
+1. **WORD COUNT & EXPANSION**: Write a massive, immersive chapter exceeding 2500 - 3500 words (MUST BE >2200 WORDS minimum to yield 10+ minutes audio duration). Never summarize events. Write out every scene paragraph by paragraph in vivid detail.
+2. **SHOW, DON'T TELL**: 
+   - Describe sensory details: sound of wind rustling bamboo leaves, scent of rain-soaked earth, heartbeat pounding in chest, reflections of light on polished blades, micro-facial expressions, and subtle body posture.
+   - Describe character internal monologues, doubts, strategic thoughts, and emotional weight in great depth.
+3. **5-STAGE CINEMATIC SCENE STRUCTURE**:
+   - Stage 1: Atmospheric Opening & Environment Setup (300-500 words).
+   - Stage 2: Rising Tension & Dialogue Encounter (600-800 words).
+   - Stage 3: Core Confrontation or Mysterious Discovery (700-900 words).
+   - Stage 4: Emotional & Physical Aftermath / Realization (500-700 words).
+   - Stage 5: **HIGH-STAKES CLIFFHANGER**: End the chapter on a tense, unexpected twist or unresolved suspense that makes readers desperate for the next chapter!
+4. **PROTAGONIST PROGRESSION & CONSTRAINT**:
+   - Protagonist: {protagonist_name} | Current Power: {protagonist_power} | Stats: {protagonist_stats} | Failure Flag: {failure_flag}
+   - **CRITICAL RULE**: The protagonist CANNOT level up or obtain new powers unless failure_flag is TRUE. If failure_flag is False, they must face intense struggle, difficulty, or setback without a breakthrough.
+5. **NAMING & DIALOGUE STYLE**:
+   - Use natural 2-word Vietnamese names ONLY (e.g. Trần Lam, Linh Vy, Minh Đức). NEVER use 3-word full names (do NOT write Nguyễn Minh Đức) and NEVER use English proper nouns.
+   - Dialogue ratio: 50% dynamic dialogue/action, 50% deep sensory description and internal thought.
 
-Write the chapter in Vietnamese. Keep the output as the raw novel content only (do NOT include conversational chat filler, headers, or section titles like 'Dẫn lược:', 'Chương X:', 'Giới thiệu:'). Write directly into the story narrative.
+Write the chapter in natural, evocative Vietnamese. Output ONLY the raw story text without conversational intro/outro text, headers, or sections like 'Dẫn lược:' or 'Chương X:'. Write straight into the narrative.
 """
 
 EXTRACT_ENTITIES_PROMPT = """
-Read the following chapter and extract any updates to the character status, relationships, world lore, or new narrative threads.
+Read the following chapter and extract all character status updates, world lore additions, and active narrative threads.
 
 Chapter Content:
 {chapter_content}
@@ -82,64 +87,50 @@ Chapter Content:
 Current Character States:
 {current_characters}
 
-Analyze the chapter and output a JSON object indicating:
-1. Whether any character's power level, combat stats, or relationships updated.
-2. Whether the protagonist experienced a major defeat, setback, or failure (set failure_flag to true if they failed/lost/struggled heavily, or keep false).
-3. If the protagonist had a breakthrough (breakthrough = true if they leveled up or unlocked new powers, otherwise false).
-4. Any new lore keywords introduced.
-5. Any new active narrative threads.
-
-Output format (strict JSON, do not wrap in markdown):
+Analyze the narrative and output a strictly formatted JSON object (no markdown wrappers):
 {{
   "character_updates": [
     {{
-      "name": "Jack",
+      "name": "Trần Lam",
       "power_tier": "Novice",
       "combat_stats": {{ "attack": 15, "defense": 10 }},
-      "relationships": {{ "Alex": "ally" }},
+      "relationships": {{ "Linh Vy": "ally" }},
       "failure_flag": true,
       "breakthrough_written": false
     }}
   ],
   "new_lore": [
-    {{ "keyword": "Aetheria", "description": "A floating city in the sky" }}
+    {{ "keyword": "Tinh Thần Ấn", "description": "Ấn ký bảo hộ cổ đại chứa sức mạnh các vị thần" }}
   ],
   "new_threads": [
-    {{ "thread_name": "The Missing Key", "description": "Jack needs to find the key to the Cortex Engine" }}
+    {{ "thread_name": "Bí Mật Chiếc Hộp Đông Sơn", "description": "Trần Lam tìm kiếm chìa khóa mở chiếc hộp cổ" }}
   ]
 }}
 """
 
 REVIEW_PROMPT = """
-You are a senior novel editor. Review Chapter {chapter_number}: {chapter_title} for quality and consistency.
+You are a senior novel editor. Review Chapter {chapter_number}: {chapter_title} for literary quality, depth, and consistency.
 
 Chapter Content:
 {chapter_content}
 
-Reference World Rules and Lore:
-{world_lore}
+Reference Lore: {world_lore}
+Reference Characters: {characters}
+Protagonist Failure Flag: {failure_flag} | Last Breakthrough: {last_breakthrough_chapter}
 
-Reference Character Bible:
-{characters}
+Evaluation Standards:
+1. **Logic & Lore Consistency**: Zero lore contradictions or character continuity errors.
+2. **Pacing & Depth**: Deep slow-burn pacing with rich sensory details. No rushed plot points or skipped scenes.
+3. **Progression Check**: Did the protagonist level up without failure_flag = true? (If yes, fail review).
+4. **Vocabulary & Names**: 100% Vietnamese 2-word names. Zero 3-word full names, zero English proper nouns.
+5. **Cliffhanger & Engagement**: High-stakes ending that compels readers to continue.
 
-Protagonist State:
-- failure_flag: {failure_flag}
-- last_breakthrough_chapter: {last_breakthrough_chapter}
-
-Analyze the chapter and answer the following questions:
-1. **Logic Contradiction**: Does the chapter contradict any established world lore or character profiles? (e.g. eye color change, weapon name mismatch, dead character appearing).
-2. **Pacing Check**: Is the pacing too fast or rushed? (e.g. traveling across a kingdom in a single paragraph, defeating a boss in two sentences). It must be detailed and slow-burn.
-3. **Protagonist Progression Check**: Did the protagonist obtain a breakthrough or easily defeat an opponent?
-   - If failure_flag is false: Did the protagonist break this constraint and level up anyway? (This is a violation).
-   - Did the protagonist win a major fight too easily?
-4. **Vocabulary Check**: Are any character names or proper nouns in English? (Prefer Vietnamese names and terms. Avoid English names).
-
-Output a JSON response:
+Output a strictly formatted JSON object:
 {{
   "pass_review": true/false,
   "score": 1-10,
-  "feedback": "Detailed feedback of issues found",
-  "violations": ["List of specific violations like 'Protagonist leveled up without failure flag' or 'Rushed pacing'"]
+  "feedback": "Detailed editor feedback",
+  "violations": ["List of specific violations if any"]
 }}
 """
 
