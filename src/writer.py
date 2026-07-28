@@ -163,15 +163,21 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 10) -> str:
         
         print("[WARNING] All Groq retries failed. Switching to Gemini API...")
 
-    # Fallback to Gemini API với Key Rotator
-    model_name = config.GEMINI_MODEL_WRITER
+    # Fallback to Gemini API với Key Rotator & Multi-Model Pool
+    gemini_models = [
+        config.GEMINI_MODEL_WRITER,     # "gemini-2.0-flash"
+        "gemini-1.5-flash",
+        "gemini-2.0-flash-lite",
+        "gemini-1.5-pro"
+    ]
     
-    for attempt in range(min(retries, 2)):
+    for attempt in range(min(retries, 4)):
         g_key = key_rotator.get_gemini_key() or config.GEMINI_API_KEY
         if not g_key:
             print("[ERROR] No valid Gemini API key available.")
             break
             
+        current_g_model = gemini_models[attempt % len(gemini_models)]
         try:
             if USE_NEW_GENAI:
                 client = get_genai_client(api_key=g_key)
@@ -180,7 +186,7 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 10) -> str:
                     response_mime_type="application/json" if json_mode else None
                 )
                 response = client.models.generate_content(
-                    model=model_name,
+                    model=current_g_model,
                     contents=prompt,
                     config=generation_config
                 )
@@ -189,7 +195,7 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 10) -> str:
                 g_config = {"max_output_tokens": 8192}
                 if json_mode:
                     g_config["response_mime_type"] = "application/json"
-                model = genai.GenerativeModel(model_name, generation_config=g_config)
+                model = genai.GenerativeModel(current_g_model, generation_config=g_config)
                 response = model.generate_content(prompt)
 
             if response.text:
@@ -197,11 +203,14 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 10) -> str:
             raise ValueError("Empty response from Gemini API.")
         except Exception as e:
             err_str = str(e)
-            if "401" in err_str or "UNAUTHENTICATED" in err_str or "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
-                print(f"[WARNING] Gemini Key bị lỗi {err_str[:80]}. Đang tự động chuyển sang Key tiếp theo...")
+            if "401" in err_str or "UNAUTHENTICATED" in err_str:
+                print(f"[WARNING] Gemini Key bị lỗi 401. Đang chuyển sang Key tiếp theo...")
                 key_rotator.mark_gemini_key_failed(g_key)
-                time.sleep(2)
+            elif "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
+                print(f"[WARNING] Gemini ({current_g_model}) bị hết Quota (429). Đã tự động xoay sang Model Gemini tiếp theo...")
+                time.sleep(1.5)
                 continue
+            time.sleep(2)
                 
             print(f"[WARNING] Gemini call failed: {e}. Retrying in 5s...")
             time.sleep(5)
