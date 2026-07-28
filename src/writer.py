@@ -114,8 +114,8 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 10) -> str:
         groq_models = [
             config.GROQ_MODEL_WRITER,      # "llama-3.3-70b-versatile"
             "llama-3.1-8b-instant",
-            "mixtral-8x7b-32768",
-            "gemma2-9b-it"
+            "qwen-2.5-coder-32b",
+            "llama-3.2-11b-vision-preview"
         ]
         
         max_tokens_options = [3200, 2400, 1800] if not json_mode else [1000]
