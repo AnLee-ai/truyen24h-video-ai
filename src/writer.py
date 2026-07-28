@@ -143,11 +143,11 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 10) -> str:
                         
                 if response.status_code in (401, 403):
                     print(f"[WARNING] Groq API Key invalid ({response.status_code}). Switching directly to Gemini API...")
-                    key_rotator.mark_groq_key_failed(groq_key)
+                    key_rotator.mark_groq_key_failed(groq_key, is_permanent=True)
                     break
                     
                 if response.status_code == 429:
-                    key_rotator.mark_groq_key_failed(groq_key)
+                    key_rotator.mark_groq_key_failed(groq_key, is_permanent=False)
                     groq_key = key_rotator.get_groq_key()
                     if not groq_key:
                         break
@@ -204,10 +204,11 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 10) -> str:
         except Exception as e:
             err_str = str(e)
             if "401" in err_str or "UNAUTHENTICATED" in err_str:
-                print(f"[WARNING] Gemini Key bị lỗi 401. Đang chuyển sang Key tiếp theo...")
-                key_rotator.mark_gemini_key_failed(g_key)
+                print(f"[WARNING] Gemini Key bị lỗi 401. Khóa bị vô hiệu hóa hẳn.")
+                key_rotator.mark_gemini_key_failed(g_key, is_permanent=True)
             elif "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
-                print(f"[WARNING] Gemini ({current_g_model}) bị hết Quota (429). Đã tự động xoay sang Model Gemini tiếp theo...")
+                print(f"[WARNING] Gemini ({current_g_model}) bị hết Quota (429). Đã chuyển sang Model Gemini tiếp theo...")
+                key_rotator.mark_gemini_key_failed(g_key, is_permanent=False)
                 time.sleep(1.5)
                 continue
             time.sleep(2)

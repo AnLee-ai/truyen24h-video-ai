@@ -41,30 +41,38 @@ class APIKeyRotator:
                     self.keys.append(d_clean)
                     
         self.current_index = 0
-        self.failed_keys = set()
+        self.invalid_keys = set()  # Key bị hỏng hẳn 401/403 (Không thử lại)
+        self.rate_limited_keys = set()  # Key tạm hết quota 429
         print(f"[INFO] API Key Rotator [{provider}]: Loaded {len(self.keys)} API Key account(s).")
 
     def get_key(self) -> str:
-        """Lấy API key tiếp theo theo cơ chế Round-Robin."""
-        valid_keys = [k for k in self.keys if k not in self.failed_keys]
-        if not valid_keys:
-            # Nếu tất cả key bị lỗi, reset danh sách để thử lại
-            self.failed_keys.clear()
-            valid_keys = self.keys
+        """Lấy API key tiếp theo hợp lệ theo cơ chế Round-Robin."""
+        # Loại bỏ hoàn toàn các key hỏng 401
+        active_keys = [k for k in self.keys if k not in self.invalid_keys]
+        if not active_keys:
+            return ""  # Không còn key hợp lệ nào
+            
+        # Ưu tiên các key chưa bị dính 429
+        usable_keys = [k for k in active_keys if k not in self.rate_limited_keys]
+        if not usable_keys:
+            # Reset danh sách hết quota tạm thời 429 để dùng lại
+            self.rate_limited_keys.clear()
+            usable_keys = active_keys
 
-        if not valid_keys:
-            return ""
-
-        key = valid_keys[self.current_index % len(valid_keys)]
-        self.current_index = (self.current_index + 1) % len(valid_keys)
+        key = usable_keys[self.current_index % len(usable_keys)]
+        self.current_index = (self.current_index + 1) % len(usable_keys)
         return key
 
-    def mark_key_failed(self, key: str):
-        """Đánh dấu key bị lỗi 401 hoặc 429 để tự động xoay sang tài khoản khác."""
+    def mark_key_failed(self, key: str, is_permanent: bool = True):
+        """Đánh dấu key bị hỏng (401) hoặc hết quota (429)."""
         if key:
             key_mask = f"...{key[-6:]}" if len(key) >= 6 else key
-            print(f"[WARNING] API Key [{self.provider}] {key_mask} bị hạn chế/lỗi. Đã tự động xoay sang tài khoản khác!")
-            self.failed_keys.add(key)
+            if is_permanent:
+                print(f"[WARNING] API Key [{self.provider}] {key_mask} bị lỗi 401 (Vô hiệu hóa vĩnh viễn trong lượt chạy này).")
+                self.invalid_keys.add(key)
+            else:
+                print(f"[WARNING] API Key [{self.provider}] {key_mask} bị tạm hết Quota (429). Đã chuyển sang key khác.")
+                self.rate_limited_keys.add(key)
 
 # Khởi tạo hai bộ xoay vòng API Keys cho Gemini và Groq
 gemini_rotator = APIKeyRotator(
@@ -85,8 +93,8 @@ def get_gemini_key() -> str:
 def get_groq_key() -> str:
     return groq_rotator.get_key()
 
-def mark_gemini_key_failed(key: str):
-    gemini_rotator.mark_key_failed(key)
+def mark_gemini_key_failed(key: str, is_permanent: bool = True):
+    gemini_rotator.mark_key_failed(key, is_permanent=is_permanent)
 
-def mark_groq_key_failed(key: str):
-    groq_rotator.mark_key_failed(key)
+def mark_groq_key_failed(key: str, is_permanent: bool = True):
+    groq_rotator.mark_key_failed(key, is_permanent=is_permanent)
