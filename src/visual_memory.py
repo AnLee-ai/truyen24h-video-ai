@@ -27,6 +27,7 @@ class Ultimate50FeatureMemoryEngine:
 
     # Category 4: Negative Prompting & Quality Guardrails (Features 31-40)
     MASTER_NEGATIVE_PROMPT = (
+        "3D render, photorealistic, realistic 3D photo, CGI, octane render, 3D model, "
         "blurry, low quality, extra limbs, bad hands, deformed fingers, extra fingers, "
         "mutated body, distorted face, bad anatomy, text, watermark, signature, cropped, "
         "out of frame, duplicate character, color bleeding, oversaturated, ugly, jpeg artifacts"
@@ -173,12 +174,13 @@ class Ultimate50FeatureMemoryEngine:
         # 4. Feature 29 & 37: Aspect Ratio & Resolution Optimization
         aspect_note = "16:9 widescreen orientation" if target_aspect_ratio == "16:9" else "9:16 vertical orientation for mobile"
 
-        # 5. Feature 38: Prompt Weight Balancing
+        # 5. Feature 38: Prompt Weight Balancing (Epic 2D Manhwa Webtoon Comic Art Style)
         positive_prompt = (
+            f"2D manhwa webtoon style, vibrant digital comic book art, clean anime line art, "
+            f"high detail 2D webtoon illustration, colored manhwa comic page, sharp 2D lines, "
             f"{cam['shot']}, {cam['focal']}, {cam['dof']}, "
             f"{', '.join(matched_chars_prompts) if matched_chars_prompts else scene_text}, "
-            f"{env_str}, {env['color_palette']}, {aspect_note}, "
-            f"masterpiece, 8k resolution, highly detailed unreal engine 5 render"
+            f"{env_str}, {env['color_palette']}, {aspect_note}, masterpiece, 8k resolution"
         )
         
         # 6. Feature 41: MD5 Hash Caching
