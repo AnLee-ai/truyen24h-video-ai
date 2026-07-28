@@ -68,6 +68,10 @@ jobs:
           import os
           from src import database, main
           
+          g_raw = os.getenv('GEMINI_API_KEY', '').strip()
+          mask_g = f"{g_raw[:4]}...{g_raw[-6:]}" if len(g_raw) >= 10 else "EMPTY"
+          print(f"[DEBUG] GitHub Secret GEMINI_API_KEY value: {mask_g}")
+          
           input_novel_id = os.getenv('INPUT_NOVEL_ID', '').strip() or os.getenv('SECRET_NOVEL_ID', '').strip()
           
           if input_novel_id:
