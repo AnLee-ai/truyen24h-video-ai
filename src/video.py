@@ -5,33 +5,63 @@ import subprocess
 import shutil
 from src.image_generator import generate_scene_image
 
-def parse_srt_scenes(srt_path: str, interval_seconds: int = 7) -> list:
-    """Đọc file SRT và phân chia thành các đoạn cảnh 5-10 giây kèm văn bản thoại."""
+def parse_srt_scenes_with_durations(srt_path: str, target_min_duration: float = 5.0) -> list:
+    """
+    Đọc file SRT và phân nhóm các câu thoại thành các phân cảnh vừa vặn (5-8 giây),
+    trả về danh sách dict chứa: {'text': text_thoai, 'duration': thoi_gian_thuc_te_giay}.
+    Chuyển cảnh CHÍNH XÁC KHỚP VỚI LỜI NÓI NHÂN VẬT!
+    """
     if not os.path.exists(srt_path):
-        return []
+        return [{'text': 'Mở đầu chương tiểu thuyết', 'duration': 7.0}]
         
-    scenes = []
+    def time_to_sec(t_str):
+        h, m, s_ms = t_str.split(':')
+        s, ms = s_ms.split(',')
+        return int(h)*3600 + int(m)*60 + int(s) + int(ms)/1000.0
+
     try:
         with open(srt_path, "r", encoding="utf-8") as f:
             content = f.read()
-            
+
         blocks = re.split(r'\n\s*\n', content.strip())
-        current_text = []
+        scenes = []
+        
+        current_texts = []
+        current_start = None
+        current_end = None
         
         for idx, block in enumerate(blocks):
             lines = [l.strip() for l in block.split('\n') if l.strip()]
-            if len(lines) >= 2:
-                text_lines = " ".join(lines[2:]) if lines[0].isdigit() else " ".join(lines[1:])
-                current_text.append(text_lines)
-                
-                # Cứ 3-4 câu thoại (khoảng 7 giây) gộp thành 1 phân cảnh
-                if len(current_text) >= 3 or idx == len(blocks) - 1:
-                    scenes.append(" ".join(current_text))
-                    current_text = []
+            if len(lines) >= 3:
+                t_match = re.match(r'(\d{2}:\d{2}:\d{2},\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2},\d{3})', lines[1])
+                if t_match:
+                    start_s = time_to_sec(t_match.group(1))
+                    end_s = time_to_sec(t_match.group(2))
+                    text_lines = " ".join(lines[2:])
+                    
+                    if current_start is None:
+                        current_start = start_s
+                    current_end = end_s
+                    current_texts.append(text_lines)
+                    
+                    accumulated_dur = current_end - current_start
+                    
+                    # Gộp thoại đến khi đạt khoảng 5-8s hoặc là câu thoại cuối cùng
+                    if accumulated_dur >= target_min_duration or idx == len(blocks) - 1:
+                        scenes.append({
+                            'text': " ".join(current_texts),
+                            'duration': round(max(accumulated_dur, 2.5), 2)
+                        })
+                        current_texts = []
+                        current_start = None
+                        current_end = None
+                        
+        if scenes:
+            return scenes
     except Exception as e:
-        print(f"[WARNING] Lỗi đọc SRT phân cảnh: {e}")
+        print(f"[WARNING] Lỗi đọc SRT khớp thời lượng thoại: {e}")
         
-    return scenes if scenes else ["Mở đầu chương tiểu thuyết"]
+    return [{'text': 'Mở đầu chương tiểu thuyết', 'duration': 7.0}]
 
 def get_audio_duration_seconds(audio_path: str) -> float:
     """Lấy chính xác độ dài thời gian của file audio MP3 tính bằng giây."""
@@ -45,7 +75,7 @@ def get_audio_duration_seconds(audio_path: str) -> float:
     return 0.0
 
 def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_video_path: str, title: str = "Novel", interval: int = 7) -> str:
-    """Tự động sinh ảnh AI và ghép thành video kéo dài 100% khớp độ dài audio kèm hiệu ứng Pan & Zoom điện ảnh nhẹ nhàng."""
+    """Tự động sinh ảnh AI và ghép thành video chuyển phân cảnh KHỚP 100% VỚI LỜI NÓI NHÂN VẬT."""
     if not shutil.which("ffmpeg"):
         print("[ERROR] FFmpeg không được cài đặt!")
         return ""
@@ -58,17 +88,15 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
     total_audio_duration = get_audio_duration_seconds(audio_path)
     print(f"[INFO] Thời lượng thực tế của file Audio: {total_audio_duration:.2f} giây ({total_audio_duration/60:.2f} phút).")
     
-    # 2. Phân đoạn cảnh từ SRT
-    scenes = parse_srt_scenes(srt_path, interval_seconds=interval)
-    
-    # Tính số lượng ảnh cần phủ kín toàn bộ thời lượng audio
-    required_images_count = int(total_audio_duration / interval) + 2 if total_audio_duration > 0 else len(scenes)
-    print(f"[INFO] Tổng số phân cảnh sinh ảnh AI (cần {required_images_count} ảnh để phủ kín {total_audio_duration:.1f}s): {len(scenes)}")
+    # 2. Phân đoạn cảnh từ SRT với thời lượng khớp chính xác từng câu thoại
+    scene_data_list = parse_srt_scenes_with_durations(srt_path, target_min_duration=5.0)
+    scene_texts = [s['text'] for s in scene_data_list]
+    print(f"[INFO] Tổng số phân cảnh sinh ảnh AI khớp thoại: {len(scene_texts)}")
     
     # 3. Sinh ảnh AI ĐA LUỒNG cho các phân cảnh (tối đa 40 ảnh)
     from src.image_generator import batch_generate_scene_images
     chapter_id = os.path.basename(out_dir)
-    image_files = batch_generate_scene_images(scenes[:40], chapter_id=chapter_id, max_workers=4)
+    image_files = batch_generate_scene_images(scene_texts[:40], chapter_id=chapter_id, max_workers=4)
             
     if not image_files:
         bg_image = os.path.join(out_dir, "background.jpg")
@@ -76,44 +104,40 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
         if os.path.exists(bg_image):
             image_files.append(bg_image)
             
-    # 4. Lặp lại danh sách ảnh liên tục (Looping) cho đến khi phủ kín thời lượng audio thực tế!
-    full_image_sequence = []
+    # 4. Ghép ảnh AI tương ứng với từng mốc thời gian thoại thực tế!
+    full_scene_sequence = []
     accumulated_duration = 0.0
     idx = 0
     while accumulated_duration < (total_audio_duration if total_audio_duration > 0 else 60.0):
+        scene_item = scene_data_list[idx % len(scene_data_list)]
         img_item = image_files[idx % len(image_files)]
-        full_image_sequence.append(img_item)
-        accumulated_duration += interval
+        dur = scene_item['duration']
+        
+        full_scene_sequence.append({'image': img_item, 'duration': dur})
+        accumulated_duration += dur
         idx += 1
         
-    # 5. Tạo file danh sách FFmpeg concat
+    # 5. Tạo file danh sách FFmpeg concat với thời lượng riêng biệt KHỚP THOẠI CHO TỪNG ẢNH
     concat_list_path = os.path.join(out_dir, "concat_list.txt")
     with open(concat_list_path, "w", encoding="utf-8") as f:
-        for img in full_image_sequence:
-            img_clean = os.path.abspath(img).replace("\\", "/")
+        for item in full_scene_sequence:
+            img_clean = os.path.abspath(item['image']).replace("\\", "/")
             f.write(f"file '{img_clean}'\n")
-            f.write(f"duration {interval}\n")
+            f.write(f"duration {item['duration']}\n")
         # Dòng cuối lặp ảnh cuối cùng để tránh trôi frame
-        if full_image_sequence:
-            last_img_clean = os.path.abspath(full_image_sequence[-1]).replace("\\", "/")
+        if full_scene_sequence:
+            last_img_clean = os.path.abspath(full_scene_sequence[-1]['image']).replace("\\", "/")
             f.write(f"file '{last_img_clean}'\n")
             
-    # 6. Định dạng bộ lọc Hiệu Ứng Di Chuyển Nhẹ Nhàng (Subtle Ken Burns Pan & Zoom Effect) + Phụ Đề Chuẩn YouTube
+    # 6. Định dạng bộ lọc Phụ Đề Chuẩn YouTube CC
     srt_escaped = srt_path.replace("\\", "/").replace(":", "\\:") if srt_path and os.path.exists(srt_path) else ""
     subtitle_style = "Fontname=Arial,FontSize=15,PrimaryColour=&H00FFFFFF&,OutlineColour=&H00000000&,Outline=2,Shadow=1,Alignment=2,MarginV=35,MarginL=80,MarginR=80,WrapStyle=2"
     
-    # Hiệu ứng Pan & Zoom di chuyển lên xuống nhẹ nhàng (Ken Burns Slow Motion: 25fps, d=interval*25 frames)
-    frames_per_image = interval * 25
-    kb_effect = (
-        "scale=8000:-1,"
-        f"zoompan=z='min(zoom+0.0008,1.08)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)+sin(time*0.5)*15':fps=25:d={frames_per_image}:s=1920x1080,"
-        "crop=1920:1080,eq=brightness=-0.15:contrast=1.1[bg]"
-    )
-    
+    vf_filter = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,eq=brightness=-0.15:contrast=1.1[bg]"
     if srt_escaped:
-        vf_filter = f"{kb_effect};[bg]subtitles='{srt_escaped}':force_style='{subtitle_style}'[out]"
+        vf_filter += f";[bg]subtitles='{srt_escaped}':force_style='{subtitle_style}'[out]"
     else:
-        vf_filter = f"{kb_effect};[bg]null[out]"
+        vf_filter += ";[bg]null[out]"
         
     # 7. Chạy FFmpeg concat demuxer ghép nhạc + đổi ảnh từng phân cảnh
     codec = "libx264"
