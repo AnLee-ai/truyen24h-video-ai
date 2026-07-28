@@ -9,10 +9,13 @@ class APIKeyRotator:
         self.provider = provider
         self.keys = []
         
-        # 1. Đọc biến đơn lẻ chuẩn (GEMINI_API_KEY / GROQ_API_KEY - Ưu tiên key mới nhất)
+        # 1. Đọc biến đơn lẻ chuẩn (GEMINI_API_KEY / GROQ_API_KEY) - Tự động tách nếu người dùng dán nhiều key phân cách bằng dấu phẩy
         single_val = os.getenv(env_var_single, "").strip().strip("'").strip('"')
-        if single_val and single_val not in self.keys:
-            self.keys.append(single_val)
+        if single_val:
+            for k in re.split(r'[,;\n\r]+', single_val):
+                k_clean = k.strip().strip("'").strip('"')
+                if k_clean and k_clean not in self.keys:
+                    self.keys.append(k_clean)
 
         # 2. Đọc từ biến môi trường phân cách bằng dấu phẩy, chấm phẩy hoặc xuống dòng (GEMINI_API_KEYS)
         multi_val = os.getenv(env_var_multi, "").strip()
