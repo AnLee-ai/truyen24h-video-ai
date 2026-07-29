@@ -168,17 +168,34 @@ def generate_emergency_gradient_canvas(scene_text: str, output_path: str, width:
         draw.rectangle([0, 0, width, height], outline=(0, 0, 0), width=24)
         draw.rectangle([24, 24, width-24, height-24], outline=(255, 215, 0), width=4)
         
-        # Chèn Tiêu Đề Phân Cảnh Chữ Vàng Nổi Bật Chống Chói
-        display_text = scene_text[:40] + ("..." if len(scene_text) > 40 else "")
+        # Hộp Thoại Khung Truyện Tranh Manhwa 2D Glassmorphism
+        overlay = Image.new('RGBA', (width, height), (0, 0, 0, 0))
+        ov_draw = ImageDraw.Draw(overlay)
+        box_left, box_top, box_right, box_bottom = cx - 550, height - 190, cx + 550, height - 50
+        ov_draw.rectangle([box_left, box_top, box_right, box_bottom], fill=(15, 18, 30, 210), outline=(255, 215, 0), width=3)
+        img = Image.alpha_composite(img.convert('RGBA'), overlay).convert('RGB')
+        draw = ImageDraw.Draw(img)
+        
+        # Chèn Badge Khung Truyện 'MANHWA 2D - TRUYỆN 24H'
+        is_dialogue = any(w in scene_text.lower() for w in ["nói", "đối thoại", "trả lời", "hỏi", "quát", "giao phong", "đối đầu"])
+        badge_text = " MANHWA 2D - TRUYỆN 24H "
         try:
-            font = ImageFont.truetype("arial.ttf", 42)
+            b_font = ImageFont.truetype("arialbd.ttf", 26)
+            font = ImageFont.truetype("arialbd.ttf", 40)
         except Exception:
+            b_font = ImageFont.load_default()
             font = ImageFont.load_default()
+            
+        draw.rectangle([box_left + 20, box_top - 18, box_left + 420, box_top + 16], fill=(220, 20, 60), outline=(255, 215, 0), width=2)
+        draw.text((box_left + 30, box_top - 14), badge_text, fill=(255, 255, 255), font=b_font)
+        
+        # Chèn Tiêu Đề Phân Cảnh Chữ Vàng Nổi Bật Chống Chói
+        display_text = scene_text[:50] + ("..." if len(scene_text) > 50 else "")
             
         # Border chữ đen
         for dx, dy in [(-2,-2), (2,-2), (-2,2), (2,2), (0,-3), (0,3), (-3,0), (3,0)]:
-            draw.text((cx - 300 + dx, cy + 280 + dy), display_text, fill=(0,0,0), font=font)
-        draw.text((cx - 300, cy + 280), display_text, fill=(255, 235, 59), font=font)
+            draw.text((box_left + 30 + dx, box_top + 45 + dy), display_text, fill=(0,0,0), font=font)
+        draw.text((box_left + 30, box_top + 45), display_text, fill=(255, 235, 59), font=font)
 
         img.save(output_path, "JPEG", quality=92)
         print(f"[SUCCESS] Saved Vibrant Manhwa Canvas: {output_path}")

@@ -267,9 +267,13 @@ class Ultimate50FeatureMemoryEngine:
         # 2. BỘ NHỚ SIÊU CẤP NHÂN VẬT & ĐỐI TƯỢNG (Super Visual Memory Engine)
         # Nạp tự động: Trang phục, Thần thái (Cảm xúc), Vết thương, Bảo khí vũ khí & Màu sắc đặc trưng
         matched_chars_prompts = []
+        # 2. Xử lý Đa Nhân Vật & Bố Cục Đối Thoại Khung Tranh (Multi-Character Composition Engine)
+        matched_chars_prompts = []
+        matched_char_names = []
+        
         for key, char in self.characters.items():
             if any(alias in text_lower for alias in char["aliases"]):
-                # Tạo bộ mô tả nhân vật chi tiết nhất ĐÓNG BĂNG ĐỘ TUỔI CHUẨN (Universal Age Lock Weight: 1.3)
+                matched_char_names.append(char['name'])
                 c_details = [
                     f"({char['appearance']}:1.25)",
                     f"({char.get('age_group', '18-20 years old youthful person')}:1.3)",
@@ -288,8 +292,56 @@ class Ultimate50FeatureMemoryEngine:
                     
                 matched_chars_prompts.append(", ".join(c_details))
 
-        # Nếu không có nhân vật chính xác trong thoại, ép giữ bộ nhớ nam chính 18t thanh niên
-        character_anchor = " AND ".join(matched_chars_prompts) if matched_chars_prompts else "handsome 18 years old young male protagonist hero, youthful face, clean shaven, short black hair"
+        # TỰ ĐỘNG PHÁT HIỆN BỐ CỤC ĐỐI THOẠI NỀN NHIỀU NHÂN VẬT & ĐÁM ĐÔNG (Multi-Character Group & Crowd Engine)
+        is_dialogue = any(w in text_lower for w in ["nói", "đối thoại", "trả lời", "hỏi", "thì thầm", "bảo", "quát", "giao phong", "bàn luận"])
+        is_faceoff = any(w in text_lower for w in ["nhìn", "đối diện", "đối đầu", "quyết đấu", "khiêu khích", "xung đột", "khiêu chiến"])
+        is_crowd = any(w in text_lower for w in ["đám đông", "khán giả", "học viện", "quần chúng", "vây quanh", "xem", "hoan hô", "xì xào", "xôn xao", "đấu trường"])
+        
+        # Bố cục nhiều nhân vật (3+ người)
+        if len(matched_chars_prompts) >= 3:
+            all_chars_joined = " AND ".join(matched_chars_prompts[:3])
+            character_anchor = (
+                f"MULTIPLE CHARACTERS IN FRAME, GROUP DIALOGUE PANEL, "
+                f"PARTY ASSEMBLY: [{all_chars_joined}], "
+                f"group of characters standing together in wide cinematic framing, interactive conversation stance"
+            )
+        elif len(matched_chars_prompts) == 2:
+            c1_prompt = matched_chars_prompts[0]
+            c2_prompt = matched_chars_prompts[1]
+            character_anchor = (
+                f"TWO CHARACTERS IN FRAME, DUAL SHOT MANHWA PANEL, "
+                f"FIRST CHARACTER: [{c1_prompt}], SECOND CHARACTER: [{c2_prompt}], "
+                f"facing each other in intense dialogue interaction, Over-The-Shoulder cinematic angle or split panel composition"
+            )
+        elif len(matched_chars_prompts) == 1 and is_crowd:
+            c1_prompt = matched_chars_prompts[0]
+            character_anchor = (
+                f"MAIN CHARACTER IN FOREGROUND WITH MASSIVE SPECTATOR CROWD IN BACKGROUND, "
+                f"HERO CHARACTER: [{c1_prompt}], "
+                f"surrounded by shocked academy students and cheering crowd spectators, arena audience background"
+            )
+        elif len(matched_chars_prompts) == 1 and (is_dialogue or is_faceoff):
+            c1_prompt = matched_chars_prompts[0]
+            character_anchor = (
+                f"TWO CHARACTERS IN FRAME, DIALOGUE SCENE, "
+                f"PRIMARY CHARACTER: [{c1_prompt}], OPPOSING CHARACTER: [handsome rival character or academy elder opponent], "
+                f"standing opposite each other engaged in conversation, intense dramatic eye contact, mid-shot composition"
+            )
+        elif is_crowd:
+            character_anchor = (
+                "MASSIVE CROWD SCENE IN ANCIENT ACADEMY ARENA, MULTIPLE SPECTATORS AND STUDENTS IN FRAME, "
+                "shocked audience crowd reacting to the showdown event, wide angle Manhwa panel"
+            )
+        elif is_dialogue or is_faceoff:
+            character_anchor = (
+                "TWO CHARACTERS IN FRAME, DUAL SHOT DIALOGUE SCENE, "
+                "handsome 18 years old young male protagonist hero talking to a sharp-eyed opponent rival character, "
+                "facing each other in dynamic Manhwa panel"
+            )
+        elif len(matched_chars_prompts) == 1:
+            character_anchor = matched_chars_prompts[0]
+        else:
+            character_anchor = "handsome 18 years old young male protagonist hero, youthful face, clean shaven, short black hair"
 
         # 3. Ép Góc máy điện ảnh lặp (Cinematic Camera Sequence)
         cam = self.CINEMATIC_SHOT_MATRIX[self.camera_step % len(self.CINEMATIC_SHOT_MATRIX)]
@@ -299,32 +351,30 @@ class Ultimate50FeatureMemoryEngine:
         clean_words = re.sub(r"[^\w\s]", "", scene_text).split()
         scene_action_clean = " ".join(clean_words[:15]) if clean_words else "dynamic action moment"
 
-        # Tự động phát hiện và bơm hiệu ứng thị giác điện ảnh (FX Lighting, Energy & Particle Injection Matrix)
+        # MA TRẬN BƠM HIỆU ỨNG CHIẾN ĐẤU & THỊ GIÁC ĐIỆN ẢNH SIÊU CẤP (Ultra Combat & FX Matrix)
         visual_fx = []
-        if any(w in text_lower for w in ["đêm", "tối", "trăng", "đêm tối"]):
-            visual_fx.append("night sky, glowing moonlit atmosphere, dark blue ambient lighting")
-        if any(w in text_lower for w in ["mưa", "nước", "ướt"]):
-            visual_fx.append("falling rain droplets, wet floor reflections, misty atmosphere")
-        if any(w in text_lower for w in ["lửa", "cháy", "hỏa", "bùng"]):
-            visual_fx.append("swirling fiery embers, bright orange flames, glowing heat aura")
+        if any(w in text_lower for w in ["đánh", "chiến", "đấu", "chém", "kiếm", "đao"]):
+            visual_fx.append("EXPLOISVE SWORD SLASH ENERGY TRAIL, SHARP METALLIC REFLECTIONS, SWORD AURA ARC, ACTION SPEED LINES")
+        if any(w in text_lower for w in ["bùng nổ", "oanh", "chấn động", "nổ"]):
+            visual_fx.append("ENORMOUS IMPACT ENERGY SHOCKWAVE BURST, CRATER GROUND CRACKS, DYNAMIC DUST PARTICLES")
+        if any(w in text_lower for w in ["quyền", "chưởng", "đấm"]):
+            visual_fx.append("HIGH-SPEED POWERFUL FIST IMPACT STRIKE, AIR PRESSURE WAVE DISCHARGE, DYNAMIC combat stance")
         if any(w in text_lower for w in ["sét", "lôi", "điện"]):
-            visual_fx.append("crackling purple lightning strikes, electric arcs, thunderous energy")
+            visual_fx.append("CRACKLING PURPLE LIGHTNING STRIKES, INTENSE ELECTRIC ARCS, THUNDEROUS AURA")
+        if any(w in text_lower for w in ["lửa", "cháy", "hỏa"]):
+            visual_fx.append("SWIRLING FIERY EMBERS, BRIGHT ORANGE FLAMES, GLOWING HEAT AURA EXPLOSION")
         if any(w in text_lower for w in ["băng", "tuyết", "lạnh"]):
-            visual_fx.append("crystal ice shards, freezing frost particles, icy blue aura")
+            visual_fx.append("CRYSTAL ICE SHARDS, FREEZING FROST PARTICLES, ICY BLUE RADIANT AURA")
         if any(w in text_lower for w in ["máu", "huyết", "thương"]):
-            visual_fx.append("dark crimson energy mist, ominous red aura, battle scars")
+            visual_fx.append("DARK CRIMSON ENERGY MIST, OMINOUS RED AURA, INTENSE BATTLE DAMAGE")
         if any(w in text_lower for w in ["quỷ", "ma", "bóng tối"]):
-            visual_fx.append("dark shadow tendrils, purple demonic energy, glowing red eyes")
-        if any(w in text_lower for w in ["ấn", "trận", "phép"]):
-            visual_fx.append("glowing ancient magic array runes, golden circle spell sigil")
-        if any(w in text_lower for w in ["kiếm", "đao", "vũ khí"]):
-            visual_fx.append("glowing elemental energy blade, sharp metallic reflections, sword aura")
+            visual_fx.append("DARK SHADOW TENDRILS, PURPLE DEMONIC MIASMA, GLOWING RED EYE GLINT")
+        if any(w in text_lower for w in ["ấn", "trận", "phép", "thức tỉnh"]):
+            visual_fx.append("GLOWING ANCIENT CELESTIAL MAGIC ARRAY RUNES, GOLDEN CIRCLE SPELL SIGIL, AWAKENING GLOW")
         if any(w in text_lower for w in ["hệ thống", "giao diện", "bảng"]):
-            visual_fx.append("floating neon cyan holographic system UI screen windows")
-        if any(w in text_lower for w in ["đánh", "chiến", "đấu", "bùng nổ"]):
-            visual_fx.append("action speed lines, shockwave energy blast, dynamic combat stance")
+            visual_fx.append("FLOATING NEON CYAN HOLOGRAPHIC SYSTEM UI SCREEN WINDOWS")
         if any(w in text_lower for w in ["rừng", "cây", "núi"]):
-            visual_fx.append("lush forest greenery, sunbeams through leaves, majestic mountain backdrop")
+            visual_fx.append("LUSH FOREST GREENERY, SUNBEAMS THROUGH LEAVES, MAJESTIC MOUNTAIN BACKDROP")
 
         # Tự động nhận diện Thần Thái / Cảm Xúc Khuôn Mặt (Facial Expression Engine)
         facial_expression = "intense determined expression, sharp calculating eyes"
