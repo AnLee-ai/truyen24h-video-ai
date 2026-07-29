@@ -249,6 +249,10 @@ def call_openrouter_free_llm(prompt: str) -> str:
         "X-Title": "Truyen24h Video AI Studio"
     }
     
+    or_key = key_rotator.get_openrouter_key()
+    if or_key:
+        headers["Authorization"] = f"Bearer {or_key}"
+    
     free_models = [
         "google/gemini-2.0-flash-lite-preview-02-05:free",
         "meta-llama/llama-3.3-70b-instruct:free",

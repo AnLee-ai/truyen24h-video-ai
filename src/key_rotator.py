@@ -83,7 +83,7 @@ class APIKeyRotator:
                     pass
                 self.rate_limited_keys.add(key)
 
-# Khởi tạo hai bộ xoay vòng API Keys cho Gemini và Groq
+# Khởi tạo ba bộ xoay vòng API Keys cho Gemini, Groq và OpenRouter
 gemini_rotator = APIKeyRotator(
     provider="Gemini",
     env_var_single="GEMINI_API_KEY",
@@ -96,14 +96,26 @@ groq_rotator = APIKeyRotator(
     env_var_multi="GROQ_API_KEYS"
 )
 
+openrouter_rotator = APIKeyRotator(
+    provider="OpenRouter",
+    env_var_single="OPENROUTER_API_KEY",
+    env_var_multi="OPENROUTER_API_KEYS"
+)
+
 def get_gemini_key() -> str:
     return gemini_rotator.get_key()
 
 def get_groq_key() -> str:
     return groq_rotator.get_key()
 
+def get_openrouter_key() -> str:
+    return openrouter_rotator.get_key()
+
 def mark_gemini_key_failed(key: str, is_permanent: bool = True):
     gemini_rotator.mark_key_failed(key, is_permanent=is_permanent)
 
 def mark_groq_key_failed(key: str, is_permanent: bool = True):
     groq_rotator.mark_key_failed(key, is_permanent=is_permanent)
+
+def mark_openrouter_key_failed(key: str, is_permanent: bool = True):
+    openrouter_rotator.mark_key_failed(key, is_permanent=is_permanent)
