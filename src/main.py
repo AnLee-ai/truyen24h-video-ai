@@ -15,6 +15,7 @@ from src import telegram_uploader
 from src import video
 from src import shorts_generator
 from src import youtube_uploader
+from src import thumbnail_generator
 
 def safe_print(*args, **kwargs):
     """Safely print message preventing UnicodeEncodeError on Windows terminals."""
@@ -95,6 +96,14 @@ def _run_chapter_pipeline_impl(novel_id: str):
             print(f"[INFO] Video dài đã được tạo tại: {video_path}")
             video_public_url = database.upload_file_to_supabase(video_path, bucket_name="media", destination_path=f"videos/full/{chapter_id}_16_9.mp4")
             database.update_chapter_video_status(chapter_id, status="completed", video_url=video_public_url or video_path)
+            
+        # 4b. Tự động thiết kế Ảnh Bìa Thumbnail 16:9 YouTube 4K siêu bắt mắt
+        scene_img_p = os.path.join("output", chapter_id, "images", "scene_001.jpg")
+        thumb_out_p = os.path.join("output", chapter_id, "thumbnail.jpg")
+        print(f"[INFO] Bắt đầu tự động thiết kế Thumbnail YouTube 16:9 cho Tập {chapter_num}...")
+        thumbnail_path = thumbnail_generator.generate_youtube_thumbnail(chapter_num, chapter_title, scene_img_p, thumb_out_p)
+        if thumbnail_path and os.path.exists(thumbnail_path):
+            database.upload_file_to_supabase(thumbnail_path, bucket_name="media", destination_path=f"thumbnails/{chapter_id}_thumbnail.jpg")
             
         # 5. (Đã tắt phần render Video Shorts 9:16 theo yêu cầu người dùng)
         shorts_path = ""

@@ -42,7 +42,7 @@ def sanitize_voice_name(voice: str) -> str:
         return f"{lang.strip()}-{name.strip()}"
     return voice
 
-def split_text_into_chunks(text: str, max_chars: int = 3000) -> list:
+def split_text_into_chunks(text: str, max_chars: int = 1800) -> list:
     """Split text into smaller chunks by paragraph or sentence to avoid edge-tts timeout/limits."""
     paragraphs = text.split("\n")
     chunks = []

@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import urllib.parse
 import urllib.request
@@ -12,7 +13,8 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     - Provider 1: Pollinations.ai Multi-Model (flux-anime, flux, turbo, flux-real, any-dark)
     - Provider 2: Lexica.art High Quality Manhwa Art Search Engine
     - Provider 3: HuggingFace Flux/SDXL Inference Engine
-    - Provider 4: Emergency Dynamic 4K Gradient Canvas Generator (Không bao giờ lỗi)
+    - Provider 4: Public High-Res Dynamic Art Engine (Picsum & Unsplash Engine)
+    - Provider 5: Emergency Dynamic 4K Manhwa Comic Canvas (Khung Ảnh Truyện Tranh 2D Rực Rỡ Chữ Vàng)
     """
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     
