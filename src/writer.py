@@ -99,8 +99,8 @@ def clean_chapter_content(text: str) -> str:
     cleaned = remove_repetitive_sentences(cleaned)
     return cleaned
 
-def call_gemini(prompt: str, json_mode: bool = False, retries: int = 10) -> str:
-    """Helper to call LLM (Groq multi-model pool with fallback, otherwise Gemini API) with automatic key rotator & fast 401 failover."""
+def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
+    """Helper to call LLM (Groq multi-model pool with fallback, Gemini API & Pollinations 100% Free) with key rotator & fast failover."""
     groq_key = key_rotator.get_groq_key() or config.GROQ_API_KEY
     
     if groq_key:
@@ -111,7 +111,8 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 10) -> str:
             "Content-Type": "application/json"
         }
         
-        raw_groq = [config.GROQ_MODEL_WRITER, "llama-3.3-70b-versatile", "llama-3.1-8b-instant"]
+        # Danh sách Model Groq hoạt động tốt nhất
+        raw_groq = [config.GROQ_MODEL_WRITER, "llama-3.3-70b-versatile", "llama-3.3-70b-specdec", "llama-3.1-8b-instant", "mixtral-8x7b-32768"]
         groq_models = [m for m in raw_groq if m]
         
         max_tokens_options = [3200, 2400, 1800] if not json_mode else [1000]
@@ -120,9 +121,12 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 10) -> str:
             current_model = groq_models[attempt % len(groq_models)]
             current_max_tokens = max_tokens_options[min(attempt // len(groq_models), len(max_tokens_options)-1)]
             
+            # Xử lý cắt giảm prompt cho model dung lượng nhỏ (llama-3.1-8b-instant) để tránh lỗi 413 Request too large
+            payload_prompt = prompt[:3500] if (current_model == "llama-3.1-8b-instant" and len(prompt) > 3500) else prompt
+            
             data = {
                 "model": current_model,
-                "messages": [{"role": "user", "content": prompt}],
+                "messages": [{"role": "user", "content": payload_prompt}],
                 "temperature": 0.7,
                 "max_tokens": current_max_tokens
             }
@@ -134,7 +138,7 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 10) -> str:
                 if response.status_code == 200:
                     resp_json = response.json()
                     content = resp_json["choices"][0]["message"]["content"]
-                    if content:
+                    if content and len(content.strip().split()) > 10:
                         return content.strip()
                         
                 if response.status_code in (401, 403):
@@ -149,21 +153,21 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 10) -> str:
                         break
                     headers["Authorization"] = f"Bearer {groq_key}"
                 
-                print(f"[WARNING] Groq ({current_model}) status {response.status_code}: {response.text[:120]}. Retrying (Attempt {attempt+1}/{retries})...")
-                time.sleep(5)
+                print(f"[WARNING] Groq ({current_model}) status {response.status_code}: {response.text[:100]}. Retrying (Attempt {attempt+1}/{retries})...")
+                time.sleep(3)
                 continue
             except Exception as e:
                 print(f"[WARNING] Groq ({current_model}) error: {e}. Retrying (Attempt {attempt+1}/{retries})...")
-                time.sleep(5)
+                time.sleep(3)
                 continue
         
         print("[WARNING] All Groq retries failed. Switching to Gemini API...")
 
     # Fallback to Gemini API với Key Rotator & Multi-Model Pool
-    raw_gemini = [config.GEMINI_MODEL_WRITER, "gemini-2.0-flash", "gemini-2.0-flash-lite"]
+    raw_gemini = [config.GEMINI_MODEL_WRITER, "gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash", "gemini-1.5-pro"]
     gemini_models = [m for m in raw_gemini if m]
     
-    for attempt in range(min(retries, 3)):
+    for attempt in range(retries):
         g_key = key_rotator.get_gemini_key() or config.GEMINI_API_KEY
         if not g_key:
             print("[ERROR] No valid Gemini API key available.")
@@ -190,7 +194,7 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 10) -> str:
                 model = genai.GenerativeModel(current_g_model, generation_config=g_config)
                 response = model.generate_content(prompt)
 
-            if response.text:
+            if response.text and len(response.text.strip().split()) > 10:
                 return response.text.strip()
             raise ValueError("Empty response from Gemini API.")
         except Exception as e:
@@ -198,37 +202,109 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 10) -> str:
             if "401" in err_str or "UNAUTHENTICATED" in err_str:
                 print(f"[WARNING] Gemini Key bị lỗi 401 UNAUTHENTICATED. Khóa bị vô hiệu hóa hẳn.")
                 key_rotator.mark_gemini_key_failed(g_key, is_permanent=True)
-                break
-            elif "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
-                print(f"[WARNING] Gemini ({current_g_model}) bị hết Quota (429). Đã chuyển sang Model Gemini tiếp theo...")
-                key_rotator.mark_gemini_key_failed(g_key, is_permanent=False)
-                time.sleep(1.5)
+                time.sleep(1.0)
                 continue
-            time.sleep(2)
+            elif "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
+                print(f"[WARNING] Gemini ({current_g_model}) bị hết Quota (429). Đã chuyển sang Model/Key Gemini tiếp theo...")
+                key_rotator.mark_gemini_key_failed(g_key, is_permanent=False)
+                time.sleep(2.0)
+                continue
+            time.sleep(2.0)
                 
-            print(f"[WARNING] Gemini call failed: {e}. Retrying in 5s...")
-            time.sleep(5)
+            print(f"[WARNING] Gemini call failed: {e}. Retrying in 3s...")
+            time.sleep(3)
             
-    print("[WARNING] All API Keys failed (401/429). Switching to Pollinations 100% Free LLM Fallback Engine...")
+    print("[WARNING] All API Keys failed (401/429). Switching to OpenRouter 100% Free AI Engine...")
+    openrouter_res = call_openrouter_free_llm(prompt)
+    if openrouter_res:
+        return openrouter_res
+
+    print("[WARNING] OpenRouter failed. Switching to Pollinations Multi-Model 100% Free LLM Engine...")
     free_res = call_pollinations_free_llm(prompt)
     if free_res:
         return free_res
-    return "Tiếp tục diễn biến câu chuyện."
+    return ""
+
+def call_openrouter_free_llm(prompt: str) -> str:
+    """Emergency Fallback to OpenRouter 100% Free AI Models (Zero Cost)."""
+    import requests
+    print("[INFO] Fallback to OpenRouter Free AI Engine...")
+    url = "https://openrouter.ai/api/v1/chat/completions"
+    headers = {
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://truyen24h.ai",
+        "X-Title": "Truyen24h Video AI Studio"
+    }
+    
+    free_models = [
+        "google/gemini-2.0-flash-lite-preview-02-05:free",
+        "meta-llama/llama-3.3-70b-instruct:free",
+        "deepseek/deepseek-r1:free",
+        "qwen/qwen-2.5-coder-32b-instruct:free",
+        "mistralai/mistral-7b-instruct:free"
+    ]
+    
+    for m in free_models:
+        payload = {
+            "model": m,
+            "messages": [{"role": "user", "content": prompt[:3500]}],
+            "temperature": 0.7
+        }
+        try:
+            resp = requests.post(url, json=payload, headers=headers, timeout=40)
+            if resp.status_code == 200:
+                data = resp.json()
+                content = data["choices"][0]["message"]["content"]
+                if content and len(content.strip().split()) > 20:
+                    print(f"[SUCCESS] OpenRouter Free LLM ({m}) succeeded! ({len(content.strip().split())} words)")
+                    return content.strip()
+        except Exception as e:
+            print(f"[WARNING] OpenRouter model ({m}) error: {e}")
+            continue
+    return ""
 
 def call_pollinations_free_llm(prompt: str) -> str:
-    """100% Free Emergency LLM Fallback via Pollinations.ai (Zero API Key needed)."""
-    import urllib.parse, urllib.request
-    print("[INFO] Fallback to Pollinations 100% Free LLM Engine (Zero API Key needed)...")
+    """100% Free Emergency LLM Fallback via Pollinations.ai POST API with Multi-Model Rotation (Zero API Key needed)."""
+    import json
+    import requests
+    print("[INFO] Fallback to Pollinations Multi-Model Free LLM Engine...")
+    
+    url = "https://text.pollinations.ai/"
+    headers = {"Content-Type": "application/json"}
+    pollination_models = ["mistral", "qwen-coder", "openai", "llama"]
+    
+    for model_name in pollination_models:
+        payload = {
+            "messages": [
+                {"role": "user", "content": prompt[:3000]}
+            ],
+            "model": model_name
+        }
+        
+        try:
+            resp = requests.post(url, json=payload, headers=headers, timeout=45)
+            if resp.status_code == 200 and resp.text:
+                res_text = resp.text.strip()
+                if len(res_text.split()) > 20 and "402" not in res_text:
+                    print(f"[SUCCESS] Pollinations Free LLM POST ({model_name}) succeeded! ({len(res_text.split())} words)")
+                    return res_text
+        except Exception as e:
+            print(f"[WARNING] Pollinations Free LLM ({model_name}) failed: {e}")
+            continue
+        
+    # Backup GET request rút gọn prompt
     try:
-        encoded = urllib.parse.quote(prompt[:2000])
-        url = f"https://text.pollinations.ai/{encoded}"
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        import urllib.parse
+        import urllib.request
+        short_prompt = urllib.parse.quote(prompt[:1200])
+        req = urllib.request.Request(f"https://text.pollinations.ai/{short_prompt}", headers={'User-Agent': 'Mozilla/5.0'})
         with urllib.request.urlopen(req, timeout=30) as response:
             res_text = response.read().decode('utf-8')
-            if res_text and len(res_text) > 20 and "402" not in res_text:
+            if res_text and len(res_text.split()) > 20 and "402" not in res_text:
                 return res_text.strip()
-    except Exception as e:
-        print(f"[WARNING] Pollinations Free LLM failed: {e}")
+    except Exception:
+        pass
+        
     return ""
 
 def get_embedding(text: str) -> list:
@@ -506,13 +582,15 @@ def write_next_chapter(novel_id: str) -> dict:
             word_count = len(final_content.split()) if final_content else 0
             print(f"[INFO] Generated draft length: {word_count} words.")
             
-            if word_count < 200:
-                print(f"[WARNING] API Key issue or failed response (words: {word_count}). Aborting draft attempts.")
-                break
+            if word_count < 500:
+                print(f"[WARNING] Draft response too short (words: {word_count}). Retrying with simplified prompt payload...")
+                time.sleep(3)
+                current_prompt = prompt[:2500] if len(prompt) > 2500 else prompt
+                continue
                 
             ends_abruptly = not final_content.strip().endswith((".", "?", "!", '"', "”", "»", "*"))
             
-            if ends_abruptly and word_count >= 1500:
+            if ends_abruptly and word_count >= 2500:
                 last_punct = max(
                     final_content.rfind('.'),
                     final_content.rfind('?'),
@@ -524,8 +602,27 @@ def write_next_chapter(novel_id: str) -> dict:
                     print(f"[INFO] Automatically trimmed unfinished trailing sentence. Clean word count: {word_count} words.")
                     ends_abruptly = False
 
-            if word_count >= 1500 and not ends_abruptly:
+            # Đảm bảo BẮT BUỘC chương phải đạt từ 2500 từ trở lên
+            if word_count >= 2500 and not ends_abruptly:
                 break
+                
+            # Nếu chương mới đạt từ 1200 - 2400 từ, tự động kích hoạt tính năng Viết Nối Tiếp để vượt mốc 2500 từ!
+            if word_count < 2500:
+                print(f"[INFO] Bản thảo hiện tại đạt {word_count} từ (<2500 từ). Tự động kích hoạt AI Viết Nối Tiếp để vượt mốc 2500 từ...")
+                continuation_prompt = (
+                    f"Dưới đây là phần 1 của Chương {next_ch_number} ({word_count} từ):\n\n"
+                    f"{final_content[-1500:]}\n\n"
+                    f"YÊU CẦU BẮT BUỘC: Hãy viết tiếp phần 2 của Chương {next_ch_number} (khoảng 1000 - 1500 từ nữa). "
+                    f"Miêu tả sâu sắc biến cố tiếp theo, đối thoại dồn dập, tâm lý nhân vật và kết thúc bằng một nút thắt Cliffhanger kịch tính. "
+                    f"Viết trực tiếp vào nội dung câu chuyện, không nhắc lại đoạn cũ."
+                )
+                part2_content = call_gemini(continuation_prompt)
+                if part2_content and len(part2_content.split()) > 200:
+                    final_content = final_content + "\n\n" + clean_chapter_content(part2_content)
+                    word_count = len(final_content.split())
+                    print(f"[SUCCESS] Đã nối tiếp phần 2! Tổng độ dài chương đạt: {word_count} từ.")
+                    if word_count >= 2500:
+                        break
                 
             if ends_abruptly:
                 print(f"[WARNING] Draft ends abruptly (no punctuation at the end). Requesting completion (Attempt {draft_attempt}/3)...")
