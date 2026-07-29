@@ -27,34 +27,53 @@ def overlay_thumbnail_text(image_path: str, chapter_number: int, title: str) -> 
         img = Image.alpha_composite(img, overlay).convert("RGB")
         draw_final = ImageDraw.Draw(img)
         
-        # Thử nạp Font hệ thống chuẩn hoặc fallback default
-        try:
-            font_large = ImageFont.truetype("arial.ttf", 64)
-            font_badge = ImageFont.truetype("arial.ttf", 40)
-        except Exception:
+        # Thử nạp Font IMPACT Ultra-Bold (Phông chữ YouTube Thumbnail đẹp nhất thế giới) với fallback linh hoạt
+        font_candidates = [
+            "C:/Windows/Fonts/impact.ttf", "impact.ttf",
+            "C:/Windows/Fonts/arialbd.ttf", "arialbd.ttf",
+            "C:/Windows/Fonts/segoeuib.ttf"
+        ]
+        
+        font_large = None
+        font_badge = None
+        for fpath in font_candidates:
+            try:
+                if os.path.exists(fpath) or not fpath.startswith("C:"):
+                    font_large = ImageFont.truetype(fpath, 76)
+                    font_badge = ImageFont.truetype(fpath, 42)
+                    print(f"[INFO] Loaded Ultra-Bold Thumbnail Font: {fpath}")
+                    break
+            except Exception:
+                continue
+                
+        if not font_large:
             font_large = ImageFont.load_default()
             font_badge = ImageFont.load_default()
             
-        # 1. Viết chữ Badge Top: SIÊU PHẨM TIỂU THUYẾT
-        draw_final.text((60, 52), "🔥 SIÊU PHẨM TIỂU THUYẾT", fill=(255, 255, 255), font=font_badge)
+        # 1. Viết chữ Badge Top Thương Hiệu Chính Thức: 🔥 TRUYỆN 24H - SIÊU PHẨM
+        draw_final.text((60, 52), "🔥 TRUYỆN 24H - SIÊU PHẨM", fill=(255, 255, 255), font=font_badge)
         
-        # 2. Viết chữ Tiêu đề Tập & Tên chương (Viền đen nổi bật)
+        # 2. Viết chữ Tiêu đề Tập & Tên chương (IMPACT Font + Viền đen 5px + Drop Shadow)
         chapter_str = f"TẬP {chapter_number}: {title.upper()}"
         text_x = 50
-        text_y = int(height * 0.8)
+        text_y = int(height * 0.78)
         
-        # Vẽ viền đen xung quanh chữ (Stroke Outline)
+        # A. Vẽ lớp bóng đổ đen phía sau (Drop Shadow Offset +3px)
+        shadow_color = (0, 0, 0, 220)
+        draw_final.text((text_x + 4, text_y + 4), chapter_str, fill=shadow_color, font=font_large)
+        
+        # B. Vẽ viền đen siêu dày 5px xung quanh chữ (Heavy 5px Stroke Outline)
         stroke_color = (0, 0, 0)
-        for offset_x in range(-3, 4):
-            for offset_y in range(-3, 4):
+        for offset_x in range(-5, 6):
+            for offset_y in range(-5, 6):
                 draw_final.text((text_x + offset_x, text_y + offset_y), chapter_str, fill=stroke_color, font=font_large)
                 
-        # Vẽ chữ chính màu Vàng Hoàng Kim (Gold Accent)
+        # C. Vẽ chữ chính màu Vàng Hoàng Kim (Gold Accent #FFD700)
         draw_final.text((text_x, text_y), chapter_str, fill=(255, 215, 0), font=font_large)
         
-        # Lưu lại đè lên file Thumbnail
-        img.save(image_path, "JPEG", quality=95)
-        print(f"[SUCCESS] Applied High-CTR Text Overlay to Thumbnail: {image_path}")
+        # Lưu lại đè lên file Thumbnail chất lượng 98%
+        img.save(image_path, "JPEG", quality=98)
+        print(f"[SUCCESS] Applied Impact Ultra-Bold Text Overlay to Thumbnail: {image_path}")
     except Exception as e:
         print(f"[WARNING] Could not apply text overlay to thumbnail: {e}")
         

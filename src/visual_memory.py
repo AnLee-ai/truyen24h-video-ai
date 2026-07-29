@@ -95,6 +95,7 @@ class Ultimate50FeatureMemoryEngine:
         "blurry, low quality, extra limbs, bad hands, deformed fingers, extra fingers, "
         "fused fingers, missing limbs, malformed hands, asymmetric eyes, cross-eyed, "
         "deformed eyes, bad proportions, unnatural body posture, mutated body, distorted face, "
+        "disfigured hands, poorly drawn face, poorly drawn hands, floating limbs, disconnected limbs, "
         "bad anatomy, text, watermark, signature, cropped, out of frame, duplicate character, "
         "color bleeding, oversaturated, ugly, jpeg artifacts, low resolution blur"
     )
@@ -294,18 +295,37 @@ class Ultimate50FeatureMemoryEngine:
         cam = self.CINEMATIC_SHOT_MATRIX[self.camera_step % len(self.CINEMATIC_SHOT_MATRIX)]
         self.camera_step += 1
 
-        # 4. Trích xuất 10 từ hành động chính để tránh rác Prompt
+        # 4. Trích xuất & Tự động dịch / Mở rộng từ khóa hình ảnh tiếng Việt sang tiếng Anh (Visual Keyword Expansion)
         clean_words = re.sub(r"[^\w\s]", "", scene_text).split()
         scene_action_clean = " ".join(clean_words[:12]) if clean_words else "dynamic moment"
 
-        # 5. GHÉP PROMPT NGHỆ THUẬT HOÀN HẢO CHO AI VẼ TRANH (ULTRA ENHANCED 8K ARTIST ENGINE)
+        # Tự động phát hiện và bơm hiệu ứng thị giác đỉnh cao (FX Lighting & Atmospheric Injection)
+        visual_fx = []
+        if any(w in text_lower for w in ["đêm", "tối", "trăng", "đêm tối"]):
+            visual_fx.append("night sky, glowing moonlit atmosphere, dark blue ambient lighting")
+        if any(w in text_lower for w in ["mưa", "nước", "ướt"]):
+            visual_fx.append("falling rain droplets, wet floor reflections, misty atmosphere")
+        if any(w in text_lower for w in ["lửa", "cháy", "hỏa", "bùng"]):
+            visual_fx.append("swirling fiery embers, bright orange flames, glowing heat aura")
+        if any(w in text_lower for w in ["kiếm", "đao", "vũ khí"]):
+            visual_fx.append("glowing elemental energy blade, sharp metallic reflections, sword aura")
+        if any(w in text_lower for w in ["hệ thống", "giao diện", "bảng"]):
+            visual_fx.append("floating neon holographic system UI screen windows")
+        if any(w in text_lower for w in ["đánh", "chiến", "đấu", "bùng nổ"]):
+            visual_fx.append("action speed lines, shockwave energy blast, dynamic combat stance")
+        if any(w in text_lower for w in ["rừng", "cây", "núi"]):
+            visual_fx.append("lush forest greenery, sunbeams through leaves, majestic mountain backdrop")
+
+        fx_string = ", ".join(visual_fx) if visual_fx else "volumetric rim light, floating glowing particles"
+
+        # 5. GHÉP PROMPT NGHỆ THUẬT PHONG CÁCH KÊNH MANHWA REVIEW TRIỆU VIEW (FAN REVIEW TRUYỆN SIGNATURE PROMPT ART STYLE)
         positive_prompt = (
-            f"masterpiece 2D manhwa webtoon illustration, vibrant digital comic book art, "
-            f"ultra sharp focus, crisp clean anime line art, sharp 2D contours, cinematic volumetric lighting, "
-            f"{cam['shot']}, {cam['focal']}, {cam['dof']}, {character_anchor}, "
-            f"action: {scene_action_clean}, setting: {genre_prompt}, "
-            f"floating glowing particle effects, vivid color grading, 16:9 widescreen orientation, "
-            f"trending on ArtStation, award-winning webtoon panel, 8k resolution"
+            f"masterpiece 2D Korean manhwa webtoon panel art style, highly detailed digital comic illustration, "
+            f"bold sharp black ink line art, vibrant saturated color grading, epic high-contrast dramatic lighting, "
+            f"intense cinematic angle, {cam['shot']}, {cam['focal']}, {cam['dof']}, {character_anchor}, "
+            f"action sequence: {scene_action_clean}, setting: {genre_prompt}, visual fx: {fx_string}, "
+            f"glowing elemental energy aura, dynamic speed particles, dramatic rim light, 16:9 widescreen, "
+            f"trending on ArtStation, Solo Leveling art direction, award-winning manhwa panel, 8k resolution"
         )
 
         # MD5 Hash Caching

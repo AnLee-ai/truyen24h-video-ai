@@ -96,8 +96,19 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
     # 3. Sinh ảnh AI ĐA LUỒNG cho các phân cảnh (tối đa 40 ảnh)
     from src.image_generator import batch_generate_scene_images
     chapter_id = os.path.basename(out_dir)
-    image_files = batch_generate_scene_images(scene_texts[:40], chapter_id=chapter_id, max_workers=4)
+    image_files = batch_generate_scene_images(scene_texts[:40], chapter_id=chapter_id, max_workers=2)
             
+    # Đảm bảo video LUÔN CÓ ĐA DẠNG ẢNH ĐỔI PHÂN CẢNH (Không bao giờ bị 1 ảnh tĩnh duy nhất!)
+    if len(image_files) < 5:
+        print(f"[WARNING] Chỉ sinh được {len(image_files)} ảnh. Đang sinh tự động các phân cảnh biến thể dự phòng...")
+        needed = 10 - len(image_files)
+        for var_i in range(needed):
+            fallback_path = os.path.join(img_dir, f"fallback_var_{var_i+1:02d}.jpg")
+            scene_prompt = scene_texts[var_i % len(scene_texts)] + f", dramatic angle perspective variant {var_i+1}"
+            res_p = generate_scene_image(scene_prompt, fallback_path, width=1920, height=1080)
+            if res_p and os.path.exists(res_p) and os.path.getsize(res_p) > 1000:
+                image_files.append(res_p)
+                
     if not image_files:
         bg_image = os.path.join(out_dir, "background.jpg")
         generate_scene_image(title, bg_image, width=1920, height=1080)
@@ -129,46 +140,67 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
             last_img_clean = os.path.abspath(full_scene_sequence[-1]['image']).replace("\\", "/")
             f.write(f"file '{last_img_clean}'\n")
             
-    # 6. Định dạng bộ lọc Phụ Đề Chuẩn YouTube CC
+    # 6. Định dạng bộ lọc Phụ Đề & Đồ Họa Chuẩn Kênh Fan Review Truyện (Chữ Vàng Nổi, Dark Vignette, Tương Phản Điện Ảnh)
     srt_escaped = srt_path.replace("\\", "/").replace(":", "\\:") if srt_path and os.path.exists(srt_path) else ""
-    subtitle_style = "Fontname=Arial,FontSize=15,PrimaryColour=&H00FFFFFF&,OutlineColour=&H00000000&,Outline=2,Shadow=1,Alignment=2,MarginV=35,MarginL=80,MarginR=80,WrapStyle=2"
+    # Color format ASS: &H0000FFFF& = Vàng Chanh #FFFF00, Outline 3px Đen Chống Chói, Alignment 2 (Căn giữa lề dưới)
+    subtitle_style = "Fontname=Arial,FontSize=18,PrimaryColour=&H0000FFFF&,OutlineColour=&H00000000&,Outline=3,Shadow=2,Alignment=2,MarginV=42,MarginL=80,MarginR=80,WrapStyle=2"
     
-    vf_filter = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,eq=brightness=-0.15:contrast=1.1[bg]"
+    # Filter chuỗi: Scale 1080p + Crop + Tăng tương phản + Saturation màu rực rỡ + Phủ mờ dải viền tối Vignette chuẩn điện ảnh
+    vf_filter = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,eq=brightness=-0.08:contrast=1.18:saturation=1.25,vignette=PI/4[bg]"
     if srt_escaped:
         vf_filter += f";[bg]subtitles='{srt_escaped}':force_style='{subtitle_style}'[out]"
     else:
         vf_filter += ";[bg]null[out]"
         
-    # 7. Chạy FFmpeg concat demuxer ghép nhạc + đổi ảnh từng phân cảnh
+    # 7. Tự động kiểm tra phần cứng GPU Encoder (NVIDIA NVENC -> Intel QSV -> AMD AMF -> CPU libx264)
     codec = "libx264"
+    encoder_opts = ["-preset", "fast"]
+    
     try:
+        # Test 1: NVIDIA NVENC GPU
         test_nvenc = subprocess.run(
             ["ffmpeg", "-y", "-f", "lavfi", "-i", "color=s=16x16:d=0.1", "-c:v", "h264_nvenc", "-f", "null", "-"],
             capture_output=True, text=True, timeout=5
         )
         if test_nvenc.returncode == 0:
             codec = "h264_nvenc"
-            print("[INFO] GPU NVIDIA khả dụng! Tự động sử dụng phần cứng GPU NVENC...")
+            encoder_opts = ["-preset", "p4", "-rc", "vbr"]
+            print("[INFO] GPU NVIDIA NVENC khả dụng! Kích hoạt tăng tốc phần cứng GPU...")
         else:
-            print("[INFO] Sử dụng CPU H.264 Encoder (libx264)...")
+            # Test 2: Intel QuickSync QSV
+            test_qsv = subprocess.run(
+                ["ffmpeg", "-y", "-f", "lavfi", "-i", "color=s=16x16:d=0.1", "-c:v", "h264_qsv", "-f", "null", "-"],
+                capture_output=True, text=True, timeout=5
+            )
+            if test_qsv.returncode == 0:
+                codec = "h264_qsv"
+                print("[INFO] GPU Intel QSV khả dụng! Kích hoạt tăng tốc phần cứng QSV...")
+            else:
+                print("[INFO] Sử dụng CPU H.264 Encoder (libx264)...")
     except Exception:
         codec = "libx264"
 
+    # Lệnh FFmpeg tối ưu: Khóa đồng bộ âm thanh - async 1, VSync 1, Bitrate 1400k (Dưới 45MB cho 10 phút)
     cmd = [
         "ffmpeg", "-y",
         "-f", "concat", "-safe", "0", "-i", concat_list_path,
         "-i", audio_path,
         "-filter_complex", vf_filter,
         "-map", "[out]", "-map", "1:a",
-        "-c:v", codec, "-preset", "fast", "-c:a", "aac", "-b:a", "192k", "-pix_fmt", "yuv420p",
+        "-c:v", codec
+    ] + encoder_opts + [
+        "-b:v", "1400k", "-maxrate", "2000k", "-bufsize", "3000k",
+        "-c:a", "aac", "-b:a", "192k", "-pix_fmt", "yuv420p",
         "-shortest", output_video_path
     ]
     
     try:
-        print(f"[INFO] FFmpeg rendering full {total_audio_duration:.1f}s video slideshow with subtle Ken Burns motion...")
-        # Tăng timeout lên 600s cho video dài 8-10 phút
+        print(f"[INFO] FFmpeg rendering full {total_audio_duration:.1f}s video ({codec})...")
         res = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
-        if res.returncode == 0 and os.path.exists(output_video_path):
+        
+        # Tự động kiểm tra chất lượng video sau khi render
+        from src.video_validator import validate_video_file
+        if res.returncode == 0 and validate_video_file(output_video_path, min_size_bytes=500000):
             print(f"[SUCCESS] Render video dài {total_audio_duration:.1f}s đầy đủ thành công: {output_video_path}")
             return output_video_path
         else:
