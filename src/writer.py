@@ -44,13 +44,25 @@ def get_genai_client(api_key: str = None):
         genai.configure(api_key=current_key)
         return genai
 
-def safe_loads(text: str):
-    """Safely parse JSON string, stripping markdown code block wrappers if present."""
+def safe_loads(text: str, default=None):
+    """Safely parse JSON string, stripping markdown code block wrappers or extracting raw JSON object. Returns default if invalid."""
+    if not text or not text.strip():
+        return default if default is not None else {}
     cleaned = text.strip()
     match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", cleaned)
     if match:
         cleaned = match.group(1).strip()
-    return json.loads(cleaned)
+    try:
+        return json.loads(cleaned)
+    except Exception:
+        # Thử trích xuất khối {...} bằng Regex nếu LLM trả về văn bản thừa
+        json_block = re.search(r"\{[\s\S]*\}", cleaned)
+        if json_block:
+            try:
+                return json.loads(json_block.group(0))
+            except Exception:
+                pass
+    return default if default is not None else {}
 
 def remove_repetitive_sentences(text: str) -> str:
     """Clean duplicate consecutive sentences or paragraphs."""
@@ -603,27 +615,36 @@ def write_next_chapter(novel_id: str) -> dict:
                     print(f"[INFO] Automatically trimmed unfinished trailing sentence. Clean word count: {word_count} words.")
                     ends_abruptly = False
 
-            # Đảm bảo BẮT BUỘC chương phải đạt từ 2500 từ trở lên
+            # VÒNG LẶP ÉP BẮT BUỘC ĐẠT >2500 TỪ (Guaranteed 2500+ Words Multi-Pass Expansion Loop)
             if word_count >= 2500 and not ends_abruptly:
                 break
                 
-            # Nếu chương mới đạt từ 1200 - 2400 từ, tự động kích hoạt tính năng Viết Nối Tiếp để vượt mốc 2500 từ!
-            if word_count < 2500:
-                print(f"[INFO] Bản thảo hiện tại đạt {word_count} từ (<2500 từ). Tự động kích hoạt AI Viết Nối Tiếp để vượt mốc 2500 từ...")
+            expand_cycles = 0
+            while word_count < 2500 and expand_cycles < 5:
+                expand_cycles += 1
+                print(f"[INFO] (Lượt nối tiếp {expand_cycles}/5) Chương hiện tại đạt {word_count} từ (<2500 từ). Tự động kích hoạt AI Viết Nối Tiếp...")
+                
                 continuation_prompt = (
-                    f"Dưới đây là phần 1 của Chương {next_ch_number} ({word_count} từ):\n\n"
-                    f"{final_content[-1500:]}\n\n"
-                    f"YÊU CẦU BẮT BUỘC: Hãy viết tiếp phần 2 của Chương {next_ch_number} (khoảng 1000 - 1500 từ nữa). "
-                    f"Miêu tả sâu sắc biến cố tiếp theo, đối thoại dồn dập, tâm lý nhân vật và kết thúc bằng một nút thắt Cliffhanger kịch tính. "
-                    f"Viết trực tiếp vào nội dung câu chuyện, không nhắc lại đoạn cũ."
+                    f"Dưới đây là phần trước của Chương {next_ch_number} (tổng {word_count} từ):\n\n"
+                    f"{final_content[-1200:]}\n\n"
+                    f"YÊU CẦU BẮT BUỘC: Hãy viết tiếp đoạn nối theo câu chuyện trên (tối thiểu 1000 - 1500 từ nữa). "
+                    f"Miêu tả diễn biến tiếp theo, đối thoại sâu sắc, cảm xúc nhân vật và kết thúc bằng một nút thắt kịch tính. "
+                    f"Viết thẳng vào nội dung truyện, không lặp lại đoạn cũ."
                 )
-                part2_content = call_gemini(continuation_prompt)
-                if part2_content and len(part2_content.split()) > 200:
-                    final_content = final_content + "\n\n" + clean_chapter_content(part2_content)
+                
+                part_next = call_gemini(continuation_prompt)
+                if part_next and len(part_next.split()) > 100:
+                    cleaned_next = clean_chapter_content(part_next)
+                    final_content = final_content + "\n\n" + cleaned_next
                     word_count = len(final_content.split())
-                    print(f"[SUCCESS] Đã nối tiếp phần 2! Tổng độ dài chương đạt: {word_count} từ.")
+                    print(f"[SUCCESS] Đã nối tiếp thành công! Tổng độ dài chương hiện tại: {word_count} từ.")
                     if word_count >= 2500:
                         break
+                else:
+                    time.sleep(2)
+                    
+            if word_count >= 2500:
+                break
                 
             if ends_abruptly:
                 print(f"[WARNING] Draft ends abruptly (no punctuation at the end). Requesting completion (Attempt {draft_attempt}/3)...")
