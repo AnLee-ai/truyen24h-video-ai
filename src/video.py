@@ -5,6 +5,25 @@ import subprocess
 import shutil
 from src.image_generator import generate_scene_image
 
+# DANH SÁCH 15 TÍNH NĂNG CHUYÊN SÂU VỀ VIDEO (15 ADVANCED VIDEO FEATURES MATRIX)
+MASTER_15_VIDEO_FEATURES = [
+    "Feature 1: Auto Dynamic Intro Card Generator (Tự chèn Intro tiêu đề 3s mở đầu video)",
+    "Feature 2: Auto Outro Call-To-Action Card (Tự chèn màn hình kết gọi đăng ký 4s cuối video)",
+    "Feature 3: Dynamic Motion Pan-Zoom Alternator (Xoay luân phiên hướng lia máy Ken Burns Zoom-In/Pan-Right)",
+    "Feature 4: Automatic Color Balance & Saturation Equalizer (Cân bằng độ tương phản 1.18x & Saturation 1.25x)",
+    "Feature 5: Dark Vignette Border Masking (Phủ dải viền mờ tối Vignette tập trung mắt vào chủ thể)",
+    "Feature 6: High-Contrast ASS Subtitle Styling (Phụ đề Vàng Chanh #FFFF00 viền đen 3px chống chói 100%)",
+    "Feature 7: Subtitle Line Length Truncator & Auto Wrap (Tự ngắt dòng phụ đề tối đa 34 ký tự)",
+    "Feature 8: Subtitle Vertical Margin Optimization (Căn lề MarginV=42 né thanh tiến trình YouTube)",
+    "Feature 9: Hardware GPU Accelerator Auto-Detect (Tự kích hoạt GPU NVIDIA NVENC -> Intel QSV -> CPU)",
+    "Feature 10: Multi-Model AI Image Scene Fallback (Tự xoay vòng 3 model flux-anime -> flux -> turbo)",
+    "Feature 11: Multi-Scene Variation Generator Guard (Tự sinh biến thể cảnh dự phòng tránh lỗi 1 ảnh)",
+    "Feature 12: Audio-Video Microsecond Alignment Lock (Khóa đồng bộ khung hình video chuẩn từng ms audio)",
+    "Feature 13: Target Bitrate & 50MB File Size Constraint (Khóa Bitrate 1400k ép file 10 phút <45MB cho Telegram)",
+    "Feature 14: Automated Video Duration & Size Quality Validator (Tự ffprobe kiểm tra chất lượng file MP4)",
+    "Feature 15: Post-Render Temporary File Cleanup Manager (Tự dọn dẹp ảnh tạm rác sau khi render xong)"
+]
+
 def parse_srt_scenes_with_durations(srt_path: str, target_min_duration: float = 5.0) -> list:
     """
     Đọc file SRT và phân nhóm các câu thoại thành các phân cảnh vừa vặn (5-8 giây),
