@@ -345,10 +345,24 @@ class Ultimate50FeatureMemoryEngine:
             "HIGH-CONTRAST DRAMATIC LIGHTING, DYNAMIC CINEMATIC COMPOSITION"
         )
 
+        # 4b. Dynamic Action Mood & Emotion Auto-Enhancer (Phát hiện cảm xúc & hiệu ứng chiến đấu tự động)
+        mood_tags = []
+        lower_scene = scene_text.lower()
+        if any(w in lower_scene for w in ["giận", "nộ", "quát", "gầm", "sát khí"]):
+            mood_tags.append("furious roaring expression, glowing crimson eyes, intense red aura particles")
+        if any(w in lower_scene for w in ["bá chủ", "thức tỉnh", "bộc phát", "vô địch"]):
+            mood_tags.append("godlike awakening light, golden energy eruption, electric lightning discharge")
+        if any(w in lower_scene for w in ["chém", "đánh", "kiếm", "quyết chiến", "xung đột"]):
+            mood_tags.append("epic weapon clash sparks, fiery blast impact, dynamic action speed lines")
+        if any(w in lower_scene for w in ["ma", "tà", "tối", "quỷ"]):
+            mood_tags.append("sinister purple shadow miasma, dark demonic energy aura")
+            
+        mood_string = ", ".join(mood_tags) if mood_tags else "intense focused atmosphere"
+
         positive_prompt = (
             f"{UNIFIED_ART_STYLE_HEADER}, {cam['shot']}, {cam['focal']}, {cam['dof']}, {character_anchor}, "
             f"{facial_expression}, action sequence: {scene_action_clean}, setting: {genre_prompt}, visual fx: {fx_string}, "
-            f"glowing elemental energy aura, dynamic speed particles, dramatic rim light, 16:9 widescreen, "
+            f"{mood_string}, glowing elemental energy aura, dynamic speed particles, dramatic rim light, 16:9 widescreen, "
             f"Solo Leveling and Magic Emperor art direction, uniform visual identity across all panels, 8k resolution"
         )
 

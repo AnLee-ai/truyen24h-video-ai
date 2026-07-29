@@ -5,7 +5,25 @@ import urllib.parse
 import urllib.request
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from PIL import Image, ImageDraw, ImageFont, ImageEnhance
 from src.visual_memory import ultimate_memory_50
+
+def enhance_image_quality(image_path: str):
+    """Tự động nâng cấp màu sắc rực rỡ (Color Saturation 1.15x) và làm nét chi tiết Manhwa (Sharpness 1.25x)."""
+    try:
+        if not os.path.exists(image_path) or os.path.getsize(image_path) < 1000:
+            return
+        with Image.open(image_path) as img:
+            img = img.convert("RGB")
+            # Tăng độ rực rỡ cel-shading 1.15x
+            enhancer_color = ImageEnhance.Color(img)
+            img = enhancer_color.enhance(1.15)
+            # Tăng độ sắc nét nét vẽ đen 1.25x
+            enhancer_sharp = ImageEnhance.Sharpness(img)
+            img = enhancer_sharp.enhance(1.25)
+            img.save(image_path, "JPEG", quality=95)
+    except Exception as e:
+        print(f"[WARNING] Post-processing image quality failed: {e}")
 
 def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, height: int = 1080) -> str:
     """
@@ -42,6 +60,7 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
                 out_file.write(response.read())
                 
             if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
+                enhance_image_quality(output_path)
                 print(f"[SUCCESS] Saved AI image via Pollinations ({model_name}): {output_path}")
                 return output_path
         except Exception as e:
@@ -70,6 +89,7 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
                     with urllib.request.urlopen(req_img, timeout=30) as img_resp, open(output_path, 'wb') as out_file:
                         out_file.write(img_resp.read())
                     if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
+                        enhance_image_quality(output_path)
                         print(f"[SUCCESS] Saved AI image via Lexica Art: {output_path}")
                         return output_path
     except Exception as e:
@@ -90,6 +110,7 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
             if resp.status_code == 200 and len(resp.content) > 1000:
                 with open(output_path, 'wb') as f:
                     f.write(resp.content)
+                enhance_image_quality(output_path)
                 print(f"[SUCCESS] Saved AI image via HuggingFace Engine: {output_path}")
                 return output_path
     except Exception as e:
@@ -104,6 +125,7 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
         with urllib.request.urlopen(req_p, timeout=15) as p_resp, open(output_path, 'wb') as out_file:
             out_file.write(p_resp.read())
         if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
+            enhance_image_quality(output_path)
             print(f"[SUCCESS] Saved High-Res AI image via Public Art Engine: {output_path}")
             return output_path
     except Exception as e:
