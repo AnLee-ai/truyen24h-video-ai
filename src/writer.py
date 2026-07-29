@@ -163,11 +163,11 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
         
         print("[WARNING] All Groq retries failed. Switching to Gemini API...")
 
-    # Fallback to Gemini API với Key Rotator & Multi-Model Pool
-    raw_gemini = [config.GEMINI_MODEL_WRITER, "gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash", "gemini-1.5-pro"]
-    gemini_models = [m for m in raw_gemini if m]
+    # Fallback to Gemini API với Key Rotator & Multi-Model Pool (Chỉ dùng model hợp lệ 100%)
+    raw_gemini = [config.GEMINI_MODEL_WRITER, "gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash-latest"]
+    gemini_models = [m for m in raw_gemini if m and m not in ["gemini-1.5-flash", "gemini-1.5-pro"]]
     
-    for attempt in range(retries):
+    for attempt in range(min(retries, 4)):
         g_key = key_rotator.get_gemini_key() or config.GEMINI_API_KEY
         if not g_key:
             print("[ERROR] No valid Gemini API key available.")
@@ -199,20 +199,21 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
             raise ValueError("Empty response from Gemini API.")
         except Exception as e:
             err_str = str(e)
-            if "401" in err_str or "UNAUTHENTICATED" in err_str:
+            if "404" in err_str or "NOT_FOUND" in err_str:
+                print(f"[WARNING] Gemini Model '{current_g_model}' 404 NOT_FOUND. Bỏ qua model tên sai.")
+                time.sleep(0.5)
+                continue
+            elif "401" in err_str or "UNAUTHENTICATED" in err_str:
                 print(f"[WARNING] Gemini Key bị lỗi 401 UNAUTHENTICATED. Khóa bị vô hiệu hóa hẳn.")
                 key_rotator.mark_gemini_key_failed(g_key, is_permanent=True)
-                time.sleep(1.0)
+                time.sleep(0.5)
                 continue
             elif "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
                 print(f"[WARNING] Gemini ({current_g_model}) bị hết Quota (429). Đã chuyển sang Model/Key Gemini tiếp theo...")
                 key_rotator.mark_gemini_key_failed(g_key, is_permanent=False)
-                time.sleep(2.0)
+                time.sleep(1.0)
                 continue
-            time.sleep(2.0)
-                
-            print(f"[WARNING] Gemini call failed: {e}. Retrying in 3s...")
-            time.sleep(3)
+            time.sleep(1.5)
             
     print("[WARNING] All API Keys failed (401/429). Switching to OpenRouter 100% Free AI Engine...")
     openrouter_res = call_openrouter_free_llm(prompt)
