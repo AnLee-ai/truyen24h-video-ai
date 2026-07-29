@@ -19,46 +19,53 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
         return output_path
     
-    # 1. Biên dịch master prompt từ 50-Feature Memory Engine
+    # 1. Biên dịch master prompt từ 50-Feature Memory Engine (GIỮ NGUYÊN 100% PROMPT ĐẦY ĐỦ, KHÔNG CẮT BỚT)
     aspect = "9:16" if height > width else "16:9"
     compiled_data = ultimate_memory_50.compile_master_prompt(scene_text, target_aspect_ratio=aspect)
     prompt_str = compiled_data["positive_prompt"]
     
-    print(f"[INFO] Generating Free AI Image with prompt:\n > {prompt_str[:100]}...")
-    base_seed = int(compiled_data.get("hash", "0")[:8], 16) % 1000000
     encoded_prompt = urllib.parse.quote(prompt_str)
+    
+    print(f"[INFO] Generating Free AI Image with FULL prompt:\n > {prompt_str[:120]}...")
+    base_seed = int(compiled_data.get("hash", "0")[:8], 16) % 1000000
 
-    # NỀN TẢNG 1: Pollinations.ai Multi-Model Engine (flux-anime -> flux -> turbo -> flux-real -> any-dark)
+    # NỀN TẢNG 1: Pollinations.ai Multi-Model Engine (Tăng thời gian chờ timeout=35s & Dãn cách 3.0s khi bị 429)
     pollination_models = ["flux-anime", "flux", "turbo", "flux-real", "any-dark"]
     for idx, model_name in enumerate(pollination_models):
-        seed = base_seed + (idx * 111)
+        seed = base_seed + (idx * 111) + int(time.time() % 1000)
         url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={width}&height={height}&model={model_name}&seed={seed}&enhance=true&nologo=true"
         try:
             req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
-            with urllib.request.urlopen(req, timeout=20) as response, open(output_path, 'wb') as out_file:
+            with urllib.request.urlopen(req, timeout=35) as response, open(output_path, 'wb') as out_file:
                 out_file.write(response.read())
                 
             if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
                 print(f"[SUCCESS] Saved AI image via Pollinations ({model_name}): {output_path}")
                 return output_path
         except Exception as e:
-            print(f"[WARNING] Pollinations model '{model_name}' failed: {e}")
-            time.sleep(0.5)
+            err_str = str(e)
+            if "429" in err_str:
+                print(f"[WARNING] Pollinations model '{model_name}' rate limited (429). Tự động chờ 3.0s để giải phóng Quota...")
+                time.sleep(3.0)
+            else:
+                print(f"[WARNING] Pollinations model '{model_name}' failed: {e}")
+                time.sleep(1.5)
 
-    # NỀN TẢNG 2: Lexica.art High Quality Manhwa Image Search Engine
+    # NỀN TẢNG 2: Lexica.art & Public High-Quality Anime Search Engine (Tăng thời gian chờ timeout=25s)
     try:
         print("[INFO] Pollinations exhausted. Switching to Provider 2: Lexica.art Engine...")
-        lexica_query = urllib.parse.quote("Korean manhwa webtoon style 2D " + scene_text[:60])
+        clean_q = re.sub(r"[^\w\s]", "", scene_text[:80])
+        lexica_query = urllib.parse.quote("Korean 2D manhwa webtoon " + clean_q)
         lexica_url = f"https://lexica.art/api/v1/search?q={lexica_query}"
-        req = urllib.request.Request(lexica_url, headers={'User-Agent': 'Mozilla/5.0'})
-        with urllib.request.urlopen(req, timeout=15) as response:
+        req = urllib.request.Request(lexica_url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+        with urllib.request.urlopen(req, timeout=25) as response:
             data = json.loads(response.read().decode('utf-8'))
             images = data.get("images", [])
             if images:
                 src_url = images[0].get("src")
                 if src_url:
                     req_img = urllib.request.Request(src_url, headers={'User-Agent': 'Mozilla/5.0'})
-                    with urllib.request.urlopen(req_img, timeout=20) as img_resp, open(output_path, 'wb') as out_file:
+                    with urllib.request.urlopen(req_img, timeout=30) as img_resp, open(output_path, 'wb') as out_file:
                         out_file.write(img_resp.read())
                     if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
                         print(f"[SUCCESS] Saved AI image via Lexica Art: {output_path}")
@@ -66,17 +73,18 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     except Exception as e:
         print(f"[WARNING] Lexica.art engine failed: {e}")
 
-    # NỀN TẢNG 3: HuggingFace Flux/SDXL Inference Router (Public Free)
+    # NỀN TẢNG 3: HuggingFace Flux/SDXL Inference Router (Giữ Full Prompt & Tăng timeout=45s)
     try:
         print("[INFO] Switching to Provider 3: HuggingFace Public AI Engine...")
         import requests
-        unified_hf_prompt = "2D Korean manhwa webtoon style, bold black lines, cel shading, " + prompt_str[:250]
+        unified_hf_prompt = prompt_str
+        headers_hf = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
         hf_models = [
-            "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell",
-            "https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0"
+            "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell",
+            "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0"
         ]
         for hf_url in hf_models:
-            resp = requests.post(hf_url, json={"inputs": unified_hf_prompt}, timeout=25)
+            resp = requests.post(hf_url, json={"inputs": unified_hf_prompt}, headers=headers_hf, timeout=45)
             if resp.status_code == 200 and len(resp.content) > 1000:
                 with open(output_path, 'wb') as f:
                     f.write(resp.content)

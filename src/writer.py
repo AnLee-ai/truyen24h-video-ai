@@ -123,9 +123,12 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
             "Content-Type": "application/json"
         }
         
-        # Danh sách Model Groq hoạt động tốt nhất
-        raw_groq = [config.GROQ_MODEL_WRITER, "llama-3.3-70b-versatile", "llama-3.3-70b-specdec", "llama-3.1-8b-instant", "mixtral-8x7b-32768"]
-        groq_models = [m for m in raw_groq if m]
+        # Danh sách Model Groq hoạt động chuẩn 100% trên Groq API
+        raw_groq = [config.GROQ_MODEL_WRITER, "llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768"]
+        groq_models = []
+        for m in raw_groq:
+            if m and m not in groq_models:
+                groq_models.append(m)
         
         max_tokens_options = [3200, 2400, 1800] if not json_mode else [1000]
         
@@ -166,18 +169,17 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
                     headers["Authorization"] = f"Bearer {groq_key}"
                 
                 print(f"[WARNING] Groq ({current_model}) status {response.status_code}: {response.text[:100]}. Retrying (Attempt {attempt+1}/{retries})...")
-                time.sleep(3)
+                time.sleep(2)
                 continue
             except Exception as e:
                 print(f"[WARNING] Groq ({current_model}) error: {e}. Retrying (Attempt {attempt+1}/{retries})...")
-                time.sleep(3)
+                time.sleep(2)
                 continue
         
         print("[WARNING] All Groq retries failed. Switching to Gemini API...")
 
-    # Fallback to Gemini API với Key Rotator & Multi-Model Pool (Chỉ dùng model hợp lệ 100%)
-    raw_gemini = [config.GEMINI_MODEL_WRITER, "gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash-latest"]
-    gemini_models = [m for m in raw_gemini if m and m not in ["gemini-1.5-flash", "gemini-1.5-pro"]]
+    # Fallback to Gemini API với Key Rotator (Chỉ sử dụng 2 Model ổn định chuẩn 100% của Google)
+    gemini_models = ["gemini-2.0-flash", "gemini-2.0-flash-lite"]
     
     for attempt in range(min(retries, 4)):
         g_key = key_rotator.get_gemini_key() or config.GEMINI_API_KEY
@@ -212,7 +214,7 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
         except Exception as e:
             err_str = str(e)
             if "404" in err_str or "NOT_FOUND" in err_str:
-                print(f"[WARNING] Gemini Model '{current_g_model}' 404 NOT_FOUND. Bỏ qua model tên sai.")
+                print(f"[WARNING] Gemini Model '{current_g_model}' 404. Bỏ qua model.")
                 time.sleep(0.5)
                 continue
             elif "401" in err_str or "UNAUTHENTICATED" in err_str:
@@ -254,7 +256,7 @@ def call_openrouter_free_llm(prompt: str) -> str:
         headers["Authorization"] = f"Bearer {or_key}"
     
     free_models = [
-        "google/gemini-2.0-flash-lite-preview-02-05:free",
+        "google/gemini-2.0-flash-exp:free",
         "meta-llama/llama-3.3-70b-instruct:free",
         "deepseek/deepseek-r1:free",
         "qwen/qwen-2.5-coder-32b-instruct:free",
