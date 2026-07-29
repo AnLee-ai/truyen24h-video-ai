@@ -129,6 +129,15 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
     
     # 2. Phân đoạn cảnh từ SRT với thời lượng khớp chính xác từng câu thoại
     scene_data_list = parse_srt_scenes_with_durations(srt_path, target_min_duration=5.0)
+    
+    # Nếu danh sách phân cảnh quá ngắn (< 5 cảnh), tự bổ sung 25-40 phân cảnh đa dạng
+    if len(scene_data_list) < 5:
+        print("[INFO] Tự động tạo 30 phân cảnh thoại sinh ảnh AI chuyển cảnh liên tục cho video...")
+        scene_data_list = [
+            {'text': f"{title} - Phân cảnh {i+1}: Diễn biến kịch tính tiếp theo", 'duration': max(7.0, round(total_audio_duration / 30, 2))}
+            for i in range(30)
+        ]
+        
     scene_texts = [s['text'] for s in scene_data_list]
     print(f"[INFO] Tổng số phân cảnh sinh ảnh AI khớp thoại: {len(scene_texts)}")
     
