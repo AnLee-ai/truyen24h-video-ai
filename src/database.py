@@ -58,15 +58,25 @@ def get_all_chapters(novel_id: str) -> list:
     return response.data if response.data else []
 
 def create_chapter(novel_id: str, chapter_number: int, title: str, content: str) -> dict:
-    """Create a new chapter record."""
+    """Create or upsert a chapter record safely avoiding 23505 duplicate key errors."""
     client = get_client()
-    response = client.table("chapters").insert({
-        "novel_id": novel_id,
-        "chapter_number": chapter_number,
-        "title": title,
-        "content": content
-    }).execute()
-    return response.data[0] if response.data else {}  # type: ignore[return-value]
+    try:
+        response = client.table("chapters").upsert({
+            "novel_id": novel_id,
+            "chapter_number": chapter_number,
+            "title": title,
+            "content": content
+        }, on_conflict="novel_id,chapter_number").execute()
+        return response.data[0] if response.data else {}
+    except Exception as e:
+        print(f"[WARNING] Upsert failed for Chapter {chapter_number}: {e}. Fetching existing record...")
+        try:
+            res = client.table("chapters").select("*").eq("novel_id", novel_id).eq("chapter_number", chapter_number).execute()
+            if res.data:
+                return res.data[0]
+        except Exception:
+            pass
+        return {}
 
 def update_chapter_audio(chapter_id: str, audio_url: str) -> dict:
     """Update the audio URL of a chapter."""

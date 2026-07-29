@@ -434,9 +434,16 @@ def generate_arc_blueprints(novel_id: str, arc: dict) -> list:
     
     try:
         try:
-            blueprints = safe_loads(blueprints_json)
-            if not isinstance(blueprints, list):
-                raise ValueError("Parsed blueprints is not a list")
+            blueprints_raw = safe_loads(blueprints_json)
+            if isinstance(blueprints_raw, list):
+                blueprints = blueprints_raw
+            elif isinstance(blueprints_raw, dict):
+                # Giải nén nếu LLM bọc trong dict {"blueprints": [...]} hoặc {"chapters": [...]}
+                blueprints = blueprints_raw.get("blueprints") or blueprints_raw.get("chapters") or blueprints_raw.get("arcs") or []
+                if not isinstance(blueprints, list):
+                    raise ValueError("Extracted blueprints from dict is not a list")
+            else:
+                raise ValueError("Parsed blueprints is not a list or dict")
         except Exception as e:
             print(f"[WARNING] Failed to parse blueprints JSON: {e}. Attempting recovery...")
             blueprints = []
@@ -464,6 +471,7 @@ def generate_arc_blueprints(novel_id: str, arc: dict) -> list:
                 "narrative_goal": "Giới thiệu bối cảnh"
             }]
 
+        existing_chapter_numbers = {c["chapter_number"] for c in existing_chapters}
         inserted_chapters = []
         for ch_data in blueprints:
             if not isinstance(ch_data, dict):
@@ -472,15 +480,18 @@ def generate_arc_blueprints(novel_id: str, arc: dict) -> list:
             ch_title = ch_data.get("chapter_title") or "Chương Tiếp Theo"
             blueprint_text = ch_data.get("blueprint") or "Tiếp tục diễn biến câu chuyện."
             
-            ch_record = database.create_chapter(
-                novel_id=novel_id,
-                chapter_number=ch_num,
-                title=ch_title,
-                content=f"BLUEPRINT: {blueprint_text}"
-            )
-            inserted_chapters.append(ch_record)
+            # Chỉ tạo blueprint nếu chương chưa tồn tại trong CSDL
+            if ch_num not in existing_chapter_numbers:
+                ch_record = database.create_chapter(
+                    novel_id=novel_id,
+                    chapter_number=ch_num,
+                    title=ch_title,
+                    content=f"BLUEPRINT: {blueprint_text}"
+                )
+                if ch_record:
+                    inserted_chapters.append(ch_record)
             
-        print(f"[INFO] Created {len(inserted_chapters)} chapter blueprints in DB.")
+        print(f"[INFO] Created/Updated {len(inserted_chapters)} new chapter blueprints in DB.")
         return inserted_chapters
     except Exception as e:
         print(f"[ERROR] Failed to generate/parse blueprints for Arc {arc_num}: {e}")

@@ -132,25 +132,25 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
     scene_texts = [s['text'] for s in scene_data_list]
     print(f"[INFO] Tổng số phân cảnh sinh ảnh AI khớp thoại: {len(scene_texts)}")
     
-    # 3. Sinh ảnh AI ĐA LUỒNG cho các phân cảnh (tối đa 40 ảnh)
-    from src.image_generator import batch_generate_scene_images
+    # 3. Sinh ảnh AI ĐA LUỒNG cho tất cả phân cảnh thoại (lên đến 40 phân cảnh độc lập)
+    from src.image_generator import batch_generate_scene_images, generate_emergency_gradient_canvas
     chapter_id = os.path.basename(out_dir)
-    image_files = batch_generate_scene_images(scene_texts[:40], chapter_id=chapter_id, max_workers=2)
+    target_scenes = scene_texts[:40]
+    image_files = batch_generate_scene_images(target_scenes, chapter_id=chapter_id, max_workers=2)
             
-    # Đảm bảo video LUÔN CÓ ĐA DẠNG ẢNH ĐỔI PHÂN CẢNH (Không bao giờ bị 1 ảnh tĩnh duy nhất!)
-    if len(image_files) < 5:
-        print(f"[WARNING] Chỉ sinh được {len(image_files)} ảnh. Đang sinh tự động các phân cảnh biến thể dự phòng...")
-        needed = 10 - len(image_files)
-        for var_i in range(needed):
-            fallback_path = os.path.join(img_dir, f"fallback_var_{var_i+1:02d}.jpg")
-            scene_prompt = scene_texts[var_i % len(scene_texts)] + f", dramatic angle perspective variant {var_i+1}"
-            res_p = generate_scene_image(scene_prompt, fallback_path, width=1920, height=1080)
-            if res_p and os.path.exists(res_p) and os.path.getsize(res_p) > 1000:
-                image_files.append(res_p)
+    # Đảm bảo BẮT BUỘC mỗi phân cảnh đều có 1 ảnh riêng biệt (Không bao giờ bị 1 ảnh lặp lại hay ảnh đen)
+    if len(image_files) < len(target_scenes):
+        print(f"[INFO] Bổ sung ảnh khung truyện rực rỡ cho {len(target_scenes) - len(image_files)} phân cảnh còn lại...")
+        for i in range(len(target_scenes)):
+            img_file_path = os.path.join(img_dir, f"scene_{i + 1:03d}.jpg")
+            if not os.path.exists(img_file_path) or os.path.getsize(img_file_path) < 1000:
+                generate_emergency_gradient_canvas(target_scenes[i], img_file_path, width=1920, height=1080)
+            if img_file_path not in image_files and os.path.exists(img_file_path):
+                image_files.append(img_file_path)
                 
     if not image_files:
         bg_image = os.path.join(out_dir, "background.jpg")
-        generate_scene_image(title, bg_image, width=1920, height=1080)
+        generate_emergency_gradient_canvas(title, bg_image, width=1920, height=1080)
         if os.path.exists(bg_image):
             image_files.append(bg_image)
             
