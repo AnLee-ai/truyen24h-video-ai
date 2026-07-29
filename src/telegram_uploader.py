@@ -86,8 +86,8 @@ def send_document_to_telegram(doc_path: str, caption: str, custom_filename: str 
         print(f"[ERROR] Subtitle upload failed: {e}")
         return False
 
-def send_video_to_telegram(video_path: str, caption: str) -> bool:
-    """Send a video MP4 file to Telegram channel using sendVideo API."""
+def send_video_to_telegram(video_path: str, caption: str, public_url: str = "") -> bool:
+    """Send a video MP4 file to Telegram channel using sendVideo API, with automatic link fallback if file exceeds 50MB Telegram limit."""
     if not config.TELEGRAM_BOT_TOKEN or not config.TELEGRAM_CHAT_ID:
         print("[WARNING] Telegram credentials not configured for video upload.")
         return False
@@ -96,8 +96,16 @@ def send_video_to_telegram(video_path: str, caption: str) -> bool:
         print(f"[ERROR] Video file does not exist: {video_path}")
         return False
         
+    file_size_mb = os.path.getsize(video_path) / (1024 * 1024)
+    print(f"[INFO] Video MP4 Size: {file_size_mb:.2f} MB")
+    
+    # Nếu file > 48MB (chạm giới hạn 50MB của Telegram Bot API), gửi link trực tiếp từ Supabase
+    if file_size_mb > 48.0 and public_url:
+        print(f"[INFO] Video file size ({file_size_mb:.2f}MB) exceeds Telegram Bot 50MB limit. Sending Supabase Video Public Link...")
+        return send_document_to_telegram(video_path, f"{caption}\n\n🔗 *Xem Video Full 4K HD*: {public_url}")
+        
     url = f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}/sendVideo"
-    print(f"[INFO] Uploading Video MP4 to Telegram chat/channel: {config.TELEGRAM_CHAT_ID}...")
+    print(f"[INFO] Uploading Video MP4 ({file_size_mb:.1f}MB) to Telegram channel: {config.TELEGRAM_CHAT_ID}...")
     
     try:
         with open(video_path, 'rb') as video_file:
@@ -118,7 +126,10 @@ def send_video_to_telegram(video_path: str, caption: str) -> bool:
                 print("[INFO] Video MP4 uploaded successfully to Telegram!")
                 return True
             else:
-                print(f"[ERROR] Telegram video upload failed: {response.status_code} - {response.text}")
+                print(f"[ERROR] Telegram video upload failed ({response.status_code}): {response.text}")
+                if public_url:
+                    print("[INFO] Fallback to sending video link...")
+                    send_document_to_telegram(video_path, f"{caption}\n\n🔗 *Link Video Supabase*: {public_url}")
                 return False
     except Exception as e:
         print(f"[ERROR] Error uploading video to Telegram: {e}")
