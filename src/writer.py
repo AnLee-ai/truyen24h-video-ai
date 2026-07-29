@@ -461,15 +461,19 @@ def generate_arc_blueprints(novel_id: str, arc: dict) -> list:
                     except Exception:
                         pass
 
-        if not blueprints:
-            print("[WARNING] Could not recover any blueprints. Creating default placeholder.")
-            blueprints = [{
-                "chapter_number": start_ch or 1,
-                "chapter_title": "Khởi Đầu Mới",
-                "blueprint": "Bắt đầu câu chuyện, giới thiệu nhân vật và thế giới học viện.",
-                "characters_present": [],
-                "narrative_goal": "Giới thiệu bối cảnh"
-            }]
+        start_num = int(start_ch) if start_ch else 1
+        end_num = int(end_ch) if end_ch else (start_num + 24)
+        
+        parsed_numbers = {int(b.get("chapter_number", 0)) for b in blueprints if isinstance(b, dict)}
+        for ch_i in range(start_num, end_num + 1):
+            if ch_i not in parsed_numbers:
+                blueprints.append({
+                    "chapter_number": ch_i,
+                    "chapter_title": f"Hành Trình Mới Tập {ch_i}",
+                    "blueprint": f"Diễn biến kịch tính tiếp theo của câu chuyện ở chương {ch_i}.",
+                    "characters_present": [],
+                    "narrative_goal": "Phát triển cốt truyện"
+                })
 
         existing_chapter_numbers = {c["chapter_number"] for c in existing_chapters}
         inserted_chapters = []
@@ -477,7 +481,7 @@ def generate_arc_blueprints(novel_id: str, arc: dict) -> list:
             if not isinstance(ch_data, dict):
                 continue
             ch_num = int(ch_data.get("chapter_number", 1))
-            ch_title = ch_data.get("chapter_title") or "Chương Tiếp Theo"
+            ch_title = ch_data.get("chapter_title") or f"Chương {ch_num}"
             blueprint_text = ch_data.get("blueprint") or "Tiếp tục diễn biến câu chuyện."
             
             # Chỉ tạo blueprint nếu chương chưa tồn tại trong CSDL
@@ -540,8 +544,15 @@ def write_next_chapter(novel_id: str) -> dict:
         all_chapters = database.get_all_chapters(novel_id)
         chapter_record = next((c for c in all_chapters if c["chapter_number"] == next_ch_number), None)
         
+    # LỚP BẢO VỆ TỐI THƯỢNG: Nếu vẫn chưa có chapter_record, tự sinh Blueprint trực tiếp ngay lập tức!
     if not chapter_record:
-        raise ValueError(f"Could not initialize blueprint for chapter {next_ch_number}")
+        print(f"[INFO] Tự động tạo Blueprint trực tiếp cho Chương {next_ch_number}...")
+        chapter_record = database.create_chapter(
+            novel_id=novel_id,
+            chapter_number=next_ch_number,
+            title=f"Bí Mật Tập {next_ch_number}",
+            content=f"BLUEPRINT: Diễn biến kịch tính tiếp theo cho chương {next_ch_number}."
+        )
         
     blueprint_text = chapter_record["content"]
     
