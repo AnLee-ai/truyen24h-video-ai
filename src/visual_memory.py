@@ -295,11 +295,11 @@ class Ultimate50FeatureMemoryEngine:
         cam = self.CINEMATIC_SHOT_MATRIX[self.camera_step % len(self.CINEMATIC_SHOT_MATRIX)]
         self.camera_step += 1
 
-        # 4. Trích xuất & Tự động dịch / Mở rộng từ khóa hình ảnh tiếng Việt sang tiếng Anh (Visual Keyword Expansion)
+        # 4. Trích xuất & Tự động dịch / Mở rộng từ khóa hình ảnh tiếng Việt sang tiếng Anh (Visual Keyword Expansion Matrix)
         clean_words = re.sub(r"[^\w\s]", "", scene_text).split()
-        scene_action_clean = " ".join(clean_words[:12]) if clean_words else "dynamic moment"
+        scene_action_clean = " ".join(clean_words[:15]) if clean_words else "dynamic action moment"
 
-        # Tự động phát hiện và bơm hiệu ứng thị giác đỉnh cao (FX Lighting & Atmospheric Injection)
+        # Tự động phát hiện và bơm hiệu ứng thị giác điện ảnh (FX Lighting, Energy & Particle Injection Matrix)
         visual_fx = []
         if any(w in text_lower for w in ["đêm", "tối", "trăng", "đêm tối"]):
             visual_fx.append("night sky, glowing moonlit atmosphere, dark blue ambient lighting")
@@ -307,25 +307,49 @@ class Ultimate50FeatureMemoryEngine:
             visual_fx.append("falling rain droplets, wet floor reflections, misty atmosphere")
         if any(w in text_lower for w in ["lửa", "cháy", "hỏa", "bùng"]):
             visual_fx.append("swirling fiery embers, bright orange flames, glowing heat aura")
+        if any(w in text_lower for w in ["sét", "lôi", "điện"]):
+            visual_fx.append("crackling purple lightning strikes, electric arcs, thunderous energy")
+        if any(w in text_lower for w in ["băng", "tuyết", "lạnh"]):
+            visual_fx.append("crystal ice shards, freezing frost particles, icy blue aura")
+        if any(w in text_lower for w in ["máu", "huyết", "thương"]):
+            visual_fx.append("dark crimson energy mist, ominous red aura, battle scars")
+        if any(w in text_lower for w in ["quỷ", "ma", "bóng tối"]):
+            visual_fx.append("dark shadow tendrils, purple demonic energy, glowing red eyes")
+        if any(w in text_lower for w in ["ấn", "trận", "phép"]):
+            visual_fx.append("glowing ancient magic array runes, golden circle spell sigil")
         if any(w in text_lower for w in ["kiếm", "đao", "vũ khí"]):
             visual_fx.append("glowing elemental energy blade, sharp metallic reflections, sword aura")
         if any(w in text_lower for w in ["hệ thống", "giao diện", "bảng"]):
-            visual_fx.append("floating neon holographic system UI screen windows")
+            visual_fx.append("floating neon cyan holographic system UI screen windows")
         if any(w in text_lower for w in ["đánh", "chiến", "đấu", "bùng nổ"]):
             visual_fx.append("action speed lines, shockwave energy blast, dynamic combat stance")
         if any(w in text_lower for w in ["rừng", "cây", "núi"]):
             visual_fx.append("lush forest greenery, sunbeams through leaves, majestic mountain backdrop")
 
+        # Tự động nhận diện Thần Thái / Cảm Xúc Khuôn Mặt (Facial Expression Engine)
+        facial_expression = "intense determined expression, sharp calculating eyes"
+        if any(w in text_lower for w in ["gầm", "thét", "nổi giận", "tức giận"]):
+            facial_expression = "furious roaring expression, veins bulging, fierce gaze"
+        elif any(w in text_lower for w in ["cười", "nhếch mép", "tự tin"]):
+            facial_expression = "smirking confident smile, sharp intelligent eyes"
+        elif any(w in text_lower for w in ["khóc", "đau đớn", "tuyệt vọng"]):
+            facial_expression = "grief-stricken tearful eyes, clenched teeth, battered face"
+
         fx_string = ", ".join(visual_fx) if visual_fx else "volumetric rim light, floating glowing particles"
 
-        # 5. GHÉP PROMPT NGHỆ THUẬT PHONG CÁCH KÊNH MANHWA REVIEW TRIỆU VIEW (FAN REVIEW TRUYỆN SIGNATURE PROMPT ART STYLE)
+        # 5. BỘ KHÓA NÉT VẼ & DIỆN MẠO NHẤT QUÁN 100% (UNIFIED ART STYLE & CHARACTER CONSISTENCY ENGINE)
+        # Khóa cố định nét vẽ Manhwa Webtoon chuẩn Kênh Fan Review Truyện cho MỌI Model AI khác nhau
+        UNIFIED_ART_STYLE_HEADER = (
+            "MASTERPIECE 2D KOREAN MANHWA WEBTOON ART STYLE, EXACT SAME UNIFIED ARTWORK DIRECTORY, "
+            "CONSISTENT CHARACTER VISUAL FEATURES, BOLD SHARP BLACK INK LINE ART, VIBRANT SATURATED CEL-SHADING COLOR GRADING, "
+            "HIGH-CONTRAST DRAMATIC LIGHTING, DYNAMIC CINEMATIC COMPOSITION"
+        )
+
         positive_prompt = (
-            f"masterpiece 2D Korean manhwa webtoon panel art style, highly detailed digital comic illustration, "
-            f"bold sharp black ink line art, vibrant saturated color grading, epic high-contrast dramatic lighting, "
-            f"intense cinematic angle, {cam['shot']}, {cam['focal']}, {cam['dof']}, {character_anchor}, "
-            f"action sequence: {scene_action_clean}, setting: {genre_prompt}, visual fx: {fx_string}, "
+            f"{UNIFIED_ART_STYLE_HEADER}, {cam['shot']}, {cam['focal']}, {cam['dof']}, {character_anchor}, "
+            f"{facial_expression}, action sequence: {scene_action_clean}, setting: {genre_prompt}, visual fx: {fx_string}, "
             f"glowing elemental energy aura, dynamic speed particles, dramatic rim light, 16:9 widescreen, "
-            f"trending on ArtStation, Solo Leveling art direction, award-winning manhwa panel, 8k resolution"
+            f"Solo Leveling and Magic Emperor art direction, uniform visual identity across all panels, 8k resolution"
         )
 
         # MD5 Hash Caching
