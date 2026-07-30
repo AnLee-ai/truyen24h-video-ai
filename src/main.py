@@ -51,6 +51,41 @@ class CallbackStream:
     def flush(self):
         self.original_stream.flush()
 
+def find_chapter_needing_video(novel_id: str) -> dict:
+    """
+    Tự động quét các chương đã viết trong CSDL:
+    Nếu phát hiện chương nào ĐÃ CÓ NỘI DUNG VĂN BẢN (không phải BLUEPRINT) và ĐÃ CÓ FILE AUDIO,
+    nhưng CHƯA TẠO VIDEO (video_status khác 'completed' hoặc video_url rỗng),
+    thì trả về chương đó để ưu tiên render Video ngay mà KHÔNG CẦN viết chương mới.
+    """
+    try:
+        all_chapters = database.get_all_chapters(novel_id)
+        for ch in all_chapters:
+            ch_id = ch.get("id", "")
+            ch_content = ch.get("content", "")
+            ch_num = ch.get("chapter_number", 0)
+            v_status = ch.get("video_status", "")
+            v_url = ch.get("video_url", "")
+            
+            # Bỏ qua nếu chưa viết xong nội dung (còn là BLUEPRINT)
+            if not ch_content or ch_content.startswith("BLUEPRINT:") or len(ch_content.split()) < 1000:
+                continue
+                
+            # Kiểm tra xem video đã hoàn thành 100% chưa
+            video_completed = (v_status == "completed" and v_url)
+            local_video_exists = os.path.exists(os.path.join("output", ch_id, "video.mp4"))
+            
+            if not video_completed and not local_video_exists:
+                # Kiểm tra xem audio đã có chưa
+                has_audio = bool(ch.get("audio_url")) or os.path.exists(os.path.join("output", ch_id, f"{ch_id}_final.mp3")) or os.path.exists(os.path.join("output", ch_id, f"{ch_id}_raw.mp3"))
+                if has_audio:
+                    print(f"[INFO] TỰ ĐỘNG PHÁT HIỆN: Chương {ch_num} (ID: {ch_id}) đã có File Audio nhưng CHƯA CÓ VIDEO!")
+                    return ch
+    except Exception as e:
+        print(f"[WARNING] Lỗi quét chương chưa có video: {e}")
+        
+    return {}
+
 def run_chapter_pipeline(novel_id: str, log_callback=None):
     """Executes the full pipeline for writing a chapter and uploading audio."""
     if log_callback:
@@ -67,14 +102,23 @@ def _run_chapter_pipeline_impl(novel_id: str):
         return
         
     try:
-        # 1. Write the chapter & update Story Bible
-        chapter = writer.write_next_chapter(novel_id)
-        chapter_id = chapter["id"]
-        chapter_num = chapter["chapter_number"]
-        chapter_title = chapter["title"]
-        chapter_content = chapter["content"]
-        
-        print(f"[INFO] Chapter {chapter_num} written successfully: '{chapter_title}' (Words: {len(chapter_content.split())})")
+        # 0. TỰ ĐỘNG PHÁT HIỆN CHƯƠNG ĐÃ CÓ AUDIO NHƯNG CHƯA CÓ VIDEO (ƯU TIÊN RENDER VIDEO NGAY)
+        pending_video_ch = find_chapter_needing_video(novel_id)
+        if pending_video_ch:
+            chapter = pending_video_ch
+            chapter_id = chapter["id"]
+            chapter_num = chapter["chapter_number"]
+            chapter_title = chapter["title"]
+            chapter_content = chapter["content"]
+            print(f"[INFO] TRỰC TIẾP BỎ QUA BƯỚC VIẾT CHƯƠNG MỚI! Tập trung render Video ngay cho Chương {chapter_num}: '{chapter_title}' (Words: {len(chapter_content.split())})...")
+        else:
+            # 1. Viết chương tiếp theo nếu tất cả các chương cũ đã có video đầy đủ
+            chapter = writer.write_next_chapter(novel_id)
+            chapter_id = chapter["id"]
+            chapter_num = chapter["chapter_number"]
+            chapter_title = chapter["title"]
+            chapter_content = chapter["content"]
+            print(f"[INFO] Chapter {chapter_num} written successfully: '{chapter_title}' (Words: {len(chapter_content.split())})")
         
         # BỘ KIỂM DUYỆT BẢO VỆ TUYỆT ĐỐI (Strict Quality Guardrail):
         # NẾU NỘI DUNG CHƯƠNG CHƯA ĐẠT MỐC >2500 TỪ, DỪNG TIẾN TRÌNH AN TOÀN ĐỂ TRÁNH XUẤT VIDEO LỖI!
