@@ -95,6 +95,41 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     except Exception as e:
         print(f"[WARNING] Lexica.art engine failed: {e}")
 
+    # NỀN TẢNG 2B: Hercai Instant AI Image Engine (Miễn phí 100%, hỗ trợ anime 2D)
+    try:
+        print("[INFO] Switching to Provider 2B: Hercai AI Instant Anime Engine...")
+        hercai_prompt = urllib.parse.quote(prompt_str[:250])
+        hercai_url = f"https://hercai.onrender.com/v3/text2image?prompt={hercai_prompt}"
+        req_h = urllib.request.Request(hercai_url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+        with urllib.request.urlopen(req_h, timeout=25) as response:
+            data = json.loads(response.read().decode('utf-8'))
+            url_img = data.get("url")
+            if url_img:
+                req_download = urllib.request.Request(url_img, headers={'User-Agent': 'Mozilla/5.0'})
+                with urllib.request.urlopen(req_download, timeout=30) as img_resp, open(output_path, 'wb') as out_file:
+                    out_file.write(img_resp.read())
+                if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
+                    enhance_image_quality(output_path)
+                    print(f"[SUCCESS] Saved AI image via Hercai AI Engine: {output_path}")
+                    return output_path
+    except Exception as e:
+        print(f"[WARNING] Hercai AI engine failed: {e}")
+
+    # NỀN TẢNG 2C: Airforce AI Flux/Anime Engine (Miễn phí 100% không cần key)
+    try:
+        print("[INFO] Switching to Provider 2C: Airforce AI Anime Engine...")
+        air_prompt = urllib.parse.quote(prompt_str[:300])
+        air_url = f"https://api.airforce/v1/imagen?prompt={air_prompt}&model=flux"
+        req_a = urllib.request.Request(air_url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+        with urllib.request.urlopen(req_a, timeout=30) as img_resp, open(output_path, 'wb') as out_file:
+            out_file.write(img_resp.read())
+        if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
+            enhance_image_quality(output_path)
+            print(f"[SUCCESS] Saved AI image via Airforce AI Engine: {output_path}")
+            return output_path
+    except Exception as e:
+        print(f"[WARNING] Airforce AI engine failed: {e}")
+
     # NỀN TẢNG 3: HuggingFace Flux/SDXL Inference Router (Giữ Full Prompt & Tăng timeout=45s)
     try:
         print("[INFO] Switching to Provider 3: HuggingFace Public AI Engine...")
