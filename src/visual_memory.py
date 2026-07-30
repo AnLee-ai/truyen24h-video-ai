@@ -366,26 +366,40 @@ class Ultimate50FeatureMemoryEngine:
         if any(w in text_lower for w in ["băng", "tuyết", "lạnh"]):
             visual_fx.append("CRYSTAL ICE SHARDS, FREEZING FROST PARTICLES, ICY BLUE RADIANT AURA")
         if any(w in text_lower for w in ["máu", "huyết", "thương"]):
-            visual_fx.append("DARK CRIMSON ENERGY MIST, OMINOUS RED AURA, INTENSE BATTLE DAMAGE")
+            visual_fx.append("DARK CRIMSON ENERGY MIST, OMINOUS RED AURA, BATTERED BATTLE DAMAGE STANCE")
         if any(w in text_lower for w in ["quỷ", "ma", "bóng tối"]):
-            visual_fx.append("DARK SHADOW TENDRILS, PURPLE DEMONIC MIASMA, GLOWING RED EYE GLINT")
+            visual_fx.append("DARK SHADOW TENDRILS, PURPLE DEMONIC MIASMA, OMINOUS RED EYE GLINT IN SHADOW")
         if any(w in text_lower for w in ["ấn", "trận", "phép", "thức tỉnh"]):
-            visual_fx.append("GLOWING ANCIENT CELESTIAL MAGIC ARRAY RUNES, GOLDEN CIRCLE SPELL SIGIL, AWAKENING GLOW")
+            visual_fx.append("GLOWING ANCIENT CELESTIAL MAGIC ARRAY RUNES, GOLDEN CIRCLE SPELL SIGIL, AWAKENING FLOATING POSE")
         if any(w in text_lower for w in ["hệ thống", "giao diện", "bảng"]):
             visual_fx.append("FLOATING NEON CYAN HOLOGRAPHIC SYSTEM UI SCREEN WINDOWS")
         if any(w in text_lower for w in ["rừng", "cây", "núi"]):
             visual_fx.append("LUSH FOREST GREENERY, SUNBEAMS THROUGH LEAVES, MAJESTIC MOUNTAIN BACKDROP")
 
-        # Tự động nhận diện Thần Thái / Cảm Xúc Khuôn Mặt (Facial Expression Engine)
-        facial_expression = "intense determined expression, sharp calculating eyes"
+        # MA TRẬN THỂ HIỆN THẦN THÁI NHÂN VẬT & GÓC NHÌN KHUNG HÌNH (CHARACTER PRESENTATION & PANEL FRAMING MATRIX)
+        facial_expression = "intense determined expression, sharp calculating eyes, wind-blown hair"
         if any(w in text_lower for w in ["gầm", "thét", "nổi giận", "tức giận"]):
-            facial_expression = "furious roaring expression, veins bulging, fierce gaze"
+            facial_expression = "furious roaring expression, veins bulging, fierce rage gaze, intense battle aura"
         elif any(w in text_lower for w in ["cười", "nhếch mép", "tự tin"]):
-            facial_expression = "smirking confident smile, sharp intelligent eyes"
+            facial_expression = "smirking confident smile, sharp intelligent eyes, dominant presence"
         elif any(w in text_lower for w in ["khóc", "đau đớn", "tuyệt vọng"]):
-            facial_expression = "grief-stricken tearful eyes, clenched teeth, battered face"
+            facial_expression = "grief-stricken tearful eyes, clenched teeth, battered face, emotional struggle"
+        elif any(w in text_lower for w in ["lạnh lùng", "sát ý", "thì thầm"]):
+            facial_expression = "cold menacing glare, shadow covering half face, sinister glowing eyes"
+
+        # Tự động thay đổi Góc máy & Khung hình điện ảnh (Dynamic Camera Angle & Panel Framing)
+        dynamic_framing = "cinematic 16:9 Manhwa panel framing"
+        if any(w in text_lower for w in ["bá chủ", "uy phong", "đỉnh núi"]):
+            dynamic_framing = "LOW-ANGLE WORMS EYE VIEW, DOMINANT POWERFUL STANCE, TALL IMPOSING PRESENCE"
+        elif any(w in text_lower for w in ["nhìn xuống", "toàn cảnh", "trận pháp"]):
+            dynamic_framing = "HIGH-ANGLE BIRDS EYE VIEW, OVERHEAD PANORAMA SHOT, EXTENSIVE BATTLEFIELD DISTANCE"
+        elif any(w in text_lower for w in ["bất ngờ", "sốc", "kinh ngạc"]):
+            dynamic_framing = "DUTCH ANGLE TILTED CAMERA, EXTREME TENSION PANEL, OVER-THE-SHOULDER REACTION SHOT"
+        elif any(w in text_lower for w in ["mắt", "nắm tay", "lưỡi kiếm"]):
+            dynamic_framing = "EXTREME CLOSE-UP MACRO FOCUS, INTENSE SUSPENSE DETAIL, SHALLOW DEPTH OF FIELD"
 
         fx_string = ", ".join(visual_fx) if visual_fx else "volumetric rim light, floating glowing particles"
+        fx_string += f", {dynamic_framing}"
 
         # 5. BỘ KHÓA NÉT VẼ & DIỆN MẠO NHẤT QUÁN TỪ CÁC SIÊU PHẨM TRUYỆN TRANH NỔI TIẾNG
         # Tích hợp phong cách nghệ thuật từ Solo Leveling, Ta Là Tà Đạo (Magic Emperor), TBATE, JJK và Tower of God
