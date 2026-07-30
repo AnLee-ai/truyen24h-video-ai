@@ -104,12 +104,14 @@ def _run_chapter_pipeline_impl(novel_id: str):
     try:
         # 0. TỰ ĐỘNG PHÁT HIỆN CHƯƠNG ĐÃ CÓ AUDIO NHƯNG CHƯA CÓ VIDEO (ƯU TIÊN RENDER VIDEO NGAY)
         pending_video_ch = find_chapter_needing_video(novel_id)
+        is_resuming_video = False
         if pending_video_ch:
             chapter = pending_video_ch
             chapter_id = chapter["id"]
             chapter_num = chapter["chapter_number"]
             chapter_title = chapter["title"]
             chapter_content = chapter["content"]
+            is_resuming_video = True
             print(f"[INFO] TRỰC TIẾP BỎ QUA BƯỚC VIẾT CHƯƠNG MỚI! Tập trung render Video ngay cho Chương {chapter_num}: '{chapter_title}' (Words: {len(chapter_content.split())})...")
         else:
             # 1. Viết chương tiếp theo nếu tất cả các chương cũ đã có video đầy đủ
@@ -120,10 +122,11 @@ def _run_chapter_pipeline_impl(novel_id: str):
             chapter_content = chapter["content"]
             print(f"[INFO] Chapter {chapter_num} written successfully: '{chapter_title}' (Words: {len(chapter_content.split())})")
         
-        # BỘ KIỂM DUYỆT BẢO VỆ TUYỆT ĐỐI (Strict Quality Guardrail):
-        # NẾU NỘI DUNG CHƯƠNG CHƯA ĐẠT MỐC >2500 TỪ, DỪNG TIẾN TRÌNH AN TOÀN ĐỂ TRÁNH XUẤT VIDEO LỖI!
-        if not chapter_content or len(chapter_content.split()) < 2500:
-            print(f"[WARNING] Nội dung chương chưa đạt tiêu chuẩn BẮT BUỘC (>2500 từ). Độ dài thực tế: {len(chapter_content.split()) if chapter_content else 0} từ. Tự động dừng tiến trình an toàn.")
+        # BỘ KIỂM DUYỆT BẢO VỆ TUYỆT ĐỐI (Strict Quality Guardrail cho chương VIẾT MỚI):
+        # Khi viết chương mới, NẾU NỘI DUNG CHƯƠNG CHƯA ĐẠT MỐC >2500 TỪ thì dừng.
+        # Nhưng khi DÙNG LẠI CHƯƠNG CŨ ĐÃ CÓ AUDIO (is_resuming_video=True), CHO PHÉP TẠO VIDEO TRỰC TIẾP!
+        if not is_resuming_video and (not chapter_content or len(chapter_content.split()) < 2500):
+            print(f"[WARNING] Nội dung chương viết mới chưa đạt tiêu chuẩn BẮT BUỘC (>2500 từ). Độ dài thực tế: {len(chapter_content.split()) if chapter_content else 0} từ. Tự động dừng tiến trình an toàn.")
             return
             
         # 2. Convert chapter text to raw speech audio & subtitles
