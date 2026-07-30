@@ -73,7 +73,7 @@ CORE WRITING DIRECTIVES (MUST FOLLOW ALL AT ALL COSTS):
    - **CRITICAL RULE**: The protagonist CANNOT level up or obtain new powers unless failure_flag is TRUE. If failure_flag is False, they must face intense struggle, difficulty, or setback without a breakthrough.
 5. **NAMING & DIALOGUE STYLE**:
    - Use natural 2-word Vietnamese names ONLY (e.g. Trần Lam, Linh Vy, Minh Đức). NEVER use 3-word full names (do NOT write Nguyễn Minh Đức) and NEVER use English proper nouns.
-   - Dialogue ratio: 50% dynamic dialogue/action, 50% deep sensory description and internal thought.
+   - **TẢI TRỌNG LỜI THOẠI ĐỐI THOẠI CỰC ĐẠI (70% - 80% DIRECT DIALOGUE RATIO)**: BẮT BUỘC câu chuyện phải chiếm từ 70% ĐẾN 80% LỜI NÓI TRỰC TIẾP và ĐỐI THOẠI giữa các nhân vật trong ngoặc kép ("..."). Mọi phân cảnh đều là sự đối đáp dồn dập, tranh luận gay gắt, khiêu khích, thì thầm, bàn chiến thuật và phản ứng bộc phát giữa nhân vật chính và các nhân vật xung quanh. Hạn chế tối đa các đoạn mô tả dài dòng không cần thiết, hãy thể hiện toàn bộ diễn biến câu chuyện qua LỜI NÓI TRỰC TIẾP sống động giữa 2, 3 hoặc nhóm nhân vật!
 
 Write the chapter in natural, evocative Vietnamese. Output ONLY the raw story text without conversational intro/outro text, headers, or sections like 'Dẫn lược:' or 'Chương X:'. Write straight into the narrative.
 """
