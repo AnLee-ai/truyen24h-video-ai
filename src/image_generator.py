@@ -49,7 +49,7 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     print(f"[INFO] Generating Free AI Image with FULL prompt:\n > {prompt_str[:120]}...")
     base_seed = int(compiled_data.get("hash", "0")[:8], 16) % 1000000
 
-    # NỀN TẢNG 1: Pollinations.ai Multi-Model Engine (Tăng thời gian chờ timeout=35s & Dãn cách 3.0s khi bị 429)
+    # NỀN TẢNG 1: Pollinations.ai Multi-Model Engine (Tăng thời gian chờ timeout=35s & Dãn cách 6.0s khi bị 429)
     pollination_models = ["flux-anime", "flux", "turbo", "flux-real", "any-dark"]
     for idx, model_name in enumerate(pollination_models):
         seed = base_seed + (idx * 111) + int(time.time() % 1000)
@@ -62,15 +62,16 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
             if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
                 enhance_image_quality(output_path)
                 print(f"[SUCCESS] Saved AI image via Pollinations ({model_name}): {output_path}")
+                time.sleep(2.0)  # Dãn cách an toàn 2.0s giữa các lần sinh ảnh liên tiếp
                 return output_path
         except Exception as e:
             err_str = str(e)
             if "429" in err_str:
-                print(f"[WARNING] Pollinations model '{model_name}' rate limited (429). Tự động chờ 3.0s để giải phóng Quota...")
-                time.sleep(3.0)
+                print(f"[WARNING] Pollinations model '{model_name}' rate limited (429). Tự động chờ 6.0s để giải phóng Quota...")
+                time.sleep(6.0)
             else:
                 print(f"[WARNING] Pollinations model '{model_name}' failed: {e}")
-                time.sleep(1.5)
+                time.sleep(2.5)
 
     # NỀN TẢNG 2: Lexica.art & Public High-Quality Anime Search Engine (Tăng thời gian chờ timeout=25s)
     try:
