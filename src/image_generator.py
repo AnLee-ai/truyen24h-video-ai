@@ -9,19 +9,22 @@ from PIL import Image, ImageDraw, ImageFont, ImageEnhance
 from src.visual_memory import ultimate_memory_50
 
 def enhance_image_quality(image_path: str):
-    """Tự động nâng cấp màu sắc rực rỡ (Color Saturation 1.15x) và làm nét chi tiết Manhwa (Sharpness 1.25x)."""
+    """Tự động nâng cấp độ sắc nét nét vẽ AI Manhwa 2D (Sharpness 1.6x), bão hòa màu sắc (Color 1.20x) và tương phản (Contrast 1.15x)."""
     try:
         if not os.path.exists(image_path) or os.path.getsize(image_path) < 1000:
             return
         with Image.open(image_path) as img:
             img = img.convert("RGB")
-            # Tăng độ rực rỡ cel-shading 1.15x
+            # 1. Tăng độ rực rỡ cel-shading 1.20x
             enhancer_color = ImageEnhance.Color(img)
-            img = enhancer_color.enhance(1.15)
-            # Tăng độ sắc nét nét vẽ đen 1.25x
+            img = enhancer_color.enhance(1.20)
+            # 2. Tăng độ sắc nét nét vẽ đen 1.60x (Siêu sắc nét 4K)
             enhancer_sharp = ImageEnhance.Sharpness(img)
-            img = enhancer_sharp.enhance(1.25)
-            img.save(image_path, "JPEG", quality=95)
+            img = enhancer_sharp.enhance(1.60)
+            # 3. Tăng tương phản nổi bật 1.15x
+            enhancer_contrast = ImageEnhance.Contrast(img)
+            img = enhancer_contrast.enhance(1.15)
+            img.save(image_path, "JPEG", quality=98)
     except Exception as e:
         print(f"[WARNING] Post-processing image quality failed: {e}")
 
@@ -152,23 +155,8 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     except Exception as e:
         print(f"[WARNING] HuggingFace AI engine failed: {e}")
 
-    # NỀN TẢNG 4: Public High-Res Dynamic Art Engine (Picsum 100% Luôn Trả Về Ảnh Thật Sống Động)
-    try:
-        print("[INFO] Switching to Provider 4: Public High-Res Dynamic Art Engine...")
-        picsum_seed = base_seed + int(time.time() % 10000)
-        picsum_url = f"https://picsum.photos/{width}/{height}?random={picsum_seed}"
-        req_p = urllib.request.Request(picsum_url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
-        with urllib.request.urlopen(req_p, timeout=15) as p_resp, open(output_path, 'wb') as out_file:
-            out_file.write(p_resp.read())
-        if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
-            enhance_image_quality(output_path)
-            print(f"[SUCCESS] Saved High-Res AI image via Public Art Engine: {output_path}")
-            return output_path
-    except Exception as e:
-        print(f"[WARNING] Public Art Engine failed: {e}")
-
     # NỀN TẢNG 5: Emergency Dynamic 4K Manhwa Comic Canvas (Khung Ảnh Truyện Tranh 2D Rực Rỡ Chữ Vàng)
-    print(f"[WARNING] Emergency fallback: Generating Vibrant Manhwa Comic Canvas for {output_path}...")
+    print(f"[WARNING] Fallback: Generating Dynamic 4K Manhwa Comic Canvas for {output_path}...")
     return generate_emergency_gradient_canvas(scene_text, output_path, width, height)
 
 def generate_emergency_gradient_canvas(scene_text: str, output_path: str, width: int = 1920, height: int = 1080) -> str:
