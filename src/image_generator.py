@@ -8,10 +8,49 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from PIL import Image, ImageDraw, ImageFont, ImageEnhance
 from src.visual_memory import ultimate_memory_50
 
+def is_valid_image_file(file_path: str) -> bool:
+    """Kiểm tra Header Magic Bytes (\xff\xd8\xff, \x89PNG, WEBP) đảm bảo file tải về không bị lỗi 0-byte hay hỏng cấu trúc."""
+    if not os.path.exists(file_path) or os.path.getsize(file_path) < 1000:
+        return False
+    try:
+        with open(file_path, "rb") as f:
+            header = f.read(12)
+            if header.startswith(b"\xff\xd8\xff") or header.startswith(b"\x89PNG") or b"WEBP" in header:
+                return True
+    except Exception:
+        pass
+    return False
+
+def get_random_user_agent() -> str:
+    """Xoay vòng User-Agent giả lập trình duyệt chống khóa IP WAF/Cloudflare."""
+    user_agents = [
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0'
+    ]
+    import random
+    return random.choice(user_agents)
+
+def generate_random_ip() -> str:
+    """Tự động sinh địa chỉ IP ngẫu nhiên (Dynamic IP Rotator) vượt qua giới hạn Rate Limit theo IP của server AI."""
+    import random
+    return f"{random.randint(1, 223)}.{random.randint(0, 255)}.{random.randint(0, 255)}.{random.randint(1, 254)}"
+
+def get_anti_rate_limit_headers() -> dict:
+    """Tạo Header HTTP giả lập IP ngẫu nhiên (X-Forwarded-For, X-Real-IP, Client-IP) và User-Agent đổi liên tục."""
+    fake_ip = generate_random_ip()
+    return {
+        'User-Agent': get_random_user_agent(),
+        'X-Forwarded-For': fake_ip,
+        'X-Real-IP': fake_ip,
+        'CF-Connecting-IP': fake_ip,
+        'Client-IP': fake_ip
+    }
+
 def enhance_image_quality(image_path: str):
     """Tự động nâng cấp độ sắc nét nét vẽ AI Manhwa 2D SIÊU NÉT (Sharpness 2.20x + PIL Sharpen Filter + JPEG 100% Quality 4:4:4)."""
     try:
-        if not os.path.exists(image_path) or os.path.getsize(image_path) < 1000:
+        if not is_valid_image_file(image_path):
             return
         from PIL import ImageFilter
         with Image.open(image_path) as img:
@@ -33,17 +72,10 @@ def enhance_image_quality(image_path: str):
         print(f"[WARNING] Post-processing image quality failed: {e}")
 
 def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, height: int = 1080) -> str:
-    """
-    Sinh ảnh minh họa phân cảnh 100% MIỄN PHÍ qua Ma Trận 5 Nền Tảng AI Sinh Ảnh:
-    - Provider 1: Pollinations.ai Multi-Model (flux-anime, flux, turbo, flux-real, any-dark)
-    - Provider 2: Lexica.art High Quality Manhwa Art Search Engine
-    - Provider 3: HuggingFace Flux/SDXL Inference Engine
-    - Provider 4: Public High-Res Dynamic Art Engine (Picsum & Unsplash Engine)
-    - Provider 5: Emergency Dynamic 4K Manhwa Comic Canvas (Khung Ảnh Truyện Tranh 2D Rực Rỡ Chữ Vàng)
-    """
+    """Sinh ảnh minh họa phân cảnh 100% MIỄN PHÍ qua Ma Trận 5 Nền Tảng AI Sinh Ảnh."""
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     
-    if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
+    if is_valid_image_file(output_path):
         return output_path
     
     # 1. Biên dịch master prompt từ 50-Feature Memory Engine (GIỮ NGUYÊN 100% PROMPT ĐẦY ĐỦ, KHÔNG CẮT BỚT)
@@ -60,20 +92,21 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     try:
         print("[INFO] Trying Provider 1 (RANK #1 ART QUALITY): HuggingFace FLUX.1 Engine...")
         import requests
-        unified_hf_prompt = prompt_str
-        headers_hf = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+        prompt_str = compiled_data["positive_prompt"]
+        headers_hf = get_anti_rate_limit_headers()
         hf_models = [
             "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell",
             "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0"
         ]
         for hf_url in hf_models:
-            resp = requests.post(hf_url, json={"inputs": unified_hf_prompt}, headers=headers_hf, timeout=25)
+            resp = requests.post(hf_url, json={"inputs": prompt_str}, headers=headers_hf, timeout=25)
             if resp.status_code == 200 and len(resp.content) > 1000:
                 with open(output_path, 'wb') as f:
                     f.write(resp.content)
-                enhance_image_quality(output_path)
-                print(f"[SUCCESS] Saved Rank #1 AI image via HuggingFace FLUX.1 Engine: {output_path}")
-                return output_path
+                if is_valid_image_file(output_path):
+                    enhance_image_quality(output_path)
+                    print(f"[SUCCESS] Saved Rank #1 AI image via HuggingFace FLUX.1 Engine: {output_path}")
+                    return output_path
     except Exception as e:
         print(f"[WARNING] HuggingFace FLUX.1 engine failed: {e}")
 
@@ -83,11 +116,11 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
         seed = base_seed + (idx * 111) + int(time.time() % 1000)
         url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={width}&height={height}&model={model_name}&seed={seed}&nologo=true"
         try:
-            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+            req = urllib.request.Request(url, headers=get_anti_rate_limit_headers())
             with urllib.request.urlopen(req, timeout=30) as response, open(output_path, 'wb') as out_file:
                 out_file.write(response.read())
                 
-            if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
+            if is_valid_image_file(output_path):
                 enhance_image_quality(output_path)
                 print(f"[SUCCESS] Saved Rank #2 AI image via Pollinations ({model_name}): {output_path}")
                 time.sleep(1.5)  # Dãn cách 1.5s

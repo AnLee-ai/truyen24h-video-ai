@@ -401,13 +401,16 @@ class Ultimate50FeatureMemoryEngine:
         fx_string = ", ".join(visual_fx) if visual_fx else "volumetric rim light, floating glowing particles"
         fx_string += f", {dynamic_framing}"
 
-        # 5. BỘ KHÓA NÉT VẼ & DIỆN MẠO NHẤT QUÁN SIÊU SẮC NÉT (ULTRA CRISP SHARP FOCUS 8K)
-        # Tích hợp phong cách nghệ thuật từ Solo Leveling, Ta Là Tà Đạo (Magic Emperor), TBATE, JJK và Tower of God
+        # 5. BỘ KHÓA TOÀN DIỆN 5 THÀNH PHẦN: NHÂN VẬT, BỐI CẢNH, MÀU SẮC, VŨ KHÍ & TRANG PHỤC (5 MASTER CONSISTENCY LOCKS)
+        # Tích hợp bộ khóa đồng bộ từ Solo Leveling, Ta Là Tà Đạo (Magic Emperor), TBATE, JJK và Tower of God
         UNIFIED_ART_STYLE_HEADER = (
             "MASTERPIECE 2D KOREAN MANHWA WEBTOON ART STYLE, FAMOUS COMIC ART DIRECTION, "
             "INSPIRED BY SOLO LEVELING AND MAGIC EMPEROR AND TBATE WEBTOON ART, ULTRA CRISP SHARP FOCUS, "
-            "CONSISTENT CHARACTER VISUAL FEATURES, BOLD SHARP BLACK INK LINE ART, VIBRANT SATURATED CEL-SHADING COLOR GRADING, "
-            "HIGH-CONTRAST DRAMATIC CHIAROSCURO LIGHTING, DYNAMIC CINEMATIC THREE-POINT PERSPECTIVE COMPOSITION, NO BLUR"
+            "EXACT SAME CHARACTER MODEL SHEET, LOCKED CHARACTER FACIAL STRUCTURE, SAME HAIR AND OUTFIT DESIGN ACROSS ALL PANELS, "
+            "LOCKED ENVIRONMENT ARCHITECTURE, LOCKED SCENERY BACKGROUND, LOCKED COLOR PALETTE AND VOLUMETRIC LIGHTING, "
+            "LOCKED WEAPON DESIGN AND MAGICAL ARTIFACT DETAILS, LOCKED COSTUME EMBROIDERIES AND ARMOR PLATES, "
+            "STRICT ALL-ELEMENT VISUAL CONSISTENCY, BOLD SHARP BLACK INK LINE ART, VIBRANT SATURATED CEL-SHADING COLOR GRADING, "
+            "HIGH-CONTRAST DRAMATIC CHIAROSCURO LIGHTING, DYNAMIC CINEMATIC THREE-POINT PERSPECTIVE COMPOSITION, NO BLUR, NO FACIAL DRIFT, NO BACKGROUND DRIFT"
         )
 
         # 4b. Dynamic Action Mood & Emotion Auto-Enhancer (Phát hiện cảm xúc & hiệu ứng chiến đấu tự động)
@@ -427,7 +430,7 @@ class Ultimate50FeatureMemoryEngine:
         positive_prompt = (
             f"{UNIFIED_ART_STYLE_HEADER}, {cam['shot']}, {cam['focal']}, {cam['dof']}, {character_anchor}, "
             f"{facial_expression}, action sequence: {scene_action_clean}, setting: {genre_prompt}, visual fx: {fx_string}, "
-            f"{mood_string}, glowing elemental energy aura, dynamic speed particles, dramatic rim light, 16:9 widescreen, "
+            f"{mood_string}, glowing elemental energy aura, dynamic speed particles, dramatic rim light, 16:9 widescreen boundary, "
             f"Solo Leveling aura glow, Magic Emperor demonic eyes, uniform visual identity across all panels, ultra sharp 8k resolution, crystal clear details"
         )
 
