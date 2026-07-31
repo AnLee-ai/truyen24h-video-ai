@@ -37,14 +37,11 @@ def generate_random_ip() -> str:
     return f"{random.randint(1, 223)}.{random.randint(0, 255)}.{random.randint(0, 255)}.{random.randint(1, 254)}"
 
 def get_anti_rate_limit_headers() -> dict:
-    """Tạo Header HTTP giả lập IP ngẫu nhiên (X-Forwarded-For, X-Real-IP, Client-IP) và User-Agent đổi liên tục."""
-    fake_ip = generate_random_ip()
+    """Tạo Header HTTP chuẩn giả lập trình duyệt thực tế chống WAF và lỗi 403 Forbidden."""
     return {
         'User-Agent': get_random_user_agent(),
-        'X-Forwarded-For': fake_ip,
-        'X-Real-IP': fake_ip,
-        'CF-Connecting-IP': fake_ip,
-        'Client-IP': fake_ip
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9'
     }
 
 def enhance_image_quality(image_path: str):

@@ -194,7 +194,8 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
     subtitle_style = "Fontname=Arial,FontSize=18,PrimaryColour=&H00FFFFFF&,OutlineColour=&H00000000&,Outline=3,Shadow=2,Alignment=2,MarginV=42,MarginL=80,MarginR=80,WrapStyle=2"
     
     # 6. BẢN CẬP NHẬT ĐỘT PHÁ V5.0: Động Cơ Chuyển Động Ken Burns Cinematic Slow Zoom Motion 4K
-    has_combat = any(w in str(chapter_data).lower() for w in ["chém", "đánh", "bá chủ", "thức tỉnh", "bộc phát", "giao phong", "quyết đấu"])
+    all_context_text = (str(title) + " " + " ".join(scene_texts)).lower()
+    has_combat = any(w in all_context_text for w in ["chém", "đánh", "bá chủ", "thức tỉnh", "bộc phát", "giao phong", "quyết đấu"])
     if has_combat:
         print("[INFO] Release v5.0: Kích hoạt Hiệu Ứng Ken Burns Slow Zoom + Combat Speed Lines 4K...")
         vf_filter = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,eq=brightness=0.03:contrast=1.12:saturation=1.22[bg]"
