@@ -9,22 +9,26 @@ from PIL import Image, ImageDraw, ImageFont, ImageEnhance
 from src.visual_memory import ultimate_memory_50
 
 def enhance_image_quality(image_path: str):
-    """Tự động nâng cấp độ sắc nét nét vẽ AI Manhwa 2D (Sharpness 1.6x), bão hòa màu sắc (Color 1.20x) và tương phản (Contrast 1.15x)."""
+    """Tự động nâng cấp độ sắc nét nét vẽ AI Manhwa 2D SIÊU NÉT (Sharpness 2.20x + PIL Sharpen Filter + JPEG 100% Quality 4:4:4)."""
     try:
         if not os.path.exists(image_path) or os.path.getsize(image_path) < 1000:
             return
+        from PIL import ImageFilter
         with Image.open(image_path) as img:
             img = img.convert("RGB")
-            # 1. Tăng độ rực rỡ cel-shading 1.20x
+            # 1. Áp dụng bộ lọc Sharpen phần cứng để làm rõ chi tiết viền mực
+            img = img.filter(ImageFilter.SHARPEN)
+            # 2. Tăng độ rực rỡ cel-shading 1.25x
             enhancer_color = ImageEnhance.Color(img)
-            img = enhancer_color.enhance(1.20)
-            # 2. Tăng độ sắc nét nét vẽ đen 1.60x (Siêu sắc nét 4K)
+            img = enhancer_color.enhance(1.25)
+            # 3. Tăng độ sắc nét nét vẽ đen 2.20x (Siêu sắc nét 4K Cực Đại)
             enhancer_sharp = ImageEnhance.Sharpness(img)
-            img = enhancer_sharp.enhance(1.60)
-            # 3. Tăng tương phản nổi bật 1.15x
+            img = enhancer_sharp.enhance(2.20)
+            # 4. Tăng tương phản nổi bật 1.15x
             enhancer_contrast = ImageEnhance.Contrast(img)
             img = enhancer_contrast.enhance(1.15)
-            img.save(image_path, "JPEG", quality=98)
+            # 5. Lưu chất lượng 100% 4:4:4 Chroma Subsampling không nén mờ
+            img.save(image_path, "JPEG", quality=100, subsampling=0)
     except Exception as e:
         print(f"[WARNING] Post-processing image quality failed: {e}")
 
