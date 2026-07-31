@@ -56,7 +56,28 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     print(f"[INFO] Generating Free AI Image with short encoded prompt:\n > {clean_short_prompt}...")
     base_seed = int(compiled_data.get("hash", "0")[:8], 16) % 1000000
 
-    # NỀN TẢNG 1: Pollinations.ai Multi-Model Engine (Short prompt <260 chars đảm bảo 100% sinh ảnh AI Anime thành công)
+    # NỀN TẢNG 1 (ĐẸP NHẤT & SẮC NÉT NHẤT): HuggingFace FLUX.1 / SDXL Base Inference Engine
+    try:
+        print("[INFO] Trying Provider 1 (RANK #1 ART QUALITY): HuggingFace FLUX.1 Engine...")
+        import requests
+        unified_hf_prompt = prompt_str
+        headers_hf = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+        hf_models = [
+            "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell",
+            "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0"
+        ]
+        for hf_url in hf_models:
+            resp = requests.post(hf_url, json={"inputs": unified_hf_prompt}, headers=headers_hf, timeout=25)
+            if resp.status_code == 200 and len(resp.content) > 1000:
+                with open(output_path, 'wb') as f:
+                    f.write(resp.content)
+                enhance_image_quality(output_path)
+                print(f"[SUCCESS] Saved Rank #1 AI image via HuggingFace FLUX.1 Engine: {output_path}")
+                return output_path
+    except Exception as e:
+        print(f"[WARNING] HuggingFace FLUX.1 engine failed: {e}")
+
+    # NỀN TẢNG 2 (RANK #2 ART QUALITY): Pollinations.ai Multi-Model Engine (flux-anime / flux / turbo)
     pollination_models = ["flux-anime", "flux", "turbo", "flux-real", "any-dark"]
     for idx, model_name in enumerate(pollination_models):
         seed = base_seed + (idx * 111) + int(time.time() % 1000)
@@ -68,7 +89,7 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
                 
             if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
                 enhance_image_quality(output_path)
-                print(f"[SUCCESS] Saved AI image via Pollinations ({model_name}): {output_path}")
+                print(f"[SUCCESS] Saved Rank #2 AI image via Pollinations ({model_name}): {output_path}")
                 time.sleep(1.5)  # Dãn cách 1.5s
                 return output_path
         except Exception as e:
@@ -80,33 +101,25 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
                 print(f"[WARNING] Pollinations model '{model_name}' failed: {e}")
                 time.sleep(1.5)
 
-    # NỀN TẢNG 2: Lexica.art & Public High-Quality Anime Search Engine (Tăng thời gian chờ timeout=25s)
+    # NỀN TẢNG 3 (RANK #3 ART QUALITY): Airforce AI Flux/Anime Engine
     try:
-        print("[INFO] Pollinations exhausted. Switching to Provider 2: Lexica.art Engine...")
-        clean_q = re.sub(r"[^\w\s]", "", scene_text[:80])
-        lexica_query = urllib.parse.quote("Korean 2D manhwa webtoon " + clean_q)
-        lexica_url = f"https://lexica.art/api/v1/search?q={lexica_query}"
-        req = urllib.request.Request(lexica_url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
-        with urllib.request.urlopen(req, timeout=25) as response:
-            data = json.loads(response.read().decode('utf-8'))
-            images = data.get("images", [])
-            if images:
-                src_url = images[0].get("src")
-                if src_url:
-                    req_img = urllib.request.Request(src_url, headers={'User-Agent': 'Mozilla/5.0'})
-                    with urllib.request.urlopen(req_img, timeout=30) as img_resp, open(output_path, 'wb') as out_file:
-                        out_file.write(img_resp.read())
-                    if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
-                        enhance_image_quality(output_path)
-                        print(f"[SUCCESS] Saved AI image via Lexica Art: {output_path}")
-                        return output_path
+        print("[INFO] Switching to Provider 3 (RANK #3 ART QUALITY): Airforce AI Flux Engine...")
+        air_prompt = urllib.parse.quote(clean_short_prompt[:250])
+        air_url = f"https://api.airforce/v1/imagen?prompt={air_prompt}&model=flux"
+        req_a = urllib.request.Request(air_url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+        with urllib.request.urlopen(req_a, timeout=25) as img_resp, open(output_path, 'wb') as out_file:
+            out_file.write(img_resp.read())
+        if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
+            enhance_image_quality(output_path)
+            print(f"[SUCCESS] Saved Rank #3 AI image via Airforce AI Engine: {output_path}")
+            return output_path
     except Exception as e:
-        print(f"[WARNING] Lexica.art engine failed: {e}")
+        print(f"[WARNING] Airforce AI engine failed: {e}")
 
-    # NỀN TẢNG 2B: Hercai Instant AI Image Engine (Miễn phí 100%, hỗ trợ anime 2D)
+    # NỀN TẢNG 4 (RANK #4 ART QUALITY): Hercai Instant AI Image Engine
     try:
-        print("[INFO] Switching to Provider 2B: Hercai AI Instant Anime Engine...")
-        hercai_prompt = urllib.parse.quote(prompt_str[:250])
+        print("[INFO] Switching to Provider 4 (RANK #4 ART QUALITY): Hercai AI Anime Engine...")
+        hercai_prompt = urllib.parse.quote(clean_short_prompt[:200])
         hercai_url = f"https://hercai.onrender.com/v3/text2image?prompt={hercai_prompt}"
         req_h = urllib.request.Request(hercai_url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
         with urllib.request.urlopen(req_h, timeout=25) as response:
@@ -118,46 +131,33 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
                     out_file.write(img_resp.read())
                 if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
                     enhance_image_quality(output_path)
-                    print(f"[SUCCESS] Saved AI image via Hercai AI Engine: {output_path}")
+                    print(f"[SUCCESS] Saved Rank #4 AI image via Hercai AI Engine: {output_path}")
                     return output_path
     except Exception as e:
         print(f"[WARNING] Hercai AI engine failed: {e}")
 
-    # NỀN TẢNG 2C: Airforce AI Flux/Anime Engine (Miễn phí 100% không cần key)
+    # NỀN TẢNG 5 (RANK #5 ART QUALITY): Lexica.art Manhwa Webtoon Search Engine
     try:
-        print("[INFO] Switching to Provider 2C: Airforce AI Anime Engine...")
-        air_prompt = urllib.parse.quote(prompt_str[:300])
-        air_url = f"https://api.airforce/v1/imagen?prompt={air_prompt}&model=flux"
-        req_a = urllib.request.Request(air_url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
-        with urllib.request.urlopen(req_a, timeout=30) as img_resp, open(output_path, 'wb') as out_file:
-            out_file.write(img_resp.read())
-        if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
-            enhance_image_quality(output_path)
-            print(f"[SUCCESS] Saved AI image via Airforce AI Engine: {output_path}")
-            return output_path
+        print("[INFO] Switching to Provider 5 (RANK #5 ART QUALITY): Lexica.art Engine...")
+        clean_q = re.sub(r"[^\w\s]", "", scene_text[:80])
+        lexica_query = urllib.parse.quote("Korean 2D manhwa webtoon " + clean_q)
+        lexica_url = f"https://lexica.art/api/v1/search?q={lexica_query}"
+        req = urllib.request.Request(lexica_url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+        with urllib.request.urlopen(req, timeout=20) as response:
+            data = json.loads(response.read().decode('utf-8'))
+            images = data.get("images", [])
+            if images:
+                src_url = images[0].get("src")
+                if src_url:
+                    req_img = urllib.request.Request(src_url, headers={'User-Agent': 'Mozilla/5.0'})
+                    with urllib.request.urlopen(req_img, timeout=25) as img_resp, open(output_path, 'wb') as out_file:
+                        out_file.write(img_resp.read())
+                    if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
+                        enhance_image_quality(output_path)
+                        print(f"[SUCCESS] Saved Rank #5 AI image via Lexica Art: {output_path}")
+                        return output_path
     except Exception as e:
-        print(f"[WARNING] Airforce AI engine failed: {e}")
-
-    # NỀN TẢNG 3: HuggingFace Flux/SDXL Inference Router (Giữ Full Prompt & Tăng timeout=45s)
-    try:
-        print("[INFO] Switching to Provider 3: HuggingFace Public AI Engine...")
-        import requests
-        unified_hf_prompt = prompt_str
-        headers_hf = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
-        hf_models = [
-            "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell",
-            "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0"
-        ]
-        for hf_url in hf_models:
-            resp = requests.post(hf_url, json={"inputs": unified_hf_prompt}, headers=headers_hf, timeout=45)
-            if resp.status_code == 200 and len(resp.content) > 1000:
-                with open(output_path, 'wb') as f:
-                    f.write(resp.content)
-                enhance_image_quality(output_path)
-                print(f"[SUCCESS] Saved AI image via HuggingFace Engine: {output_path}")
-                return output_path
-    except Exception as e:
-        print(f"[WARNING] HuggingFace AI engine failed: {e}")
+        print(f"[WARNING] Lexica.art engine failed: {e}")
 
     # NỀN TẢNG CUỐI CÙNG: Ép sinh ảnh AI Anime Pollinations 100% (XÓA BỎ 100% CANVAS VÒNG TRÒN TÍM)
     print(f"[WARNING] Final Retry: Forcing Pollinations AI Anime generation for {output_path}...")
