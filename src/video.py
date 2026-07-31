@@ -142,24 +142,24 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
     print(f"[INFO] Tổng số phân cảnh sinh ảnh AI khớp thoại: {len(scene_texts)}")
     
     # 3. Sinh ảnh AI ĐA LUỒNG cho tất cả phân cảnh thoại (lên đến 40 phân cảnh độc lập)
-    from src.image_generator import batch_generate_scene_images, generate_emergency_gradient_canvas
+    from src.image_generator import batch_generate_scene_images, generate_scene_image
     chapter_id = os.path.basename(out_dir)
     target_scenes = scene_texts[:40]
     image_files = batch_generate_scene_images(target_scenes, chapter_id=chapter_id, max_workers=2)
             
     # Đảm bảo BẮT BUỘC mỗi phân cảnh đều có 1 ảnh riêng biệt (Không bao giờ bị 1 ảnh lặp lại hay ảnh đen)
     if len(image_files) < len(target_scenes):
-        print(f"[INFO] Bổ sung ảnh khung truyện rực rỡ cho {len(target_scenes) - len(image_files)} phân cảnh còn lại...")
+        print(f"[INFO] Bổ sung ảnh AI Manhwa cho {len(target_scenes) - len(image_files)} phân cảnh còn lại...")
         for i in range(len(target_scenes)):
             img_file_path = os.path.join(img_dir, f"scene_{i + 1:03d}.jpg")
             if not os.path.exists(img_file_path) or os.path.getsize(img_file_path) < 1000:
-                generate_emergency_gradient_canvas(target_scenes[i], img_file_path, width=1920, height=1080)
+                generate_scene_image(target_scenes[i], img_file_path, width=1920, height=1080)
             if img_file_path not in image_files and os.path.exists(img_file_path):
                 image_files.append(img_file_path)
                 
     if not image_files:
         bg_image = os.path.join(out_dir, "background.jpg")
-        generate_emergency_gradient_canvas(title, bg_image, width=1920, height=1080)
+        generate_scene_image(title, bg_image, width=1920, height=1080)
         if os.path.exists(bg_image):
             image_files.append(bg_image)
             
