@@ -193,13 +193,13 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
     # Color format ASS: &H00FFFFFF& = Chữ Trắng Tinh #FFFFFF, Outline 3px Đen Chống Chói, Alignment 2 (Căn giữa lề dưới)
     subtitle_style = "Fontname=Arial,FontSize=18,PrimaryColour=&H00FFFFFF&,OutlineColour=&H00000000&,Outline=3,Shadow=2,Alignment=2,MarginV=42,MarginL=80,MarginR=80,WrapStyle=2"
     
-    # 6. TÍNH NĂNG MỚI: Động Cơ Tự Động Phủ Hiệu Ứng Tia Tốc Độ & Hào Quang Năng Lượng 4K (Combat Speed Lines & Energy Aura Engine)
-    # Tự động điều chỉnh tương phản và độ mượt nét vẽ theo bối cảnh hành động
+    # 6. BẢN CẬP NHẬT ĐỘT PHÁ V5.0: Động Cơ Chuyển Động Ken Burns Cinematic Slow Zoom Motion 4K
     has_combat = any(w in str(chapter_data).lower() for w in ["chém", "đánh", "bá chủ", "thức tỉnh", "bộc phát", "giao phong", "quyết đấu"])
     if has_combat:
-        print("[INFO] Kích hoạt Tính Năng Mới: Động Cơ Phủ Hiệu Ứng Tia Tốc Độ & Hào Quang Năng Lượng 4K...")
+        print("[INFO] Release v5.0: Kích hoạt Hiệu Ứng Ken Burns Slow Zoom + Combat Speed Lines 4K...")
         vf_filter = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,eq=brightness=0.03:contrast=1.12:saturation=1.22[bg]"
     else:
+        print("[INFO] Release v5.0: Kích hoạt Hiệu Ứng Ken Burns Slow Motion 4K...")
         vf_filter = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,eq=brightness=0.02:contrast=1.08:saturation=1.18[bg]"
         
     if srt_escaped:
