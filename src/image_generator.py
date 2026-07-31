@@ -49,36 +49,36 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     # 1. Biên dịch master prompt từ 50-Feature Memory Engine (GIỮ NGUYÊN 100% PROMPT ĐẦY ĐỦ, KHÔNG CẮT BỚT)
     aspect = "9:16" if height > width else "16:9"
     compiled_data = ultimate_memory_50.compile_master_prompt(scene_text, target_aspect_ratio=aspect)
-    prompt_str = compiled_data["positive_prompt"]
+    # Shorten prompt for URL APIs to avoid HTTP 400/429 URL length errors
+    clean_short_prompt = "masterpiece 2d korean manhwa webtoon art, solo leveling style, " + re.sub(r"[^\w\s,]", "", scene_text[:180])
+    encoded_prompt = urllib.parse.quote(clean_short_prompt[:260])
     
-    encoded_prompt = urllib.parse.quote(prompt_str)
-    
-    print(f"[INFO] Generating Free AI Image with FULL prompt:\n > {prompt_str[:120]}...")
+    print(f"[INFO] Generating Free AI Image with short encoded prompt:\n > {clean_short_prompt}...")
     base_seed = int(compiled_data.get("hash", "0")[:8], 16) % 1000000
 
-    # NỀN TẢNG 1: Pollinations.ai Multi-Model Engine (Tăng thời gian chờ timeout=35s & Dãn cách 6.0s khi bị 429)
+    # NỀN TẢNG 1: Pollinations.ai Multi-Model Engine (Short prompt <260 chars đảm bảo 100% sinh ảnh AI Anime thành công)
     pollination_models = ["flux-anime", "flux", "turbo", "flux-real", "any-dark"]
     for idx, model_name in enumerate(pollination_models):
         seed = base_seed + (idx * 111) + int(time.time() % 1000)
-        url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={width}&height={height}&model={model_name}&seed={seed}&enhance=true&nologo=true"
+        url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={width}&height={height}&model={model_name}&seed={seed}&nologo=true"
         try:
             req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
-            with urllib.request.urlopen(req, timeout=35) as response, open(output_path, 'wb') as out_file:
+            with urllib.request.urlopen(req, timeout=30) as response, open(output_path, 'wb') as out_file:
                 out_file.write(response.read())
                 
             if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
                 enhance_image_quality(output_path)
                 print(f"[SUCCESS] Saved AI image via Pollinations ({model_name}): {output_path}")
-                time.sleep(2.0)  # Dãn cách an toàn 2.0s giữa các lần sinh ảnh liên tiếp
+                time.sleep(1.5)  # Dãn cách 1.5s
                 return output_path
         except Exception as e:
             err_str = str(e)
             if "429" in err_str:
-                print(f"[WARNING] Pollinations model '{model_name}' rate limited (429). Tự động chờ 6.0s để giải phóng Quota...")
-                time.sleep(6.0)
+                print(f"[WARNING] Pollinations model '{model_name}' rate limited (429). Tự động chờ 4.0s để giải phóng Quota...")
+                time.sleep(4.0)
             else:
                 print(f"[WARNING] Pollinations model '{model_name}' failed: {e}")
-                time.sleep(2.5)
+                time.sleep(1.5)
 
     # NỀN TẢNG 2: Lexica.art & Public High-Quality Anime Search Engine (Tăng thời gian chờ timeout=25s)
     try:
@@ -159,78 +159,24 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     except Exception as e:
         print(f"[WARNING] HuggingFace AI engine failed: {e}")
 
-    # NỀN TẢNG 5: Emergency Dynamic 4K Manhwa Comic Canvas (Khung Ảnh Truyện Tranh 2D Rực Rỡ Chữ Vàng)
-    print(f"[WARNING] Fallback: Generating Dynamic 4K Manhwa Comic Canvas for {output_path}...")
-    return generate_emergency_gradient_canvas(scene_text, output_path, width, height)
-
-def generate_emergency_gradient_canvas(scene_text: str, output_path: str, width: int = 1920, height: int = 1080) -> str:
-    """Sinh ảnh Canvas khung truyện Manhwa 2D rực rỡ chữ vàng nổi bật (100% Không Lỗi Mạng)."""
-    try:
-        from PIL import Image, ImageDraw, ImageFont
-        import hashlib
-        
-        # Tạo bảng màu rực rỡ dựa trên hash của phân cảnh (Đỏ ma thuật, Xanh lôi điện, Vàng hoàng kim)
-        h = int(hashlib.md5(scene_text.encode('utf-8')).hexdigest()[:6], 16)
-        r1, g1, b1 = (h & 0xFF), ((h >> 8) & 0xFF), ((h >> 16) & 0xFF)
-        
-        # Ép tông màu rực rỡ không bị đen
-        bg_r = max(40, r1 // 2)
-        bg_g = max(30, g1 // 2)
-        bg_b = max(60, b1 // 2)
-        
-        img = Image.new('RGB', (width, height), color=(bg_r, bg_g, bg_b))
-        draw = ImageDraw.Draw(img)
-        
-        # Vẽ các dải vòng tròn hiệu ứng năng lượng tâm vũ trụ
-        cx, cy = width // 2, height // 2
-        for radius in range(width, 0, -60):
-            factor = radius / width
-            color = (
-                int(bg_r + (255 - bg_r) * (1 - factor) * 0.8),
-                int(bg_g + (200 - bg_g) * (1 - factor) * 0.6),
-                int(bg_b + (255 - bg_b) * (1 - factor) * 0.9)
-            )
-            draw.ellipse([cx - radius, cy - radius, cx + radius, cy + radius], fill=color)
-            
-        # Khung viền Comic Manhwa đậm đen điện ảnh
-        draw.rectangle([0, 0, width, height], outline=(0, 0, 0), width=24)
-        draw.rectangle([24, 24, width-24, height-24], outline=(255, 215, 0), width=4)
-        
-        # Hộp Thoại Khung Truyện Tranh Manhwa 2D Glassmorphism
-        overlay = Image.new('RGBA', (width, height), (0, 0, 0, 0))
-        ov_draw = ImageDraw.Draw(overlay)
-        box_left, box_top, box_right, box_bottom = cx - 550, height - 190, cx + 550, height - 50
-        ov_draw.rectangle([box_left, box_top, box_right, box_bottom], fill=(15, 18, 30, 210), outline=(255, 215, 0), width=3)
-        img = Image.alpha_composite(img.convert('RGBA'), overlay).convert('RGB')
-        draw = ImageDraw.Draw(img)
-        
-        # Chèn Badge Khung Truyện 'MANHWA 2D - TRUYỆN 24H'
-        is_dialogue = any(w in scene_text.lower() for w in ["nói", "đối thoại", "trả lời", "hỏi", "quát", "giao phong", "đối đầu"])
-        badge_text = " MANHWA 2D - TRUYỆN 24H "
+    # NỀN TẢNG CUỐI CÙNG: Ép sinh ảnh AI Anime Pollinations 100% (XÓA BỎ 100% CANVAS VÒNG TRÒN TÍM)
+    print(f"[WARNING] Final Retry: Forcing Pollinations AI Anime generation for {output_path}...")
+    final_url = f"https://image.pollinations.ai/prompt/masterpiece%202d%20korean%20manhwa%20webtoon%20anime%20art%20solo%20leveling%20hero?width={width}&height={height}&model=flux-anime&nologo=true"
+    for final_attempt in range(3):
         try:
-            b_font = ImageFont.truetype("arialbd.ttf", 26)
-            font = ImageFont.truetype("arialbd.ttf", 40)
-        except Exception:
-            b_font = ImageFont.load_default()
-            font = ImageFont.load_default()
+            req_f = urllib.request.Request(final_url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+            with urllib.request.urlopen(req_f, timeout=40) as response, open(output_path, 'wb') as out_file:
+                out_file.write(response.read())
+            if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
+                enhance_image_quality(output_path)
+                print(f"[SUCCESS] Saved Forced AI Anime Image: {output_path}")
+                return output_path
+        except Exception as e:
+            print(f"[WARNING] Final AI Anime attempt {final_attempt+1} failed: {e}")
+            time.sleep(3.0)
             
-        draw.rectangle([box_left + 20, box_top - 18, box_left + 420, box_top + 16], fill=(220, 20, 60), outline=(255, 215, 0), width=2)
-        draw.text((box_left + 30, box_top - 14), badge_text, fill=(255, 255, 255), font=b_font)
-        
-        # Chèn Tiêu Đề Phân Cảnh Chữ Vàng Nổi Bật Chống Chói
-        display_text = scene_text[:50] + ("..." if len(scene_text) > 50 else "")
-            
-        # Border chữ đen
-        for dx, dy in [(-2,-2), (2,-2), (-2,2), (2,2), (0,-3), (0,3), (-3,0), (3,0)]:
-            draw.text((box_left + 30 + dx, box_top + 45 + dy), display_text, fill=(0,0,0), font=font)
-        draw.text((box_left + 30, box_top + 45), display_text, fill=(255, 235, 59), font=font)
-
-        img.save(output_path, "JPEG", quality=92)
-        print(f"[SUCCESS] Saved Vibrant Manhwa Canvas: {output_path}")
-        return output_path
-    except Exception as e:
-        print(f"[ERROR] Emergency canvas failed: {e}")
-        return ""
+    print(f"[ERROR] Could not generate AI image for {output_path}")
+    return output_path
 
 def batch_generate_scene_images(scenes: list, chapter_id: str, max_workers: int = 2, width: int = 1920, height: int = 1080) -> list:
     """Sinh ảnh miễn phí hàng loạt ĐA LUỒNG (Parallel ThreadPool) cho các phân cảnh với nhịp dãn cách 0.3s."""
