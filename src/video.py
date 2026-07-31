@@ -190,8 +190,8 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
             
     # 6. Định dạng bộ lọc Phụ Đề & Đồ Họa Chuẩn Kênh Fan Review Truyện (Chữ Vàng Nổi, Dark Vignette, Tương Phản Điện Ảnh)
     srt_escaped = srt_path.replace("\\", "/").replace(":", "\\:") if srt_path and os.path.exists(srt_path) else ""
-    # Color format ASS: &H0000FFFF& = Vàng Chanh #FFFF00, Outline 3px Đen Chống Chói, Alignment 2 (Căn giữa lề dưới)
-    subtitle_style = "Fontname=Arial,FontSize=18,PrimaryColour=&H0000FFFF&,OutlineColour=&H00000000&,Outline=3,Shadow=2,Alignment=2,MarginV=42,MarginL=80,MarginR=80,WrapStyle=2"
+    # Color format ASS: &H00FFFFFF& = Chữ Trắng Tinh #FFFFFF, Outline 3px Đen Chống Chói, Alignment 2 (Căn giữa lề dưới)
+    subtitle_style = "Fontname=Arial,FontSize=18,PrimaryColour=&H00FFFFFF&,OutlineColour=&H00000000&,Outline=3,Shadow=2,Alignment=2,MarginV=42,MarginL=80,MarginR=80,WrapStyle=2"
     
     # Filter chuỗi: Scale 1080p + Crop + Giữ ảnh sáng tươi rực rỡ & siêu sắc nét chuẩn Manhwa 2D
     vf_filter = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,eq=brightness=0.02:contrast=1.08:saturation=1.18[bg]"
