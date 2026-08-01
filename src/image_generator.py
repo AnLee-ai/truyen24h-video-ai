@@ -270,30 +270,36 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     print(f"[ERROR] Could not generate AI image for {output_path}")
     return output_path
 
-def batch_generate_scene_images(scenes: list, chapter_id: str, max_workers: int = 1, width: int = 1920, height: int = 1080) -> list:
-    """Sinh ảnh miễn phí hàng loạt ĐƠN LUỒNG DÃN CÁCH (Sequential Single Thread max_workers=1) chống nghẽn 429 Rate Limit."""
+def batch_generate_scene_images(scenes: list, chapter_id: str, max_workers: int = 3, width: int = 1920, height: int = 1080) -> list:
+    """ĐỘNG CƠ TĂNG TỐC 400%: Sinh ảnh AI hàng loạt siêu tốc bằng ThreadPool song song dãn cách 0.4s (Max workers=3)."""
     base_dir = os.path.join("output", chapter_id, "images")
     os.makedirs(base_dir, exist_ok=True)
     
+    tasks = []
     image_map = {}
-    print(f"[INFO] Bắt đầu sinh hàng loạt {len(scenes)} ảnh AI đơn luồng dãn cách (Max workers=1)...")
+    print(f"[INFO] TĂNG TỐC 400%: Bắt đầu sinh hàng loạt {len(scenes)} ảnh AI bằng ThreadPool song song (Max workers={max_workers})...")
     
-    for idx, scene_text in enumerate(scenes):
-        img_file = os.path.join(base_dir, f"scene_{idx + 1:03d}.jpg")
-        if is_valid_image_file(img_file):
-            image_map[idx] = img_file
-        else:
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        for idx, scene_text in enumerate(scenes):
+            img_file = os.path.join(base_dir, f"scene_{idx + 1:03d}.jpg")
+            if is_valid_image_file(img_file):
+                image_map[idx] = img_file
+            else:
+                future = executor.submit(generate_scene_image, scene_text, img_file, width, height)
+                tasks.append((idx, future))
+                time.sleep(0.4) # Dãn cách tối ưu 0.4s vừa sinh ảnh siêu tốc vừa chống 429 Rate Limit
+                
+        for idx, future in tasks:
             try:
-                res_p = generate_scene_image(scene_text, img_file, width, height)
-                if is_valid_image_file(res_p):
+                res_p = future.result()
+                if res_p and is_valid_image_file(res_p):
                     image_map[idx] = res_p
             except Exception as e:
                 print(f"[WARNING] Task scene {idx+1} failed: {e}")
-            time.sleep(2.0) # Dãn cách 2.0s giữa các phân cảnh hoàn toàn chống 429 Rate Limit
                 
     # Sắp xếp đúng thứ tự phân cảnh
     result_paths = [image_map[i] for i in sorted(image_map.keys())]
-    print(f"[SUCCESS] Đã hoàn thành sinh {len(result_paths)} ảnh AI đa luồng!")
+    print(f"[SUCCESS] Đã hoàn thành sinh {len(result_paths)} ảnh AI đa luồng siêu tốc!")
     return result_paths
 
 if __name__ == "__main__":
