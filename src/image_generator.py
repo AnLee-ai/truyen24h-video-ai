@@ -189,15 +189,16 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     except Exception as e:
         print(f"[WARNING] Lexica.art engine failed: {e}")
 
-    # NỀN TẢNG CUỐI CÙNG: Ép sinh ảnh AI Anime Pollinations 100% (XÓA BỎ 100% CANVAS VÒNG TRÒN TÍM)
+    # NỀN TẢNG CUỐI CÙNG: Ép sinh ảnh AI Anime Pollinations 100% ĐỘC BẢN THEO PHÂN CẢNH
     print(f"[WARNING] Final Retry: Forcing Pollinations AI Anime generation for {output_path}...")
-    final_url = f"https://image.pollinations.ai/prompt/masterpiece%202d%20korean%20manhwa%20webtoon%20anime%20art%20solo%20leveling%20hero?width={width}&height={height}&model=flux-anime&nologo=true"
+    seed_final = base_seed + int(time.time() * 1000 % 1000000)
+    final_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={width}&height={height}&model=flux-anime&seed={seed_final}&nologo=true"
     for final_attempt in range(3):
         try:
-            req_f = urllib.request.Request(final_url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+            req_f = urllib.request.Request(final_url, headers=get_anti_rate_limit_headers())
             with urllib.request.urlopen(req_f, timeout=40) as response, open(output_path, 'wb') as out_file:
                 out_file.write(response.read())
-            if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
+            if is_valid_image_file(output_path):
                 enhance_image_quality(output_path)
                 print(f"[SUCCESS] Saved Forced AI Anime Image: {output_path}")
                 return output_path
