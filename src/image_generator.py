@@ -77,13 +77,31 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     
     # 1. Biên dịch master prompt từ 50-Feature Memory Engine (GIỮ NGUYÊN 100% PROMPT ĐẦY ĐỦ, KHÔNG CẮT BỚT)
     aspect = "9:16" if height > width else "16:9"
-    compiled_data = ultimate_memory_50.compile_master_prompt(scene_text, target_aspect_ratio=aspect)
-    # Shorten prompt for URL APIs to avoid HTTP 400/429 URL length errors
-    clean_short_prompt = "masterpiece 2d korean manhwa webtoon art, solo leveling style, " + re.sub(r"[^\w\s,]", "", scene_text[:180])
-    encoded_prompt = urllib.parse.quote(clean_short_prompt[:260])
+    # MA TRẬN KHÓA DIỆN MẠO CỐ ĐỊNH TẤT CẢ NHÂN VẬT CHÍNH & PHỤ (UNIVERSAL MULTI-CHARACTER APPEARANCE LOCK)
+    MASTER_HERO_ANCHOR = "handsome 20yo male protagonist, messy black hair, sharp brown eyes, athletic build, wearing dark blue jacket over white collared shirt"
+    FEMALE_LEAD_ANCHOR = "beautiful young female heroine, long silky black hair, bright amber eyes, elegant white cyan webtoon dress"
+    MENTOR_ELDER_ANCHOR = "wise elderly martial arts master, long white beard, traditional grey cultivator robe, serene gaze"
+    VILLAIN_RIVAL_ANCHOR = "intimidating male antagonist rival, spiky crimson hair, menacing red glowing eyes, dark black armor"
     
-    print(f"[INFO] Generating Free AI Image with short encoded prompt:\n > {clean_short_prompt}...")
-    base_seed = int(compiled_data.get("hash", "0")[:8], 16) % 1000000
+    # Tự nhận diện nhân vật xuất hiện trong phân cảnh để nạp bộ khóa diện mạo tương ứng
+    lower_s = scene_text.lower()
+    active_character_anchor = MASTER_HERO_ANCHOR
+    if any(w in lower_s for w in ["nữ", "cô", "thiếu nữ", "tiểu thư", "sư tỷ", "sư muội", "nữ tử"]):
+        active_character_anchor += f", with {FEMALE_LEAD_ANCHOR}"
+    elif any(w in lower_s for w in ["sư phụ", "lão", "trưởng lão", "thầy", "ông", "cao nhân"]):
+        active_character_anchor += f", with {MENTOR_ELDER_ANCHOR}"
+    elif any(w in lower_s for w in ["kẻ thù", "đối thủ", "ma", "sát thủ", "tà", "hắn"]):
+        active_character_anchor += f", with {VILLAIN_RIVAL_ANCHOR}"
+
+    compiled_data = ultimate_memory_50.compile_master_prompt(scene_text, target_aspect_ratio=aspect)
+    # Shorten prompt for URL APIs with LOCKED MULTI-CHARACTER DESCRIPTORS
+    scene_clean_words = re.sub(r"[^\w\s,]", "", scene_text[:120])
+    clean_short_prompt = f"masterpiece 2d korean manhwa webtoon art, solo leveling style, {active_character_anchor}, exact same character model sheet, {scene_clean_words}"
+    encoded_prompt = urllib.parse.quote(clean_short_prompt[:270])
+    
+    print(f"[INFO] Generating Free AI Image with multi-character locked prompt:\n > {clean_short_prompt[:120]}...")
+    # Seed cố định theo hash phân cảnh (Deterministic Seed Lock - Không dùng time.time())
+    base_seed = int(hashlib.md5((scene_text + "truyen24h_multi_hero_v5").encode('utf-8')).hexdigest()[:8], 16) % 1000000
 
     # NỀN TẢNG 1 (ĐẸP NHẤT & SẮC NÉT NHẤT): HuggingFace FLUX.1 / SDXL Base Inference Engine
     try:
@@ -108,9 +126,9 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
         print(f"[WARNING] HuggingFace FLUX.1 engine failed: {e}")
 
     # NỀN TẢNG 2 (RANK #2 ART QUALITY): Pollinations.ai Multi-Model Engine (flux-anime / flux / turbo)
-    pollination_models = ["flux-anime", "flux", "turbo", "flux-real", "any-dark"]
+    pollination_models = ["flux-anime", "flux", "turbo", "flux-real"]
     for idx, model_name in enumerate(pollination_models):
-        seed = base_seed + (idx * 111) + int(time.time() % 1000)
+        seed = base_seed + (idx * 50)  # Seed cố định tuyệt đối theo phân cảnh
         url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={width}&height={height}&model={model_name}&seed={seed}&nologo=true"
         try:
             req = urllib.request.Request(url, headers=get_anti_rate_limit_headers())
