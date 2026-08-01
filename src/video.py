@@ -142,36 +142,48 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
     print(f"[INFO] Tổng số phân cảnh sinh ảnh AI khớp thoại: {len(scene_texts)}")
     
     # 3. Sinh ảnh AI ĐA LUỒNG cho tất cả phân cảnh thoại (lên đến 40 phân cảnh độc lập)
-    from src.image_generator import batch_generate_scene_images, generate_scene_image
+    from src.image_generator import batch_generate_scene_images, generate_scene_image, is_valid_image_file
     chapter_id = os.path.basename(out_dir)
     target_scenes = scene_texts[:40]
     image_files = batch_generate_scene_images(target_scenes, chapter_id=chapter_id, max_workers=2)
             
-    # Đảm bảo BẮT BUỘC mỗi phân cảnh đều có 1 ảnh riêng biệt (Không bao giờ bị 1 ảnh lặp lại hay ảnh đen)
+    # Đảm bảo BẮT BUỘC mỗi phân cảnh đều có 1 ảnh riêng biệt hợp lệ (Xóa bỏ cache lỗi)
     if len(image_files) < len(target_scenes):
         print(f"[INFO] Bổ sung ảnh AI Manhwa cho {len(target_scenes) - len(image_files)} phân cảnh còn lại...")
         for i in range(len(target_scenes)):
             img_file_path = os.path.join(img_dir, f"scene_{i + 1:03d}.jpg")
-            if not os.path.exists(img_file_path) or os.path.getsize(img_file_path) < 1000:
+            if os.path.exists(img_file_path) and not is_valid_image_file(img_file_path):
+                try:
+                    os.remove(img_file_path)
+                except Exception:
+                    pass
+            if not os.path.exists(img_file_path):
                 generate_scene_image(target_scenes[i], img_file_path, width=1920, height=1080)
-            if img_file_path not in image_files and os.path.exists(img_file_path):
+            if img_file_path not in image_files and is_valid_image_file(img_file_path):
                 image_files.append(img_file_path)
                 
     if not image_files:
         bg_image = os.path.join(out_dir, "background.jpg")
         generate_scene_image(title, bg_image, width=1920, height=1080)
-        if os.path.exists(bg_image):
+        if is_valid_image_file(bg_image):
             image_files.append(bg_image)
             
     # 4. Ghép ảnh AI tương ứng với từng mốc thời gian thoại thực tế!
     full_scene_sequence = []
     accumulated_duration = 0.0
     idx = 0
-    while accumulated_duration < (total_audio_duration if total_audio_duration > 0 else 60.0):
+    max_duration = total_audio_duration if total_audio_duration > 0 else 60.0
+    while accumulated_duration < max_duration:
         scene_item = scene_data_list[idx % len(scene_data_list)]
         img_item = image_files[idx % len(image_files)]
         dur = scene_item['duration']
         
+        # Đảm bảo thời lượng tổng không vượt quá audio
+        if accumulated_duration + dur > max_duration:
+            dur = round(max_duration - accumulated_duration, 2)
+            if dur <= 0:
+                break
+                
         full_scene_sequence.append({'image': img_item, 'duration': dur})
         accumulated_duration += dur
         idx += 1
