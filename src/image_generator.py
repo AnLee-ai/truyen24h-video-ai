@@ -126,95 +126,80 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     except Exception as e:
         print(f"[WARNING] HuggingFace FLUX.1 engine failed: {e}")
 
-    # NỀN TẢNG 2 (RANK #2 ART QUALITY): Pollinations.ai Multi-Model Engine (flux-anime / flux / turbo)
-    pollination_models = ["flux-anime", "flux", "turbo", "flux-real"]
+    # NỀN TẢNG 2 (RANK #2 ART QUALITY): Pollinations.ai Multi-Model Engine (flux-anime / flux / turbo / any-dark)
+    pollination_models = ["flux-anime", "flux", "turbo", "any-dark"]
     for idx, model_name in enumerate(pollination_models):
         seed = base_seed + (idx * 50)  # Seed cố định tuyệt đối theo phân cảnh
         url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={width}&height={height}&model={model_name}&seed={seed}&nologo=true"
         try:
             req = urllib.request.Request(url, headers=get_anti_rate_limit_headers())
-            with urllib.request.urlopen(req, timeout=30) as response, open(output_path, 'wb') as out_file:
+            with urllib.request.urlopen(req, timeout=35) as response, open(output_path, 'wb') as out_file:
                 out_file.write(response.read())
                 
             if is_valid_image_file(output_path):
                 enhance_image_quality(output_path)
                 print(f"[SUCCESS] Saved Rank #2 AI image via Pollinations ({model_name}): {output_path}")
-                time.sleep(1.5)  # Dãn cách 1.5s
+                time.sleep(2.0)  # Dãn cách 2.0s hoàn toàn chống 429 Rate Limit
                 return output_path
         except Exception as e:
             err_str = str(e)
             if "429" in err_str:
-                print(f"[WARNING] Pollinations model '{model_name}' rate limited (429). Tự động chờ 4.0s để giải phóng Quota...")
-                time.sleep(4.0)
+                print(f"[WARNING] Pollinations model '{model_name}' rate limited (429). Tự động chờ 5.0s để giải phóng Quota...")
+                time.sleep(5.0)
             else:
                 print(f"[WARNING] Pollinations model '{model_name}' failed: {e}")
                 time.sleep(1.5)
 
-    # NỀN TẢNG 3 (RANK #3 ART QUALITY): Airforce AI Flux/Anime Engine
+    # NỀN TẢNG 3 (SERVER MỚI 1): HuggingFace Juggernaut-XL Cinematic 2D Engine
     try:
-        print("[INFO] Switching to Provider 3 (RANK #3 ART QUALITY): Airforce AI Flux Engine...")
-        air_prompt = urllib.parse.quote(clean_short_prompt[:250])
-        air_url = f"https://api.airforce/v1/imagen?prompt={air_prompt}&model=flux"
-        req_a = urllib.request.Request(air_url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
-        with urllib.request.urlopen(req_a, timeout=25) as img_resp, open(output_path, 'wb') as out_file:
-            out_file.write(img_resp.read())
-        if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
+        print("[INFO] Switching to Provider 3 (SERVER MỚI): HuggingFace Juggernaut-XL Engine...")
+        import requests
+        headers_hf = get_anti_rate_limit_headers()
+        jugg_url = "https://api-inference.huggingface.co/models/RunDiffusion/Juggernaut-XL-v9"
+        resp_j = requests.post(jugg_url, json={"inputs": clean_short_prompt[:250]}, headers=headers_hf, timeout=30)
+        if resp_j.status_code == 200 and len(resp_j.content) > 1000:
+            with open(output_path, 'wb') as f:
+                f.write(resp_j.content)
+            if is_valid_image_file(output_path):
+                enhance_image_quality(output_path)
+                print(f"[SUCCESS] Saved Rank #3 AI image via HuggingFace Juggernaut-XL Engine: {output_path}")
+                return output_path
+    except Exception as e:
+        print(f"[WARNING] Provider 3 Juggernaut-XL failed: {e}")
+
+    # NỀN TẢNG 4 (SERVER MỚI 2): Midjourney Style Free Inference Gateway
+    try:
+        print("[INFO] Switching to Provider 4 (SERVER MỚI): Midjourney Style Engine...")
+        mj_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={width}&height={height}&model=midjourney&seed={base_seed}&nologo=true"
+        req_mj = urllib.request.Request(mj_url, headers=get_anti_rate_limit_headers())
+        with urllib.request.urlopen(req_mj, timeout=35) as response, open(output_path, 'wb') as out_file:
+            out_file.write(response.read())
+        if is_valid_image_file(output_path):
             enhance_image_quality(output_path)
-            print(f"[SUCCESS] Saved Rank #3 AI image via Airforce AI Engine: {output_path}")
+            print(f"[SUCCESS] Saved Rank #4 AI image via Midjourney Model: {output_path}")
             return output_path
     except Exception as e:
-        print(f"[WARNING] Airforce AI engine failed: {e}")
+        print(f"[WARNING] Provider 4 Midjourney Engine failed: {e}")
 
-    # NỀN TẢNG 4 (RANK #4 ART QUALITY): Hercai Instant AI Image Engine
+    # NỀN TẢNG 5 (SERVER MỚI 3): Deliberate Anime 2D Webtoon Engine
     try:
-        print("[INFO] Switching to Provider 4 (RANK #4 ART QUALITY): Hercai AI Anime Engine...")
-        hercai_prompt = urllib.parse.quote(clean_short_prompt[:200])
-        hercai_url = f"https://hercai.onrender.com/v3/text2image?prompt={hercai_prompt}"
-        req_h = urllib.request.Request(hercai_url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
-        with urllib.request.urlopen(req_h, timeout=25) as response:
-            data = json.loads(response.read().decode('utf-8'))
-            url_img = data.get("url")
-            if url_img:
-                req_download = urllib.request.Request(url_img, headers={'User-Agent': 'Mozilla/5.0'})
-                with urllib.request.urlopen(req_download, timeout=30) as img_resp, open(output_path, 'wb') as out_file:
-                    out_file.write(img_resp.read())
-                if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
-                    enhance_image_quality(output_path)
-                    print(f"[SUCCESS] Saved Rank #4 AI image via Hercai AI Engine: {output_path}")
-                    return output_path
+        print("[INFO] Switching to Provider 5 (SERVER MỚI): Deliberate 2D Anime Engine...")
+        delib_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={width}&height={height}&model=deliberate&seed={base_seed}&nologo=true"
+        req_delib = urllib.request.Request(delib_url, headers=get_anti_rate_limit_headers())
+        with urllib.request.urlopen(req_delib, timeout=35) as response, open(output_path, 'wb') as out_file:
+            out_file.write(response.read())
+        if is_valid_image_file(output_path):
+            enhance_image_quality(output_path)
+            print(f"[SUCCESS] Saved Rank #5 AI image via Deliberate 2D Anime Engine: {output_path}")
+            return output_path
     except Exception as e:
-        print(f"[WARNING] Hercai AI engine failed: {e}")
-
-    # NỀN TẢNG 5 (RANK #5 ART QUALITY): Lexica.art Manhwa Webtoon Search Engine
-    try:
-        print("[INFO] Switching to Provider 5 (RANK #5 ART QUALITY): Lexica.art Engine...")
-        clean_q = re.sub(r"[^\w\s]", "", scene_text[:80])
-        lexica_query = urllib.parse.quote("Korean 2D manhwa webtoon " + clean_q)
-        lexica_url = f"https://lexica.art/api/v1/search?q={lexica_query}"
-        req = urllib.request.Request(lexica_url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
-        with urllib.request.urlopen(req, timeout=20) as response:
-            data = json.loads(response.read().decode('utf-8'))
-            images = data.get("images", [])
-            if images:
-                src_url = images[0].get("src")
-                if src_url:
-                    req_img = urllib.request.Request(src_url, headers={'User-Agent': 'Mozilla/5.0'})
-                    with urllib.request.urlopen(req_img, timeout=25) as img_resp, open(output_path, 'wb') as out_file:
-                        out_file.write(img_resp.read())
-                    if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
-                        enhance_image_quality(output_path)
-                        print(f"[SUCCESS] Saved Rank #5 AI image via Lexica Art: {output_path}")
-                        return output_path
-    except Exception as e:
-        print(f"[WARNING] Lexica.art engine failed: {e}")
+        print(f"[WARNING] Provider 5 Deliberate Engine failed: {e}")
 
     # NỀN TẢNG CUỐI CÙNG: Ép sinh ảnh AI Anime Pollinations 100% ĐỘC BẢN VỚI 10 LẦN RETRY DÃN CÁCH KHI MẠNG NGHẼN
     print(f"[WARNING] Final Retry: Forcing Pollinations AI Anime generation for {output_path}...")
-    models_pool = ["flux-anime", "flux", "turbo", "any-dark"]
-    
-    for final_attempt in range(10):
+    for final_attempt in range(6):
         try:
-            model_sel = models_pool[final_attempt % len(models_pool)]
+            model_sel = pollination_models[final_attempt % len(pollination_models)]
             seed_final = base_seed + int(time.time() * 1000 % 1000000) + final_attempt * 100
             final_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={width}&height={height}&model={model_sel}&seed={seed_final}&nologo=true"
             
@@ -224,11 +209,12 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
             if is_valid_image_file(output_path):
                 enhance_image_quality(output_path)
                 print(f"[SUCCESS] Saved Forced AI Anime Image ({model_sel}): {output_path}")
+                time.sleep(2.0)
                 return output_path
         except urllib.error.HTTPError as he:
             if he.code == 429:
-                wait_sec = (final_attempt + 1) * 3.0
-                print(f"[WARNING] Pollinations model '{model_sel}' rate limited (429). Tự động chờ {wait_sec:.1f}s để giải phóng Quota...")
+                wait_sec = (final_attempt + 1) * 4.0
+                print(f"[WARNING] Pollinations model rate limited (429). Tự động chờ {wait_sec:.1f}s để giải phóng Quota...")
                 time.sleep(wait_sec)
             else:
                 print(f"[WARNING] Final AI Anime attempt {final_attempt+1} failed: {he}")
@@ -250,33 +236,26 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     print(f"[ERROR] Could not generate AI image for {output_path}")
     return output_path
 
-def batch_generate_scene_images(scenes: list, chapter_id: str, max_workers: int = 2, width: int = 1920, height: int = 1080) -> list:
-    """Sinh ảnh miễn phí hàng loạt ĐA LUỒNG (Parallel ThreadPool) cho các phân cảnh với nhịp dãn cách 1.0s."""
+def batch_generate_scene_images(scenes: list, chapter_id: str, max_workers: int = 1, width: int = 1920, height: int = 1080) -> list:
+    """Sinh ảnh miễn phí hàng loạt ĐƠN LUỒNG DÃN CÁCH (Sequential Single Thread max_workers=1) chống nghẽn 429 Rate Limit."""
     base_dir = os.path.join("output", chapter_id, "images")
     os.makedirs(base_dir, exist_ok=True)
     
-    tasks = []
     image_map = {}
+    print(f"[INFO] Bắt đầu sinh hàng loạt {len(scenes)} ảnh AI đơn luồng dãn cách (Max workers=1)...")
     
-    print(f"[INFO] Bắt đầu sinh hàng loạt {len(scenes)} ảnh AI bằng ThreadPool (Max workers={max_workers})...")
-    
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        for idx, scene_text in enumerate(scenes):
-            img_file = os.path.join(base_dir, f"scene_{idx + 1:03d}.jpg")
-            if is_valid_image_file(img_file):
-                image_map[idx] = img_file
-            else:
-                future = executor.submit(generate_scene_image, scene_text, img_file, width, height)
-                tasks.append((idx, future))
-                time.sleep(1.0) # Dãn cách 1.0s giữa các request tránh bộc phát 429 Rate Limit
-                
-        for idx, future in tasks:
+    for idx, scene_text in enumerate(scenes):
+        img_file = os.path.join(base_dir, f"scene_{idx + 1:03d}.jpg")
+        if is_valid_image_file(img_file):
+            image_map[idx] = img_file
+        else:
             try:
-                res_path = future.result()
-                if res_path and os.path.exists(res_path) and os.path.getsize(res_path) > 1000:
-                    image_map[idx] = res_path
+                res_p = generate_scene_image(scene_text, img_file, width, height)
+                if is_valid_image_file(res_p):
+                    image_map[idx] = res_p
             except Exception as e:
                 print(f"[WARNING] Task scene {idx+1} failed: {e}")
+            time.sleep(2.0) # Dãn cách 2.0s giữa các phân cảnh hoàn toàn chống 429 Rate Limit
                 
     # Sắp xếp đúng thứ tự phân cảnh
     result_paths = [image_map[i] for i in sorted(image_map.keys())]
