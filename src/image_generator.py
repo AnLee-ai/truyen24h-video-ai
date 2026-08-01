@@ -195,6 +195,40 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     except Exception as e:
         print(f"[WARNING] Provider 5 Deliberate Engine failed: {e}")
 
+    # NỀN TẢNG 6 (SERVER MỚI 4): HuggingFace Anything-v5 Anime 2D Engine
+    try:
+        print("[INFO] Switching to Provider 6 (SERVER MỚI): HuggingFace Anything-v5 Engine...")
+        import requests
+        headers_hf = get_anti_rate_limit_headers()
+        any_url = "https://api-inference.huggingface.co/models/stablediffusionapi/anything-v5"
+        resp_a = requests.post(any_url, json={"inputs": clean_short_prompt[:250]}, headers=headers_hf, timeout=30)
+        if resp_a.status_code == 200 and len(resp_a.content) > 1000:
+            with open(output_path, 'wb') as f:
+                f.write(resp_a.content)
+            if is_valid_image_file(output_path):
+                enhance_image_quality(output_path)
+                print(f"[SUCCESS] Saved Rank #6 AI image via HuggingFace Anything-v5 Engine: {output_path}")
+                return output_path
+    except Exception as e:
+        print(f"[WARNING] Provider 6 Anything-v5 failed: {e}")
+
+    # NỀN TẢNG 7 (SERVER MỚI 5): HuggingFace Counterfeit-v3.0 Manhwa Engine
+    try:
+        print("[INFO] Switching to Provider 7 (SERVER MỚI): HuggingFace Counterfeit-v3.0 Engine...")
+        import requests
+        headers_hf = get_anti_rate_limit_headers()
+        cf_url = "https://api-inference.huggingface.co/models/stablediffusionapi/counterfeit-v30"
+        resp_cf = requests.post(cf_url, json={"inputs": clean_short_prompt[:250]}, headers=headers_hf, timeout=30)
+        if resp_cf.status_code == 200 and len(resp_cf.content) > 1000:
+            with open(output_path, 'wb') as f:
+                f.write(resp_cf.content)
+            if is_valid_image_file(output_path):
+                enhance_image_quality(output_path)
+                print(f"[SUCCESS] Saved Rank #7 AI image via Counterfeit-v3.0 Engine: {output_path}")
+                return output_path
+    except Exception as e:
+        print(f"[WARNING] Provider 7 Counterfeit-v3.0 failed: {e}")
+
     # NỀN TẢNG CUỐI CÙNG: Ép sinh ảnh AI Anime Pollinations 100% ĐỘC BẢN VỚI 10 LẦN RETRY DÃN CÁCH KHI MẠNG NGHẼN
     print(f"[WARNING] Final Retry: Forcing Pollinations AI Anime generation for {output_path}...")
     for final_attempt in range(6):
