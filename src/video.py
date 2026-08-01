@@ -200,7 +200,7 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
             last_img_clean = os.path.abspath(full_scene_sequence[-1]['image']).replace("\\", "/")
             f.write(f"file '{last_img_clean}'\n")
             
-    # 6. Định dạng bộ lọc Phụ Đề & Đồ Họa Chuẩn Kênh Fan Review Truyện (Chữ Trắng Nổi, Outline 3px Đen Chống Chói)
+    # 6. Định dạng bộ lọc Phụ Đề & Đồ Họa Chuẩn Kênh Fan Review Truyện (Chữ Trắng Nổi, Outline 3.5px Đen Chống Chói)
     # Color format ASS: &H00FFFFFF& = Chữ Trắng Tinh #FFFFFF, Outline 3.5px Đen Chống Chói, Alignment 2 (Căn giữa lề dưới)
     # Tự động hỗ trợ Font chữ đa hệ điều hành (Arial/DejaVu Sans/Sans) cho Ubuntu Linux GitHub Actions & Windows
     subtitle_style = "Fontname=DejaVu Sans,FontSize=26,PrimaryColour=&H00FFFFFF&,OutlineColour=&H00000000&,Outline=3.5,Shadow=2,Alignment=2,MarginV=45,MarginL=60,MarginR=60,WrapStyle=2"
@@ -208,9 +208,10 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
     srt_escaped = ""
     if srt_path and os.path.exists(srt_path):
         srt_abs = os.path.abspath(srt_path).replace("\\", "/")
-        srt_escaped = srt_abs.replace(":", "\\:").replace("'", "'\\\\''")
+        # Escaping chuẩn FFmpeg cho cả Windows & Linux
+        srt_escaped = srt_abs.replace(":", "\\:").replace("'", "'\\\\''").replace("[", "\\[").replace("]", "\\]")
     
-    # 6b. TÍNH NĂNG MỚI (/dev-enhance): Động Cơ Rung Lắc Camera Động Tác Chiến Đấu & Zoom Cận Cảnh Khuôn Mặt 4K (Kinetic Impact Camera Shake Engine)
+    # 6b. ĐỘNG CƠ TỰ ĐỘNG CHUYỂN CẢNH ĐIỆN ẢNH & ZOOM CẬN CẢNH KHUÔN MẶT 4K
     all_context_text = (str(title) + " " + " ".join(scene_texts)).lower()
     has_combat = any(w in all_context_text for w in ["chém", "đánh", "bá chủ", "thức tỉnh", "bộc phát", "giao phong", "quyết đấu"])
     has_emotional_dialogue = any(w in all_context_text for w in ["quát", "gầm", "hát", "thì thầm", "mắt", "nét mặt"])
@@ -225,7 +226,7 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
         print("[INFO] Dev-Enhance: Kích hoạt Hiệu Ứng Cinematic Dynamic Motion Panning 4K...")
         vf_filter = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,eq=brightness=0.02:contrast=1.08:saturation=1.18[bg]"
         
-    if srt_escaped:
+    if srt_escaped and os.path.exists(srt_path):
         print(f"[INFO] Chèn phụ đề Chữ Trắng Viền Đen từ file SRT: {srt_escaped}")
         vf_filter += f";[bg]subtitles=filename='{srt_escaped}':force_style='{subtitle_style}'[out]"
     else:
