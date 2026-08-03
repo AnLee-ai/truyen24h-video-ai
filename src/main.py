@@ -195,8 +195,7 @@ def _run_chapter_pipeline_impl(novel_id: str):
         
         if success:
             print(f"[INFO] Pipeline execution complete for Chapter {chapter_num}!")
-            database.update_chapter_audio(chapter_id, "Completed All Media & Uploads")
-            database.update_chapter_video_status(chapter_id, status="completed", video_url=video_public_url or "completed")
+            database.mark_chapter_completed_atomic(chapter_id, audio_url="Completed All Media & Uploads", video_url=video_public_url or "completed")
         else:
             print("[WARNING] Pipeline finished but Telegram upload failed.")
             
