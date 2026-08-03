@@ -51,6 +51,10 @@ InkOS Directives:
 WRITING_PROMPT = """
 You are the InkOS Writer & Composer Agent (Narcooo InkOS Multi-Agent Story Architecture). Write Chapter {chapter_number}: {chapter_title} of the novel "{title}".
 
+BẮT BUỘC NGÔN NGỮ 100% TIẾNG VIỆT (STRICT 100% VIETNAMESE LANGUAGE DIRECTIVE):
+- TOÀN BỘ VĂN BẢN TIỂU THUYẾT, LỜI THOẠI, NỘI TÂM, VÀ MÔ TẢ PHÂN CẢNH BẮT BUỘC PHẢI VIẾT 100% BẰNG TIẾNG VIỆT TỰ NHIÊN, GIÀU HÌNH ẢNH VÀ CẢM XÚC.
+- TUYỆT ĐỐI KHÔNG VIẾT CHÈN TIẾNG ANH HOẶC TIẾNG NƯỚC NGOÀI VÀO BẤT KỲ CÂU VĂN NÀO.
+
 INKOS TRUTH FILES & CONTEXT:
 - Chapter Blueprint: {blueprint}
 - World Lore & Rules: {world_lore}
@@ -79,7 +83,7 @@ INKOS 10-AGENT CORE DIRECTIVES (MUST FOLLOW AT ALL COSTS):
    - Use natural 2-word Vietnamese names ONLY (e.g. Trần Lam, Linh Vy, Minh Đức). NEVER use 3-word full names (do NOT write Nguyễn Minh Đức) and NEVER use English proper nouns.
    - **TẢI TRỌNG LỜI THOẠI ĐỐI THOẠI CỰC ĐẠI (70% - 80% DIRECT DIALOGUE RATIO)**: BẮT BUỘC câu chuyện phải chiếm từ 70% ĐẾN 80% LỜI NÓI TRỰC TIẾP và ĐỐI THOẠI giữa các nhân vật trong ngoặc kép ("..."). Mọi phân cảnh đều là sự đối đáp dồn dập, tranh luận gay gắt, khiêu khích, thì thầm, bàn chiến thuật và phản ứng bộc phát giữa nhân vật chính và các nhân vật xung quanh!
 
-Write the chapter in natural, evocative Vietnamese. Output ONLY the raw story text without conversational intro/outro text, headers, or sections like 'Dẫn lược:' or 'Chương X:'. Write straight into the narrative.
+Write the chapter in 100% natural, evocative Vietnamese. Output ONLY the raw story text without conversational intro/outro text, headers, or sections like 'Dẫn lược:' or 'Chương X:'. Write straight into the narrative.
 """
 
 INKOS_AUDITOR_PROMPT = """
@@ -89,10 +93,11 @@ Chapter Content:
 {chapter_content}
 
 Audit Tasks:
-1. Strip all AI clichés (e.g., 'dẫn lược', 'tóm lại', 'tổng kết', 'bức tranh toàn cảnh', 'minh chứng').
-2. Verify narrative continuity, dialogue flow, character memory consistency, and cliffhanger intensity.
-3. If any AI clichés or repetitive sentences exist, rewrite and output the perfectly cleaned, enhanced chapter text.
-4. Output ONLY the cleaned story text in natural Vietnamese.
+1. Ensure 100% strictly natural Vietnamese prose, stripping any English words or non-Vietnamese phrases.
+2. Strip all AI clichés (e.g., 'dẫn lược', 'tóm lại', 'tổng kết', 'bức tranh toàn cảnh', 'minh chứng').
+3. Verify narrative continuity, dialogue flow, character memory consistency, and cliffhanger intensity.
+4. If any non-Vietnamese text or AI clichés exist, rewrite and output the perfectly cleaned, enhanced chapter text in 100% Vietnamese.
+5. Output ONLY the cleaned story text in natural Vietnamese.
 """
 
 EXTRACT_ENTITIES_PROMPT = """

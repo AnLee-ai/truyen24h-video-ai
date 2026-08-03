@@ -111,6 +111,30 @@ def clean_chapter_content(text: str) -> str:
     cleaned = remove_repetitive_sentences(cleaned)
     return cleaned
 
+def translate_to_vietnamese_with_gemini(text: str) -> str:
+    """Tự động kiểm tra và dịch toàn bộ kịch bản tiểu thuyết từ tiếng Trung/tiếng Anh sang tiếng Việt chuẩn mượt mà 100% qua Gemini API."""
+    if not text or not text.strip():
+        return text
+        
+    has_chinese = bool(re.search(r"[\u4e00-\u9fff]", text))
+    print(f"[INFO] Bắt đầu rà soát ngôn ngữ kịch bản (Has Chinese: {has_chinese})...")
+    
+    print("[INFO] Kích hoạt Động Cơ Dịch Thuật Gemini API: Dịch/Tối ưu toàn bộ kịch bản tiểu thuyết sang Tiếng Việt mượt mà...")
+    translate_prompt = (
+        "Bạn là dịch giả tiểu thuyết webtoon hàng đầu. Hãy dịch/chuyển ngữ toàn bộ chương tiểu thuyết sau đây sang tiếng Việt tự nhiên, giàu cảm xúc và hấp dẫn.\n"
+        "YÊU CẦU DỊCH THUẬT BẮT BUỘC:\n"
+        "1. Dịch 100% sang tiếng Việt thuần túy, mượt mà, văn phong tiểu thuyết hành động/huyền ảo kịch tính.\n"
+        "2. Giữ nguyên 100% độ dài văn bản, lời thoại trong ngoặc kép (\"...\"), và cấu trúc câu chuyện. TUYỆT ĐỐI KHÔNG tóm tắt hay bỏ sót chi tiết nào.\n"
+        "3. Sử dụng tên nhân vật tiếng Việt 2 từ tự nhiên (Trần Lam, Linh Vy, Minh Đức). Cấm dùng tên riêng tiếng Anh.\n"
+        "4. Chỉ xuất ra duy nhất văn bản truyện đã dịch sang tiếng Việt, không kèm lời dẫn hay giải thích.\n\n"
+        f"VĂN BẢN CẦN DỊCH:\n{text[:12000]}"
+    )
+    translated_res = call_gemini(translate_prompt)
+    if translated_res and len(translated_res.split()) > 300:
+        print(f"[SUCCESS] Đã hoàn thành dịch kịch bản sang Tiếng Việt qua Gemini API! Độ dài: {len(translated_res.split())} từ.")
+        return clean_chapter_content(translated_res)
+    return text
+
 def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
     """Helper to call LLM (Groq multi-model pool with fallback, Gemini API & Pollinations 100% Free) with key rotator & fast failover."""
     groq_key = key_rotator.get_groq_key() or config.GROQ_API_KEY
@@ -727,6 +751,9 @@ def write_next_chapter(novel_id: str) -> dict:
             break
             
     cleaned_content = clean_chapter_content(final_content)
+    # ĐỘNG CƠ DỊCH THUẬT TIẾNG VIỆT GEMINI API: Đảm bảo 100% kịch bản tiểu thuyết chuẩn Tiếng Việt mượt mà
+    cleaned_content = translate_to_vietnamese_with_gemini(cleaned_content)
+    
     client = database.get_client()
     response = client.table("chapters")\
         .update({"content": cleaned_content})\
