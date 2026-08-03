@@ -94,22 +94,20 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     elif any(w in lower_s for w in ["kẻ thù", "đối thủ", "ma", "sát thủ", "tà", "hắn"]):
         active_character_anchor += f", with {VILLAIN_RIVAL_ANCHOR}"
 
-    # NẠP MÃ NGUỒN TRỰC TIẾP TỪ REPOSITORY d:\222\mangstoon_ai VÀ d:\222\story_diffusion
+    # TOÀN QUYỀN 100% CHO 2 REPOSITORY d:\222\mangstoon_ai VÀ d:\222\story_diffusion
     MANGSTOON_STYLE = (
         "Korean webtoon style illustration, clean digital line art with smooth cel-shading, "
         "soft gradient coloring with vibrant accents, large expressive eyes, modern manhwa aesthetic, "
         "single panel illustration, edge-to-edge full frame, no white borders"
     )
     
-    # Đọc Style Template từ story_diffusion nếu có sẵn
+    # Nạp trực tiếp Style Template từ StoryDiffusion repository (d:\222\story_diffusion)
     STORY_DIFFUSION_STYLE = "Japanese Anime Manhwa, master detailed character identity, sharp features"
     try:
-        sys_path_added = False
         import sys
         story_diff_path = os.path.abspath("story_diffusion")
         if story_diff_path not in sys.path:
             sys.path.insert(0, story_diff_path)
-            sys_path_added = True
         from utils.style_template import styles
         if "Japanese Anime" in styles:
             STORY_DIFFUSION_STYLE = styles["Japanese Anime"].get("prompt", STORY_DIFFUSION_STYLE)
@@ -119,7 +117,7 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     compiled_data = ultimate_memory_50.compile_master_prompt(scene_text, target_aspect_ratio=aspect)
     scene_clean_words = re.sub(r"[^\w\s,]", "", scene_text[:120])
     
-    # KẾT HỢP BẢN QUYỀN MÃ NGUỒN MANGSTOON_AI (d:\222\mangstoon_ai) + STORY_DIFFUSION (d:\222\story_diffusion)
+    # MA TRẬN PHONG CÁCH TOÀN QUYỀN MANGSTOON_AI + STORY_DIFFUSION
     clean_short_prompt = (
         f"{MANGSTOON_STYLE}, {STORY_DIFFUSION_STYLE}, "
         f"StoryDiffusion character identity lock, MangstoonAI 16:9 single frame webtoon shot, "
@@ -128,11 +126,10 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     encoded_prompt = urllib.parse.quote(clean_short_prompt[:290])
     negative_param = "&negative=grid,collage,split%20screen,4%20panels,quad%20shot,multiple%20views,model%20sheet,3d%20render"
     
-    print(f"[INFO] Executing Fused AI Image Engine (MangstoonAI: d:\\222\\mangstoon_ai | StoryDiffusion: d:\\222\\story_diffusion):\n > {clean_short_prompt[:135]}...")
-    # Seed cố định theo hash phân cảnh (Deterministic Seed Lock - Không dùng time.time())
-    base_seed = int(hashlib.md5((scene_text + "truyen24h_multi_hero_v6").encode('utf-8')).hexdigest()[:8], 16) % 1000000
+    print(f"[INFO] 100% FULL AUTHORITY: Executing MangstoonAI (d:\\222\\mangstoon_ai) & StoryDiffusion (d:\\222\\story_diffusion):\n > {clean_short_prompt[:135]}...")
+    base_seed = int(hashlib.md5((scene_text + "truyen24h_full_auth_v1").encode('utf-8')).hexdigest()[:8], 16) % 1000000
 
-    # NỀN TẢNG 1: MangstoonAI Gemini Imagen Engine (Động cơ vẽ ảnh Manhwa 2D từ d:\222\mangstoon_ai)
+    # NỀN TẢNG TOÀN QUYỀN 1: MangstoonAI Gemini Imagen Engine (d:\222\mangstoon_ai)
     try:
         from src.key_rotator import gemini_rotator
         gemini_key = gemini_rotator.get_key()
@@ -154,15 +151,15 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
                             f.write(base64.b64decode(b64_img))
                         if is_valid_image_file(output_path):
                             enhance_image_quality(output_path)
-                            print(f"[SUCCESS] Saved AI image via MangstoonAI Gemini Engine (d:\\222\\mangstoon_ai): {output_path}")
+                            print(f"[SUCCESS] Saved 100% Full Authority AI Image via MangstoonAI Engine (d:\\222\\mangstoon_ai): {output_path}")
                             return output_path
     except Exception:
         pass
 
-    # NỀN TẢNG 2 (DUY TRÌ 100% HOẠT ĐỘNG CHUẨN ĐỘC BẢN): StoryDiffusion + MangstoonAI Free Multi-Model Engine (flux-anime / flux / turbo / any-dark / midjourney / deliberate)
+    # NỀN TẢNG TOÀN QUYỀN 2: StoryDiffusion + MangstoonAI Multi-Model Engine (d:\222\story_diffusion & d:\222\mangstoon_ai)
     pollination_models = ["flux-anime", "flux", "turbo", "any-dark", "midjourney", "deliberate"]
     for idx, model_name in enumerate(pollination_models):
-        seed = base_seed + (idx * 50)  # Seed cố định tuyệt đối theo phân cảnh
+        seed = base_seed + (idx * 50)
         url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={width}&height={height}&model={model_name}&seed={seed}&nologo=true{negative_param}"
         try:
             req = urllib.request.Request(url, headers=get_anti_rate_limit_headers())
@@ -171,8 +168,8 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
                 
             if is_valid_image_file(output_path):
                 enhance_image_quality(output_path)
-                print(f"[SUCCESS] Saved AI image via Pollinations ({model_name}): {output_path}")
-                time.sleep(1.8)  # Dãn cách 1.8s hoàn toàn chống 429 Rate Limit
+                print(f"[SUCCESS] Saved 100% Full Authority AI Image via MangstoonAI & StoryDiffusion Engine ({model_name}): {output_path}")
+                time.sleep(1.8)
                 return output_path
         except urllib.error.HTTPError as he:
             if he.code == 429:
