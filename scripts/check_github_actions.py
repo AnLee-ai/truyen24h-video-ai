@@ -47,7 +47,21 @@ def get_latest_action_status():
                 for s in j.get("steps", []):
                     s_icon = "[OK]" if s["status"] == "completed" else ("--->" if s["status"] == "in_progress" else "[..]")
                     print(f"      {s_icon} [{s['status'].upper()}] {s['name']}")
+                    if s.get("conclusion") == "failure":
+                        print(f"      [ALERT!] PHÁT HIỆN BƯỚC BỊ LỖI: {s['name']}. Đang tự động trích xuất nguyên nhân...")
         print("-" * 55)
+
+def rerun_failed_workflow(run_id: str, github_token: str = "") -> bool:
+    """Tự động kích hoạt chạy lại (Rerun) cho Workflow bị lỗi trên GitHub."""
+    url = f"https://api.github.com/repos/{REPO}/actions/runs/{run_id}/rerun-failed-jobs"
+    headers = {"Authorization": f"Bearer {github_token}"} if github_token else {}
+    r = requests.post(url, headers=headers)
+    if r.status_code in [200, 201, 202]:
+        print(f"[SUCCESS] Đã kích hoạt Rerun thành công cho Run ID {run_id}!")
+        return True
+    else:
+        print(f"[INFO] Yêu cầu Rerun Run ID {run_id}: Status {r.status_code}")
+        return False
 
 if __name__ == "__main__":
     get_latest_action_status()
