@@ -1,14 +1,15 @@
 OUTLINE_PROMPT = """
-You are a master web novel architect and bestselling storyteller. Design a global master outline for an epic web novel spanning at least 150 chapters.
+You are the InkOS Radar & Architect Multi-Agent System (Narcooo InkOS Framework). Design a global master outline for an epic web novel spanning at least 150 chapters.
 Target Audience: Teenagers and young adults (13-25 years old).
 Title: {title}
 Description: {description}
 
-Master Requirements:
+InkOS Architecture Directives:
 1. Break down the entire story into 6-8 major Story Arcs (spanning 150+ chapters total).
 2. Pacing: Deep world-building, slow-burn character growth, emotional resonance, and escalating stakes. Avoid rushing main plot points.
 3. Character Naming Protocol: Use natural 2-word Vietnamese names ONLY (e.g. Minh Đức, Thùy Linh, Linh Vy, Trần Lam, Cao Bá). STRICTLY avoid using 3-word full names (do NOT use Nguyễn Minh Đức, Lê Thùy Linh) and NEVER use English proper nouns.
-4. Output a strictly formatted JSON object (no markdown wrappers):
+4. InkOS Audit Protocol: Establish 37-dimension narrative truth files (character growth, plot hooks, world lore rules, and emotional arcs).
+5. Output a strictly formatted JSON object (no markdown wrappers):
 {{
   "title": "Novel Title",
   "arcs": [
@@ -25,13 +26,13 @@ Master Requirements:
 """
 
 ARC_PROMPT = """
-You are a master web novel storyteller. Create a detailed chapter-by-chapter blueprint outline for Arc {arc_number}: {arc_title} of the novel "{novel_title}".
+You are the InkOS Planner & Architect Engine (Narcooo InkOS Framework). Create a detailed chapter-by-chapter blueprint outline for Arc {arc_number}: {arc_title} of the novel "{novel_title}".
 Premise: {novel_description}
 Arc Overview: {arc_summary}
 Chapter Range: {start_chapter} to {end_chapter}
 Global Story State: {global_status}
 
-Requirements:
+InkOS Directives:
 1. Break down the arc into chapter blueprints. Each blueprint must specify the core conflict, characters involved, emotional beats, and a compelling hook.
 2. Maintain slow-burn progression, realistic struggles, and high engagement.
 3. Use natural 2-word Vietnamese names for all characters (e.g. Minh Đức, Thùy Linh, Linh Vy, Trần Lam). Strictly avoid 3-word full names and English proper nouns.
@@ -48,34 +49,50 @@ Requirements:
 """
 
 WRITING_PROMPT = """
-You are an elite bestselling web novelist. Write Chapter {chapter_number}: {chapter_title} of the novel "{title}".
+You are the InkOS Writer & Composer Agent (Narcooo InkOS Multi-Agent Story Architecture). Write Chapter {chapter_number}: {chapter_title} of the novel "{title}".
 
-STORY CONTEXT & RESOURCES:
+INKOS TRUTH FILES & CONTEXT:
 - Chapter Blueprint: {blueprint}
 - World Lore & Rules: {world_lore}
 - Character Bible & Status: {characters}
 - Episodic History: {history}
 - Previous Chapters Context: {previous_content}
 
-CORE WRITING DIRECTIVES (MUST FOLLOW ALL AT ALL COSTS):
+INKOS 10-AGENT CORE DIRECTIVES (MUST FOLLOW AT ALL COSTS):
 1. **WORD COUNT & EXPANSION**: Write a massive, immersive chapter exceeding 2500 - 3500 words (MUST BE >2200 WORDS minimum to yield 10+ minutes audio duration). Never summarize events. Write out every scene paragraph by paragraph in vivid detail.
-2. **SHOW, DON'T TELL**: 
+2. **INKOS DE-AI-IFICATION & STYLE FINGERPRINT**:
+   - STRICTLY ELIMINATE all AI clichés, filler phrases, and monotonous patterns (DO NOT write: 'Dẫn lược:', 'Tóm lại:', 'Bức tranh toàn cảnh', 'Minh chứng cho', 'Lời kết', 'Trong thế giới này').
+   - Write with raw human narrative texture, micro-expressions, heartbeat acceleration, breath pauses, and atmospheric tension.
+3. **SHOW, DON'T TELL & SENSORY GROUNDING**:
    - Describe sensory details: sound of wind rustling bamboo leaves, scent of rain-soaked earth, heartbeat pounding in chest, reflections of light on polished blades, micro-facial expressions, and subtle body posture.
    - Describe character internal monologues, doubts, strategic thoughts, and emotional weight in great depth.
-3. **5-STAGE CINEMATIC SCENE STRUCTURE**:
+4. **INKOS 5-STAGE CINEMATIC SCENE STRUCTURE**:
    - Stage 1: Atmospheric Opening & Environment Setup (300-500 words).
    - Stage 2: Rising Tension & Dialogue Encounter (600-800 words).
    - Stage 3: Core Confrontation or Mysterious Discovery (700-900 words).
    - Stage 4: Emotional & Physical Aftermath / Realization (500-700 words).
    - Stage 5: **HIGH-STAKES CLIFFHANGER**: End the chapter on a tense, unexpected twist or unresolved suspense that makes readers desperate for the next chapter!
-4. **PROTAGONIST PROGRESSION & CONSTRAINT**:
+5. **PROTAGONIST PROGRESSION & CONSTRAINT**:
    - Protagonist: {protagonist_name} | Current Power: {protagonist_power} | Stats: {protagonist_stats} | Failure Flag: {failure_flag}
    - **CRITICAL RULE**: The protagonist CANNOT level up or obtain new powers unless failure_flag is TRUE. If failure_flag is False, they must face intense struggle, difficulty, or setback without a breakthrough.
-5. **NAMING & DIALOGUE STYLE**:
+6. **NAMING & DIALOGUE STYLE**:
    - Use natural 2-word Vietnamese names ONLY (e.g. Trần Lam, Linh Vy, Minh Đức). NEVER use 3-word full names (do NOT write Nguyễn Minh Đức) and NEVER use English proper nouns.
-   - **TẢI TRỌNG LỜI THOẠI ĐỐI THOẠI CỰC ĐẠI (70% - 80% DIRECT DIALOGUE RATIO)**: BẮT BUỘC câu chuyện phải chiếm từ 70% ĐẾN 80% LỜI NÓI TRỰC TIẾP và ĐỐI THOẠI giữa các nhân vật trong ngoặc kép ("..."). Mọi phân cảnh đều là sự đối đáp dồn dập, tranh luận gay gắt, khiêu khích, thì thầm, bàn chiến thuật và phản ứng bộc phát giữa nhân vật chính và các nhân vật xung quanh. Hạn chế tối đa các đoạn mô tả dài dòng không cần thiết, hãy thể hiện toàn bộ diễn biến câu chuyện qua LỜI NÓI TRỰC TIẾP sống động giữa 2, 3 hoặc nhóm nhân vật!
+   - **TẢI TRỌNG LỜI THOẠI ĐỐI THOẠI CỰC ĐẠI (70% - 80% DIRECT DIALOGUE RATIO)**: BẮT BUỘC câu chuyện phải chiếm từ 70% ĐẾN 80% LỜI NÓI TRỰC TIẾP và ĐỐI THOẠI giữa các nhân vật trong ngoặc kép ("..."). Mọi phân cảnh đều là sự đối đáp dồn dập, tranh luận gay gắt, khiêu khích, thì thầm, bàn chiến thuật và phản ứng bộc phát giữa nhân vật chính và các nhân vật xung quanh!
 
 Write the chapter in natural, evocative Vietnamese. Output ONLY the raw story text without conversational intro/outro text, headers, or sections like 'Dẫn lược:' or 'Chương X:'. Write straight into the narrative.
+"""
+
+INKOS_AUDITOR_PROMPT = """
+You are the InkOS Auditor & De-AI-ification Agent (Narcooo InkOS Framework). Analyze the following chapter draft and perform a 37-dimension quality audit.
+
+Chapter Content:
+{chapter_content}
+
+Audit Tasks:
+1. Strip all AI clichés (e.g., 'dẫn lược', 'tóm lại', 'tổng kết', 'bức tranh toàn cảnh', 'minh chứng').
+2. Verify narrative continuity, dialogue flow, character memory consistency, and cliffhanger intensity.
+3. If any AI clichés or repetitive sentences exist, rewrite and output the perfectly cleaned, enhanced chapter text.
+4. Output ONLY the cleaned story text in natural Vietnamese.
 """
 
 EXTRACT_ENTITIES_PROMPT = """

@@ -645,6 +645,17 @@ def write_next_chapter(novel_id: str) -> dict:
 
             # VÒNG LẶP ÉP BẮT BUỘC ĐẠT >2500 TỪ (Guaranteed 2500+ Words Multi-Pass Expansion Loop)
             if word_count >= 2500 and not ends_abruptly:
+                # INKOS MULTI-AGENT AUDITOR PASS: Khử AI cliché & Chuẩn hóa 37 tiêu chuẩn chất lượng truyện
+                try:
+                    print("[INFO] InkOS Auditor Agent: Bắt đầu rà soát 37 tiêu chuẩn chất lượng & Khử AI cliché...")
+                    audit_prompt = prompts.INKOS_AUDITOR_PROMPT.format(chapter_content=final_content[:4000])
+                    audited_res = call_gemini(audit_prompt)
+                    if audited_res and len(audited_res.split()) > 400:
+                        final_content = clean_chapter_content(audited_res)
+                        word_count = len(final_content.split())
+                        print(f"[SUCCESS] InkOS Auditor Agent hoàn thành khử AI cliché. Tổng số từ tinh chế: {word_count} từ.")
+                except Exception as audit_err:
+                    print(f"[WARNING] InkOS Auditor Agent pass warning: {audit_err}")
                 break
                 
             expand_cycles = 0
