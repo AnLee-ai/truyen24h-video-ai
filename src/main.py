@@ -54,9 +54,8 @@ class CallbackStream:
 def find_chapter_needing_video(novel_id: str) -> dict:
     """
     Tự động quét các chương đã viết trong CSDL:
-    Nếu phát hiện chương nào ĐÃ CÓ NỘI DUNG VĂN BẢN (không phải BLUEPRINT) và ĐÃ CÓ FILE AUDIO,
-    nhưng CHƯA TẠO VIDEO (video_status khác 'completed' hoặc video_url rỗng),
-    thì trả về chương đó để ưu tiên render Video ngay mà KHÔNG CẦN viết chương mới.
+    Nếu phát hiện chương nào ĐÃ CÓ NỘI DUNG VĂN BẢN nhưng CHƯA TẠO VIDEO và CHƯA HOÀN THÀNH,
+    thì mới trả về để render Video. Ngược lại, nếu chương đó ĐÃ HOÀN THÀNH thì bỏ qua để viết chương mới (Chương 2, 3, 4...).
     """
     try:
         all_chapters = database.get_all_chapters(novel_id)
@@ -66,21 +65,21 @@ def find_chapter_needing_video(novel_id: str) -> dict:
             ch_num = ch.get("chapter_number", 0)
             v_status = ch.get("video_status", "")
             v_url = ch.get("video_url", "")
+            audio_url = ch.get("audio_url", "")
             
+            # Bỏ qua nếu chương đã hoàn thành 100% (Đã upload Telegram / Supabase)
+            if v_status in ["completed", "published", "done"] or "Completed" in audio_url or v_url:
+                continue
+                
             # Bỏ qua nếu chưa viết xong nội dung (còn là BLUEPRINT)
             if not ch_content or ch_content.startswith("BLUEPRINT:") or len(ch_content.split()) < 1000:
                 continue
                 
-            # Kiểm tra xem video đã hoàn thành 100% chưa
-            video_completed = (v_status == "completed" and v_url)
-            local_video_exists = os.path.exists(os.path.join("output", ch_id, "video.mp4"))
-            
-            if not video_completed and not local_video_exists:
-                # Kiểm tra xem audio đã có chưa
-                has_audio = bool(ch.get("audio_url")) or os.path.exists(os.path.join("output", ch_id, f"{ch_id}_final.mp3")) or os.path.exists(os.path.join("output", ch_id, f"{ch_id}_raw.mp3"))
-                if has_audio:
-                    print(f"[INFO] TỰ ĐỘNG PHÁT HIỆN: Chương {ch_num} (ID: {ch_id}) đã có File Audio nhưng CHƯA CÓ VIDEO!")
-                    return ch
+            # Kiểm tra xem audio đã có sẵn chưa để ưu tiên render video
+            has_audio = bool(audio_url) or os.path.exists(os.path.join("output", ch_id, f"{ch_id}_final.mp3"))
+            if has_audio and not v_status:
+                print(f"[INFO] TỰ ĐỘNG PHÁT HIỆN: Chương {ch_num} (ID: {ch_id}) đã có Audio nhưng CHƯA CÓ VIDEO!")
+                return ch
     except Exception as e:
         print(f"[WARNING] Lỗi quét chương chưa có video: {e}")
         
@@ -197,6 +196,7 @@ def _run_chapter_pipeline_impl(novel_id: str):
         if success:
             print(f"[INFO] Pipeline execution complete for Chapter {chapter_num}!")
             database.update_chapter_audio(chapter_id, "Completed All Media & Uploads")
+            database.update_chapter_video_status(chapter_id, status="completed", video_url=video_public_url or "completed")
         else:
             print("[WARNING] Pipeline finished but Telegram upload failed.")
             
