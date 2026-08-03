@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+venv/
+env/
+
+# Environment / secrets
+.env
+*.env
+
+# Generated output
+output/
+backend/output/
+
+# ADK
+backend/mangstoon_ai/.adk/
+
+# OS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Next.js
+frontend/.next/
+frontend/node_modules/
+frontend/.env.local
+.vercel
+
+# Root node_modules (pptxgenjs install)
+node_modules/
+package.json
+package-lock.json
+yarn.lock
+
+# Pitch deck generator (keep .pptx, ignore .js build script)
+pitch-deck/pitch-deck.js
+
+# Claude / Playwright temp
+.claude/
+.playwright-mcp/
+
+# Screenshots (temp)
+*.png
+!pitch-deck/*.png
+
+# Lock files
+uv.lock

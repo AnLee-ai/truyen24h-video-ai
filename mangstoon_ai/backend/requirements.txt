@@ -1,0 +1,8 @@
+google-adk
+google-genai
+google-cloud-storage
+fastapi
+uvicorn[standard]
+pillow
+python-multipart
+python-dotenv

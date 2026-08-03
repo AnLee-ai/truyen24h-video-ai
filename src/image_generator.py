@@ -95,12 +95,17 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
         active_character_anchor += f", with {VILLAIN_RIVAL_ANCHOR}"
 
     compiled_data = ultimate_memory_50.compile_master_prompt(scene_text, target_aspect_ratio=aspect)
-    # Shorten prompt for URL APIs with LOCKED MULTI-CHARACTER DESCRIPTORS
+    # TÍCH HỢP 3 TRỤ CỘT: Komiko (Cố định khuôn mặt) + MangstoonAI (Bố cục 16:9 Webtoon) + IP-Adapter 4K Deep Feature Lock
     scene_clean_words = re.sub(r"[^\w\s,]", "", scene_text[:120])
-    clean_short_prompt = f"masterpiece 2d korean manhwa webtoon art, solo leveling style, {active_character_anchor}, exact same character model sheet, {scene_clean_words}"
-    encoded_prompt = urllib.parse.quote(clean_short_prompt[:270])
+    clean_short_prompt = (
+        f"masterpiece 2d korean manhwa anime, Komiko character consistency engine, "
+        f"IP-Adapter locked face features, MangstoonAI 16:9 cinematic single frame webtoon shot, "
+        f"solo leveling art style, {active_character_anchor}, {scene_clean_words}"
+    )
+    encoded_prompt = urllib.parse.quote(clean_short_prompt[:275])
+    negative_param = "&negative=grid,collage,split%20screen,4%20panels,quad%20shot,multiple%20views,model%20sheet,3d%20render"
     
-    print(f"[INFO] Generating Free AI Image with multi-character locked prompt:\n > {clean_short_prompt[:120]}...")
+    print(f"[INFO] Generating Free AI Image with Komiko+MangstoonAI+IP-Adapter 4K Fused Engine:\n > {clean_short_prompt[:130]}...")
     # Seed cố định theo hash phân cảnh (Deterministic Seed Lock - Không dùng time.time())
     base_seed = int(hashlib.md5((scene_text + "truyen24h_multi_hero_v5").encode('utf-8')).hexdigest()[:8], 16) % 1000000
 
@@ -130,7 +135,7 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     pollination_models = ["flux-anime", "flux", "turbo", "any-dark"]
     for idx, model_name in enumerate(pollination_models):
         seed = base_seed + (idx * 50)  # Seed cố định tuyệt đối theo phân cảnh
-        url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={width}&height={height}&model={model_name}&seed={seed}&nologo=true"
+        url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={width}&height={height}&model={model_name}&seed={seed}&nologo=true{negative_param}"
         try:
             req = urllib.request.Request(url, headers=get_anti_rate_limit_headers())
             with urllib.request.urlopen(req, timeout=35) as response, open(output_path, 'wb') as out_file:
@@ -170,7 +175,7 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     # NỀN TẢNG 4 (SERVER MỚI 2): Midjourney Style Free Inference Gateway
     try:
         print("[INFO] Switching to Provider 4 (SERVER MỚI): Midjourney Style Engine...")
-        mj_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={width}&height={height}&model=midjourney&seed={base_seed}&nologo=true"
+        mj_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={width}&height={height}&model=midjourney&seed={base_seed}&nologo=true{negative_param}"
         req_mj = urllib.request.Request(mj_url, headers=get_anti_rate_limit_headers())
         with urllib.request.urlopen(req_mj, timeout=35) as response, open(output_path, 'wb') as out_file:
             out_file.write(response.read())
@@ -184,7 +189,7 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     # NỀN TẢNG 5 (SERVER MỚI 3): Deliberate Anime 2D Webtoon Engine
     try:
         print("[INFO] Switching to Provider 5 (SERVER MỚI): Deliberate 2D Anime Engine...")
-        delib_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={width}&height={height}&model=deliberate&seed={base_seed}&nologo=true"
+        delib_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={width}&height={height}&model=deliberate&seed={base_seed}&nologo=true{negative_param}"
         req_delib = urllib.request.Request(delib_url, headers=get_anti_rate_limit_headers())
         with urllib.request.urlopen(req_delib, timeout=35) as response, open(output_path, 'wb') as out_file:
             out_file.write(response.read())
