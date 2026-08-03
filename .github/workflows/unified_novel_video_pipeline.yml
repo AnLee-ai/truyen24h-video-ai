@@ -15,7 +15,7 @@ on:
 jobs:
   unified-pipeline:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 15
 
     steps:
       - name: 1. Checkout Code

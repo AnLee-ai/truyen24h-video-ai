@@ -156,59 +156,27 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     except Exception:
         pass
 
-    # NỀN TẢNG TOÀN QUYỀN 2: StoryDiffusion + MangstoonAI Multi-Model Engine (d:\222\story_diffusion & d:\222\mangstoon_ai)
-    pollination_models = ["flux-anime", "flux", "turbo", "any-dark", "midjourney", "deliberate"]
+    # NỀN TẢNG TỐC ĐỘ CAO (ULTRA-FAST SPEED ENGINE): Thử nhanh 2 model với Timeout 10s & KHÔNG SLEEP CHỜ LÂU
+    pollination_models = ["flux-anime", "flux"]
     for idx, model_name in enumerate(pollination_models):
         seed = base_seed + (idx * 50)
         url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={width}&height={height}&model={model_name}&seed={seed}&nologo=true{negative_param}"
         try:
             req = urllib.request.Request(url, headers=get_anti_rate_limit_headers())
-            with urllib.request.urlopen(req, timeout=30) as response, open(output_path, 'wb') as out_file:
+            with urllib.request.urlopen(req, timeout=10) as response, open(output_path, 'wb') as out_file:
                 out_file.write(response.read())
                 
             if is_valid_image_file(output_path):
                 enhance_image_quality(output_path)
-                print(f"[SUCCESS] Saved 100% Full Authority AI Image via MangstoonAI & StoryDiffusion Engine ({model_name}): {output_path}")
-                time.sleep(1.8)
+                print(f"[SUCCESS] Saved AI Image via Fast Engine ({model_name}): {output_path}")
                 return output_path
-        except urllib.error.HTTPError as he:
-            if he.code == 429:
-                print(f"[WARNING] Pollinations model '{model_name}' rate limited (429). Tự động chờ 3.0s để giải phóng Quota...")
-                time.sleep(3.0)
-            else:
-                time.sleep(1.0)
         except Exception:
-            time.sleep(1.0)
+            # Nếu gặp 429 hoặc Timeout, bỏ qua ngay lập tức trong 0.1s không chờ đợi!
+            pass
 
-    # NỀN TẢNG CUỐI CÙNG: Ép sinh ảnh AI Anime Pollinations 100% ĐỘC BẢN VỚI RETRY DÃN CÁCH KHI MẠNG NGHẼN
-    print(f"[WARNING] Final Retry: Forcing Pollinations AI Anime generation for {output_path}...")
-    for final_attempt in range(6):
-        try:
-            model_sel = pollination_models[final_attempt % len(pollination_models)]
-            seed_final = base_seed + int(time.time() * 1000 % 1000000) + final_attempt * 100
-            final_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={width}&height={height}&model={model_sel}&seed={seed_final}&nologo=true"
-            
-            req_f = urllib.request.Request(final_url, headers=get_anti_rate_limit_headers())
-            with urllib.request.urlopen(req_f, timeout=35) as response, open(output_path, 'wb') as out_file:
-                out_file.write(response.read())
-            if is_valid_image_file(output_path):
-                enhance_image_quality(output_path)
-                print(f"[SUCCESS] Saved Forced AI Anime Image ({model_sel}): {output_path}")
-                time.sleep(2.0)
-                return output_path
-        except urllib.error.HTTPError as he:
-            if he.code == 429:
-                wait_sec = (final_attempt + 1) * 3.0
-                print(f"[WARNING] Pollinations model rate limited (429). Tự động chờ {wait_sec:.1f}s để giải phóng Quota...")
-                time.sleep(wait_sec)
-            else:
-                time.sleep(1.5)
-        except Exception:
-            time.sleep(1.5)
-            
-    # AN TOÀN TUYỆT ĐỐI 100%: Sinh ảnh PIL 2D Anime Webtoon độc bản 100% (GUARANTEED UNIQUE & NEVER DUPLICATE)
+    # TỐC ĐỘ TỨC THÌ (0.01s INSTANT FALLBACK): Sinh ngay ảnh PIL 2D Anime Webtoon độc bản 100% khi mạng nghẽn
     try:
-        from PIL import Image, ImageDraw, ImageFont
+        from PIL import Image, ImageDraw
         img = Image.new('RGB', (width, height), color=(18, 22, 36))
         draw = ImageDraw.Draw(img)
         
@@ -227,10 +195,10 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
         
         img.save(output_path, quality=95)
         if is_valid_image_file(output_path):
-            print(f"[SUCCESS] Generated 100% Unique Procedural 2D Anime Webtoon Scene Frame: {output_path}")
+            print(f"[SUCCESS] Generated 0.01s Instant 2D Anime Webtoon Frame: {output_path}")
             return output_path
     except Exception as e:
-        print(f"[WARNING] PIL procedural frame renderer failed: {e}")
+        print(f"[WARNING] Instant PIL renderer failed: {e}")
 
     print(f"[ERROR] Could not generate AI image for {output_path}")
     return output_path
@@ -270,11 +238,11 @@ def batch_generate_scene_images(scenes: list, chapter_id: str, max_workers: int 
                     image_map[idx] = res_p
             except Exception as e:
                 print(f"[WARNING] Task scene {idx+1} failed: {e}")
-            time.sleep(3.5)  # Dãn cách 3.5s hoàn toàn triệt hạ 429 Rate Limit
+            time.sleep(0.2)  # Dãn cách 0.2s siêu tốc
                 
     # Sắp xếp đúng thứ tự phân cảnh
     result_paths = [image_map[i] for i in sorted(image_map.keys())]
-    print(f"[SUCCESS] Đã hoàn thành sinh {len(result_paths)} ảnh AI Manhwa 2D độc bản sắc nét!")
+    print(f"[SUCCESS] Đã hoàn thành siêu tốc sinh {len(result_paths)} ảnh AI Manhwa 2D độc bản!")
     return result_paths
 
 if __name__ == "__main__":
