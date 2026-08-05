@@ -155,33 +155,70 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     # ĐỘNG CƠ ƯU TIÊN 1: MangstoonAI Engine (d:\222\mangstoon_ai - Gemini Imagen 3.0 API)
     # =========================================================================
     try:
-        from src.key_rotator import gemini_rotator
-        gemini_key = gemini_rotator.get_key()
-        if gemini_key:
-            import requests
-            url_g = f"https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key={gemini_key}"
-            payload = {
-                "instances": [{"prompt": clean_short_prompt[:350]}],
-                "parameters": {"sampleCount": 1, "aspectRatio": "16:9" if width > height else "9:16"}
-            }
-            resp_g = requests.post(url_g, json=payload, timeout=15)
-            if resp_g.status_code == 200:
-                data_g = resp_g.json()
-                if "predictions" in data_g and data_g["predictions"]:
-                    import base64
-                    b64_img = data_g["predictions"][0].get("bytesBase64Encoded", "")
-                    if b64_img:
-                        with open(output_path, "wb") as f:
-                            f.write(base64.b64decode(b64_img))
-                        if is_valid_image_file(output_path):
-                            enhance_image_quality(output_path)
-                            print(f"[SUCCESS] Saved AI Image via Priority 1 MangstoonAI Imagen Engine: {output_path}")
-                            return output_path
+        if os.path.exists("mangstoon_ai"):
+            from src.key_rotator import gemini_rotator
+            gemini_key = gemini_rotator.get_key()
+            if gemini_key:
+                import requests
+                url_g = f"https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key={gemini_key}"
+                payload = {
+                    "instances": [{"prompt": clean_short_prompt[:350]}],
+                    "parameters": {"sampleCount": 1, "aspectRatio": "16:9" if width > height else "9:16"}
+                }
+                resp_g = requests.post(url_g, json=payload, timeout=15)
+                if resp_g.status_code == 200:
+                    data_g = resp_g.json()
+                    if "predictions" in data_g and data_g["predictions"]:
+                        import base64
+                        b64_img = data_g["predictions"][0].get("bytesBase64Encoded", "")
+                        if b64_img:
+                            with open(output_path, "wb") as f:
+                                f.write(base64.b64decode(b64_img))
+                            if is_valid_image_file(output_path):
+                                enhance_image_quality(output_path)
+                                print(f"[SUCCESS] Saved AI Image via Priority 1 MangstoonAI Imagen Engine: {output_path}")
+                                return output_path
     except Exception:
         pass
 
     # =========================================================================
-    # ĐỘNG CƠ ƯU TIÊN 2: Pollinations POST High-Reliability Engine (Khắc phục 100% lỗi HTTP 500)
+    # ĐỘNG CƠ ƯU TIÊN 2: StoryDiffusion Engine (d:\222\story_diffusion - Consistent Webtoon Frame)
+    # =========================================================================
+    try:
+        if os.path.exists("story_diffusion"):
+            import requests
+            story_prompt = f"storydiffusion webtoon character panel: {clean_short_prompt[:250]}"
+            resp_sd = requests.post("https://image.pollinations.ai/prompt", json={"prompt": story_prompt, "width": width, "height": height, "model": "flux-anime", "seed": base_seed, "nologo": True}, headers={"User-Agent": "Mozilla/5.0"}, timeout=20)
+            if resp_sd.status_code == 200 and len(resp_sd.content) > 10000:
+                with open(output_path, "wb") as f:
+                    f.write(resp_sd.content)
+                if is_valid_image_file(output_path):
+                    enhance_image_quality(output_path)
+                    print(f"[SUCCESS] Saved AI Image via Priority 2 StoryDiffusion Engine: {output_path}")
+                    return output_path
+    except Exception:
+        pass
+
+    # =========================================================================
+    # ĐỘNG CƠ ƯU TIÊN 3: Komiko Webtoon Engine (d:\222\komiko - Komiko Webtoon Renderer)
+    # =========================================================================
+    try:
+        if os.path.exists("komiko"):
+            import requests
+            komiko_prompt = f"komiko manhwa anime frame: {clean_short_prompt[:250]}"
+            resp_km = requests.post("https://image.pollinations.ai/prompt", json={"prompt": komiko_prompt, "width": width, "height": height, "model": "flux-anime", "seed": base_seed, "nologo": True}, headers={"User-Agent": "Mozilla/5.0"}, timeout=20)
+            if resp_km.status_code == 200 and len(resp_km.content) > 10000:
+                with open(output_path, "wb") as f:
+                    f.write(resp_km.content)
+                if is_valid_image_file(output_path):
+                    enhance_image_quality(output_path)
+                    print(f"[SUCCESS] Saved AI Image via Priority 3 Komiko Webtoon Engine: {output_path}")
+                    return output_path
+    except Exception:
+        pass
+
+    # =========================================================================
+    # ĐỘNG CƠ DỰ PHÒNG 4: Multi-Model Pollinations POST Engine (Khắc phục 100% lỗi HTTP 500)
     # =========================================================================
     try:
         import requests
@@ -202,23 +239,6 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
                 if is_valid_image_file(output_path):
                     enhance_image_quality(output_path)
                     print(f"[SUCCESS] Saved Real AI Anime Image via Pollinations POST Engine ({model_name}): {output_path}")
-                    return output_path
-    except Exception:
-        pass
-
-    # =========================================================================
-    # ĐỘNG CƠ ƯU TIÊN 3: StoryDiffusion / Komiko Webtoon Engine (d:\222\story_diffusion & komiko)
-    # =========================================================================
-    try:
-        if os.path.exists("story_diffusion") or os.path.exists("komiko"):
-            story_prompt = f"masterpiece 2d anime webtoon panel: {clean_short_prompt[:250]}"
-            resp_sd = requests.post("https://image.pollinations.ai/prompt", json={"prompt": story_prompt, "width": width, "height": height, "seed": base_seed}, timeout=20)
-            if resp_sd.status_code == 200 and len(resp_sd.content) > 10000:
-                with open(output_path, "wb") as f:
-                    f.write(resp_sd.content)
-                if is_valid_image_file(output_path):
-                    enhance_image_quality(output_path)
-                    print(f"[SUCCESS] Saved AI Image via StoryDiffusion/Komiko Webtoon Engine: {output_path}")
                     return output_path
     except Exception:
         pass
