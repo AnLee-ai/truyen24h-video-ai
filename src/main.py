@@ -281,9 +281,21 @@ def main():
         safe_print(f"SUCCESS: Novel initialized. ID: {novel['id']}")
         
     elif args.action == "run-pipeline":
-        novel_id = args.novel_id
+        novel_id = args.novel_id or os.getenv("INPUT_NOVEL_ID") or os.getenv("SECRET_NOVEL_ID") or os.getenv("NOVEL_ID")
         if novel_id:
             novel_id = novel_id.strip().strip("'\"").strip()
+            
+        # ƯU TIÊN HÀNG ĐẦU: Nếu có file output/current_novel.json mới tạo, chạy ngay Bộ Truyện Mới này!
+        if os.path.exists("output/current_novel.json"):
+            try:
+                with open("output/current_novel.json", "r", encoding="utf-8") as f:
+                    curr_n = json.load(f)
+                    if curr_n.get("id"):
+                        novel_id = curr_n["id"]
+                        safe_print(f"[INFO] ⚡ PHÁT HIỆN BỘ TRUYỆN MỚI TỪ FILE CỤC BỘ: '{curr_n.get('title')}' (ID: {novel_id})")
+            except Exception as e:
+                safe_print(f"[WARNING] Không thể đọc output/current_novel.json: {e}")
+                
         if not novel_id or novel_id.lower() == "all":
             if not config.validate_config():
                 sys.exit(1)
