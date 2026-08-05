@@ -178,48 +178,87 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     except Exception:
         pass
 
-    # NỀN TẢNG TOÀN QUYỀN 2: StoryDiffusion + MangstoonAI High-Quality Multi-Model Engine (flux-anime / flux / turbo / midjourney)
-    pollination_models = ["flux-anime", "flux", "turbo", "midjourney"]
+    # NỀN TẢNG TOÀN QUYỀN 2: Multi-Gateway Free AI Image Engine (Pollinations Primary & Secondary Gateways)
+    pollination_models = ["flux-anime", "flux-realism", "flux", "turbo"]
     for idx, model_name in enumerate(pollination_models):
-        seed = base_seed + (idx * 50)
-        url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={width}&height={height}&model={model_name}&seed={seed}&nologo=true{negative_param}"
-        try:
-            req = urllib.request.Request(url, headers=get_anti_rate_limit_headers())
-            with urllib.request.urlopen(req, timeout=20) as response, open(output_path, 'wb') as out_file:
-                out_file.write(response.read())
-                
-            if is_valid_image_file(output_path):
-                enhance_image_quality(output_path)
-                print(f"[SUCCESS] Saved Real AI Anime Image via Engine ({model_name}): {output_path}")
-                return output_path
-        except Exception as e:
-            time.sleep(1.5)
+        seed = base_seed + (idx * 37)
+        gateways = [
+            f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={width}&height={height}&model={model_name}&seed={seed}&nologo=true{negative_param}",
+            f"https://gen.pollinations.ai/image/{encoded_prompt}?width={width}&height={height}&model={model_name}&seed={seed}&nologo=true",
+            f"https://pollinations.ai/p/{encoded_prompt}?width={width}&height={height}&seed={seed}&nologo=true"
+        ]
+        for url in gateways:
+            try:
+                req = urllib.request.Request(url, headers=get_anti_rate_limit_headers())
+                with urllib.request.urlopen(req, timeout=15) as response, open(output_path, 'wb') as out_file:
+                    out_file.write(response.read())
+                    
+                if is_valid_image_file(output_path):
+                    enhance_image_quality(output_path)
+                    print(f"[SUCCESS] Saved Real AI Anime Image via Gateway ({model_name}): {output_path}")
+                    return output_path
+            except Exception:
+                pass
+            time.sleep(0.5)
 
-    # TỐC ĐỘ TỨC THÌ (0.01s INSTANT FALLBACK): Sinh ngay ảnh PIL 2D Anime Webtoon độc bản 100% khi mạng nghẽn
+    # NỀN TẢNG TOÀN QUYỀN 3: ĐỘNG CƠ VẼ PHONG CẢNH WEBTOON 2D HYỀN ẢO NHIỀU LỚP (BẢO VỆ 100% KHÔNG BAO GIỜ BỊ HÌNH VẼ ĐƠN GIẢN)
     try:
-        from PIL import Image, ImageDraw
-        img = Image.new('RGB', (width, height), color=(18, 22, 36))
+        from PIL import Image, ImageDraw, ImageFilter
+        img = Image.new('RGB', (width, height), color=(12, 16, 28))
         draw = ImageDraw.Draw(img)
         
-        # Vẽ viền & dải hiệu ứng 2D Anime Webtoon
+        # 1. Bầu trời đêm huyền ảo chuyển màu Gradient (Gradient Night Sky)
         seed_num = int(hashlib.md5(scene_text.encode('utf-8')).hexdigest()[:6], 16)
-        r = (seed_num * 17) % 200 + 30
-        g = (seed_num * 31) % 200 + 30
-        b = (seed_num * 47) % 200 + 50
+        r_theme = (seed_num * 13) % 180 + 30
+        g_theme = (seed_num * 29) % 180 + 30
+        b_theme = (seed_num * 43) % 200 + 55
         
-        draw.rectangle([60, 60, width - 60, height - 60], outline=(r, g, b), width=5)
-        draw.rectangle([80, 80, width - 80, height - 80], outline=(255, 255, 255), width=2)
+        for y in range(height):
+            ratio = y / height
+            r = int(12 * (1 - ratio) + r_theme * ratio * 0.4)
+            g = int(16 * (1 - ratio) + g_theme * ratio * 0.4)
+            b = int(32 * (1 - ratio) + b_theme * ratio * 0.6)
+            draw.line([(0, y), (width, y)], fill=(r, g, b))
+            
+        # 2. Ngôi sao đêm lung linh (Stars)
+        for i in range(120):
+            sx = (seed_num * (i + 1) * 37) % width
+            sy = (seed_num * (i + 1) * 73) % (height // 2)
+            s_size = (i % 3) + 1
+            draw.ellipse([sx, sy, sx + s_size, sy + s_size], fill=(255, 255, 240, 220))
+            
+        # 3. Mặt trăng / Quầng sáng linh khí huyền ảo (Glowing Celestial Aura)
+        moon_x, moon_y = width * 3 // 4, height // 4
+        for radius in range(160, 40, -10):
+            alpha_val = int(40 * (1 - radius / 160))
+            draw.ellipse([moon_x - radius, moon_y - radius, moon_x + radius, moon_y + radius], fill=(r_theme, g_theme, b_theme, alpha_val))
+        draw.ellipse([moon_x - 45, moon_y - 45, moon_x + 45, moon_y + 45], fill=(255, 250, 225))
         
-        # Vẽ bóng nhân vật silhouette 2D Anime
-        draw.polygon([(width//2 - 120, height - 120), (width//2 + 120, height - 120), (width//2, height//2 - 80)], fill=(r//2, g//2, b//2))
-        draw.ellipse([width//2 - 60, height//2 - 200, width//2 + 60, height//2 - 80], fill=(r, g, b))
+        # 4. Các lớp dãy núi huyền ảo trùng điệp (Layered Misty Parallax Mountains)
+        def draw_mountain_layer(y_base, height_variance, color, fill_color):
+            points = [(0, height)]
+            step = 60
+            for x in range(0, width + step, step):
+                h_val = int(hashlib.md5(f"{scene_text}_{x}_{y_base}".encode()).hexdigest()[:4], 16) % height_variance
+                points.append((x, y_base - h_val))
+            points.append((width, height))
+            draw.polygon(points, fill=fill_color, outline=color)
+
+        # Dãy núi xa, dãy núi trung, và dãy núi gần
+        draw_mountain_layer(height * 2 // 3, 140, (r_theme//3, g_theme//3, b_theme//3), (int(r_theme*0.2), int(g_theme*0.2), int(b_theme*0.3)))
+        draw_mountain_layer(height * 4 // 5, 180, (r_theme//2, g_theme//2, b_theme//2), (int(r_theme*0.15), int(g_theme*0.15), int(b_theme*0.25)))
+        draw_mountain_layer(height - 20, 220, (15, 20, 35), (10, 14, 24))
+
+        # 5. Viền khung ảnh 2D Anime Webtoon điện ảnh kép
+        draw.rectangle([40, 40, width - 40, height - 40], outline=(r_theme, g_theme, b_theme), width=4)
+        draw.rectangle([52, 52, width - 52, height - 52], outline=(255, 255, 255, 180), width=2)
         
         img.save(output_path, quality=95)
         if is_valid_image_file(output_path):
-            print(f"[SUCCESS] Generated 0.01s Instant 2D Anime Webtoon Frame: {output_path}")
+            print(f"[SUCCESS] Generated 2D Anime Parallax Webtoon Landscape Canvas: {output_path}")
             return output_path
     except Exception as e:
-        print(f"[WARNING] Instant PIL renderer failed: {e}")
+        print(f"[WARNING] Procedural Webtoon renderer failed: {e}")
 
     print(f"[ERROR] Could not generate AI image for {output_path}")
     return output_path
