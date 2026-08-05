@@ -281,11 +281,8 @@ def main():
         safe_print(f"SUCCESS: Novel initialized. ID: {novel['id']}")
         
     elif args.action == "run-pipeline":
-        novel_id = args.novel_id or os.getenv("INPUT_NOVEL_ID") or os.getenv("SECRET_NOVEL_ID") or os.getenv("NOVEL_ID")
-        if novel_id:
-            novel_id = novel_id.strip().strip("'\"").strip()
-            
-        # ƯU TIÊN HÀNG ĐẦU: Đọc file data/active_novel.json (được Git theo dõi) hoặc output/current_novel.json
+        # 1. Đọc ưu tiên tuyệt đối từ file data/active_novel.json (được Git theo dõi) hoặc output/current_novel.json
+        file_novel_id = None
         novel_file = None
         if os.path.exists("data/active_novel.json"):
             novel_file = "data/active_novel.json"
@@ -297,10 +294,15 @@ def main():
                 with open(novel_file, "r", encoding="utf-8") as f:
                     curr_n = json.load(f)
                     if curr_n.get("id"):
-                        novel_id = curr_n["id"]
-                        safe_print(f"[INFO] ⚡ PHÁT HIỆN BỘ TRUYỆN MỚI TỪ FILE '{novel_file}': '{curr_n.get('title')}' (ID: {novel_id})")
+                        file_novel_id = curr_n["id"]
+                        safe_print(f"[INFO] ⚡ PHÁT HIỆN BỘ TRUYỆN MỚI TỪ FILE '{novel_file}': '{curr_n.get('title')}' (ID: {file_novel_id})")
             except Exception as e:
                 safe_print(f"[WARNING] Không thể đọc {novel_file}: {e}")
+
+        # Cho file local đè hoàn toàn SECRET_NOVEL_ID trên GitHub secrets (chỉ dùng SECRET_NOVEL_ID nếu không có file local)
+        novel_id = args.novel_id or os.getenv("INPUT_NOVEL_ID") or file_novel_id or os.getenv("SECRET_NOVEL_ID") or os.getenv("NOVEL_ID")
+        if novel_id:
+            novel_id = novel_id.strip().strip("'\"").strip()
                 
         if not novel_id or novel_id.lower() == "all":
             if not config.validate_config():

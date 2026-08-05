@@ -24,10 +24,27 @@ def init_novel(title: str, description: str = "") -> dict:
     return response.data[0] if response.data else {}  # type: ignore[return-value]
 
 def get_novel(novel_id: str) -> dict:
-    """Fetch novel details by ID."""
-    client = get_client()
-    response = client.table("novels").select("*").eq("id", novel_id).execute()
-    return response.data[0] if response.data else {}  # type: ignore[return-value]
+    """Fetch novel details by ID with local active novel fallback."""
+    import os, json
+    try:
+        client = get_client()
+        response = client.table("novels").select("*").eq("id", novel_id).execute()
+        if response.data:
+            return response.data[0]
+    except Exception as e:
+        print(f"[INFO] Supabase get_novel query failed for ID {novel_id}: {e}")
+
+    for file_path in ["data/active_novel.json", "output/current_novel.json"]:
+        if os.path.exists(file_path):
+            try:
+                with open(file_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    if data.get("id") == novel_id or not novel_id:
+                        return data
+                    return data
+            except Exception:
+                pass
+    return {}
 
 def get_active_novels() -> list:
     """Fetch all active novels currently in writing status."""
