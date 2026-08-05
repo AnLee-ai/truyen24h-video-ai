@@ -154,7 +154,8 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     )
     negative_param = f"&negative={urllib.parse.quote(negative_prompt_full)}"
     
-    print(f"[INFO] 100% HOLLYWOOD BLOCKBUSTER 16K MASTER PROMPT:\n > {clean_short_prompt[:180]}...")
+    safe_log_prompt = clean_short_prompt[:180].encode('ascii', 'replace').decode('ascii')
+    print(f"[INFO] 100% HOLLYWOOD BLOCKBUSTER 16K MASTER PROMPT:\n > {safe_log_prompt}...")
     base_seed = int(hashlib.md5((scene_text + "truyen24h_hollywood_v1").encode('utf-8')).hexdigest()[:8], 16) % 1000000
 
     # NỀN TẢNG TOÀN QUYỀN 1: MangstoonAI Gemini Imagen Engine (d:\222\mangstoon_ai)
