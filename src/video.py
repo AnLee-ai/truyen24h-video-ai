@@ -120,7 +120,7 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
         return ""
         
     out_dir = os.path.dirname(output_video_path)
-    img_dir = os.path.join(out_dir, "scenes")
+    img_dir = os.path.join(out_dir, "images")
     os.makedirs(img_dir, exist_ok=True)
     
     # 1. Đo chính xác độ dài audio thực tế tính bằng giây
@@ -130,7 +130,7 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
     # 2. Phân đoạn cảnh từ SRT với thời lượng khớp chính xác từng câu thoại
     scene_data_list = parse_srt_scenes_with_durations(srt_path, target_min_duration=5.0)
     
-    # Nếu danh sách phân cảnh quá ngắn (< 5 cảnh), tự bổ sung 25-40 phân cảnh đa dạng
+    # Nếu danh sách phân cảnh quá ngắn (< 5 cảnh), tự bổ sung 25-30 phân cảnh đa dạng
     if len(scene_data_list) < 5:
         print("[INFO] Tự động tạo 30 phân cảnh thoại sinh ảnh AI chuyển cảnh liên tục cho video...")
         scene_data_list = [
@@ -141,29 +141,21 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
     scene_texts = [s['text'] for s in scene_data_list]
     print(f"[INFO] Tổng số phân cảnh sinh ảnh AI khớp thoại: {len(scene_texts)}")
     
-    # 3. Sinh ảnh AI ĐA LUỒNG cho tất cả phân cảnh thoại (lên đến 40 phân cảnh độc lập)
+    # 3. Sinh ảnh AI cho tất cả phân cảnh thoại (lên đến 30 phân cảnh độc lập)
     from src.image_generator import batch_generate_scene_images, generate_scene_image, is_valid_image_file
     chapter_id = os.path.basename(out_dir)
-    target_scenes = scene_texts[:40]
-    image_files = batch_generate_scene_images(target_scenes, chapter_id=chapter_id, max_workers=2)
-            
-    # Đảm bảo BẮT BUỘC mỗi phân cảnh đều có 1 ảnh riêng biệt hợp lệ (Xóa bỏ cache lỗi)
-    if len(image_files) < len(target_scenes):
-        print(f"[INFO] Bổ sung ảnh AI Manhwa cho {len(target_scenes) - len(image_files)} phân cảnh còn lại...")
-        for i in range(len(target_scenes)):
-            img_file_path = os.path.join(img_dir, f"scene_{i + 1:03d}.jpg")
-            if os.path.exists(img_file_path) and not is_valid_image_file(img_file_path):
-                try:
-                    os.remove(img_file_path)
-                except Exception:
-                    pass
-            if not os.path.exists(img_file_path):
-                generate_scene_image(target_scenes[i], img_file_path, width=1920, height=1080)
-            if img_file_path not in image_files and is_valid_image_file(img_file_path):
-                image_files.append(img_file_path)
+    target_scenes = scene_texts[:30]
+    
+    image_files = []
+    for i, scene_text in enumerate(target_scenes):
+        img_file_path = os.path.join(img_dir, f"scene_{i + 1:03d}.jpg")
+        if not is_valid_image_file(img_file_path):
+            generate_scene_image(scene_text, img_file_path, width=1920, height=1080)
+        if is_valid_image_file(img_file_path):
+            image_files.append(img_file_path)
                 
     if not image_files:
-        bg_image = os.path.join(out_dir, "background.jpg")
+        bg_image = os.path.join(img_dir, "scene_001.jpg")
         generate_scene_image(title, bg_image, width=1920, height=1080)
         if is_valid_image_file(bg_image):
             image_files.append(bg_image)

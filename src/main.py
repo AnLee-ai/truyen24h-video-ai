@@ -285,16 +285,22 @@ def main():
         if novel_id:
             novel_id = novel_id.strip().strip("'\"").strip()
             
-        # ƯU TIÊN HÀNG ĐẦU: Nếu có file output/current_novel.json mới tạo, chạy ngay Bộ Truyện Mới này!
-        if os.path.exists("output/current_novel.json"):
+        # ƯU TIÊN HÀNG ĐẦU: Đọc file data/active_novel.json (được Git theo dõi) hoặc output/current_novel.json
+        novel_file = None
+        if os.path.exists("data/active_novel.json"):
+            novel_file = "data/active_novel.json"
+        elif os.path.exists("output/current_novel.json"):
+            novel_file = "output/current_novel.json"
+            
+        if novel_file:
             try:
-                with open("output/current_novel.json", "r", encoding="utf-8") as f:
+                with open(novel_file, "r", encoding="utf-8") as f:
                     curr_n = json.load(f)
                     if curr_n.get("id"):
                         novel_id = curr_n["id"]
-                        safe_print(f"[INFO] ⚡ PHÁT HIỆN BỘ TRUYỆN MỚI TỪ FILE CỤC BỘ: '{curr_n.get('title')}' (ID: {novel_id})")
+                        safe_print(f"[INFO] ⚡ PHÁT HIỆN BỘ TRUYỆN MỚI TỪ FILE '{novel_file}': '{curr_n.get('title')}' (ID: {novel_id})")
             except Exception as e:
-                safe_print(f"[WARNING] Không thể đọc output/current_novel.json: {e}")
+                safe_print(f"[WARNING] Không thể đọc {novel_file}: {e}")
                 
         if not novel_id or novel_id.lower() == "all":
             if not config.validate_config():
