@@ -143,8 +143,8 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     # Mã hóa URL vừa đủ 220 ký tự chuẩn HTTP GET
     encoded_prompt = urllib.parse.quote(clean_short_prompt[:220])
     
-    # Negative Prompt gọn nhẹ dưới 120 ký tự (Chống lỗi HTTP 414 URI Too Long)
-    negative_prompt_clean = "blurry,bad_anatomy,bad_hands,watermark,text,close-up,monochrome,flat_lighting"
+    # Negative Prompt gọn nhẹ dưới 140 ký tự (Chống chia ô lưới 6-22 ô truyện tranh & chống lỗi HTTP 414)
+    negative_prompt_clean = "blurry,bad_anatomy,bad_hands,watermark,text,close-up,monochrome,flat_lighting,grid,collage,split_screen,panels"
     negative_param = f"&negative={urllib.parse.quote(negative_prompt_clean)}"
     
     safe_log_prompt = clean_short_prompt[:180].encode('ascii', 'replace').decode('ascii')
