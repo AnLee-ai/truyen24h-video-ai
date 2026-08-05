@@ -133,30 +133,23 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     elif any(w in lower_s for w in ["nói", "bảo", "hỏi", "cười", "nhìn", "thiếu nữ", "sư phụ"]):
         camera_angle_anchor = "medium shot, over shoulder shot, 50mm lens, cinematic depth of field, foreground blur, professional focus pull"
 
-    # ĐƯA NỘI DUNG PHÂN CẢNH, BỐI CẢNH VÀ GÓC QUAY LÊN ĐẦU PROMPT
-    scene_clean_words = re.sub(r"[^\w\s,]", "", scene_text[:120])
+    # ĐƯA NỘI DUNG PHÂN CẢNH, BỐI CẢNH VÀ GÓC QUAY LÊN ĐẦU PROMPT (GIỮ ĐỘ DÀI URL DƯỚI 380 KÝ TỰ CHUẨN HTTP)
+    scene_clean_words = re.sub(r"[^\w\s,]", "", scene_text[:100])
     
     clean_short_prompt = (
-        f"epic scene: {scene_clean_words}, camera angle: {camera_angle_anchor}, environment: {env_anchor}, {character_composition}, "
-        f"{CHARACTER_IDENTITY_LOCK}, {CINEMATIC_LIGHTING_CAMERA}, {HOLLYWOOD_BLOCKBUSTER_STYLE}"
+        f"masterpiece 2d anime webtoon, epic scene: {scene_clean_words}, camera: {camera_angle_anchor}, "
+        f"environment: {env_anchor}, {character_composition}, 8k cinematic shot"
     )
-    # Mã hóa URL giữ nguyên tối đa 480 ký tự không bị cắt xén giữa chừng
-    encoded_prompt = urllib.parse.quote(clean_short_prompt[:480])
+    # Mã hóa URL vừa đủ 220 ký tự chuẩn HTTP GET
+    encoded_prompt = urllib.parse.quote(clean_short_prompt[:220])
     
-    negative_prompt_full = (
-        "low quality, worst quality, blurry, noisy, jpeg artifacts, bad anatomy, bad hands, extra fingers, missing fingers, "
-        "fused fingers, duplicate body, duplicate face, extra limbs, mutated limbs, deformed eyes, cross-eye, lazy eye, "
-        "incorrect perspective, cropped image, watermark, signature, logo, text, subtitle, low resolution, oversaturated, "
-        "underexposed, overexposed, plastic skin, doll face, cartoonish, childish drawing, bad proportions, ugly face, "
-        "malformed anatomy, broken pose, floating objects, duplicate accessories, inconsistent clothing, inconsistent hairstyle, "
-        "inconsistent character, unrealistic lighting, flat lighting, close-up, extreme close up, face portrait, plain background, "
-        "white background, monochrome bg, grid, collage, split screen, 4 panels, model sheet"
-    )
-    negative_param = f"&negative={urllib.parse.quote(negative_prompt_full)}"
+    # Negative Prompt gọn nhẹ dưới 120 ký tự (Chống lỗi HTTP 414 URI Too Long)
+    negative_prompt_clean = "blurry,bad_anatomy,bad_hands,watermark,text,close-up,monochrome,flat_lighting"
+    negative_param = f"&negative={urllib.parse.quote(negative_prompt_clean)}"
     
     safe_log_prompt = clean_short_prompt[:180].encode('ascii', 'replace').decode('ascii')
-    print(f"[INFO] 100% HOLLYWOOD BLOCKBUSTER 16K MASTER PROMPT:\n > {safe_log_prompt}...")
-    base_seed = int(hashlib.md5((scene_text + "truyen24h_hollywood_v1").encode('utf-8')).hexdigest()[:8], 16) % 1000000
+    print(f"[INFO] 100% MASTER ANIME PROMPT:\n > {safe_log_prompt}...")
+    base_seed = int(hashlib.md5((scene_text + "truyen24h_anime_v3").encode('utf-8')).hexdigest()[:8], 16) % 1000000
 
     # NỀN TẢNG TOÀN QUYỀN 1: MangstoonAI Gemini Imagen Engine (d:\222\mangstoon_ai)
     try:
@@ -166,7 +159,7 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
             import requests
             url_g = f"https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key={gemini_key}"
             payload = {
-                "instances": [{"prompt": clean_short_prompt[:480]}],
+                "instances": [{"prompt": clean_short_prompt[:350]}],
                 "parameters": {"sampleCount": 1, "aspectRatio": "16:9" if width > height else "9:16"}
             }
             resp_g = requests.post(url_g, json=payload, timeout=15)
@@ -192,15 +185,15 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
         url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={width}&height={height}&model={model_name}&seed={seed}&nologo=true{negative_param}"
         try:
             req = urllib.request.Request(url, headers=get_anti_rate_limit_headers())
-            with urllib.request.urlopen(req, timeout=12) as response, open(output_path, 'wb') as out_file:
+            with urllib.request.urlopen(req, timeout=20) as response, open(output_path, 'wb') as out_file:
                 out_file.write(response.read())
                 
             if is_valid_image_file(output_path):
                 enhance_image_quality(output_path)
-                print(f"[SUCCESS] Saved Hollywood 16K AI Image via Engine ({model_name}): {output_path}")
+                print(f"[SUCCESS] Saved Real AI Anime Image via Engine ({model_name}): {output_path}")
                 return output_path
-        except Exception:
-            pass
+        except Exception as e:
+            time.sleep(1.5)
 
     # TỐC ĐỘ TỨC THÌ (0.01s INSTANT FALLBACK): Sinh ngay ảnh PIL 2D Anime Webtoon độc bản 100% khi mạng nghẽn
     try:
