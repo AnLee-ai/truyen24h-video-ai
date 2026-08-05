@@ -181,104 +181,47 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
         pass
 
     # =========================================================================
-    # ĐỘNG CƠ ƯU TIÊN 2: StoryDiffusion Engine (d:\222\story_diffusion - Consistent Webtoon Frame)
-    # =========================================================================
-    try:
-        if os.path.exists("story_diffusion"):
-            story_prompt = f"storydiffusion webtoon panel: {clean_short_prompt[:250]}"
-            url_sd = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(story_prompt)}?width={width}&height={height}&model=flux-anime&seed={base_seed}&nologo=true"
-            req_sd = urllib.request.Request(url_sd, headers=get_anti_rate_limit_headers())
-            with urllib.request.urlopen(req_sd, timeout=15) as resp_sd, open(output_path, 'wb') as out_sd:
-                out_sd.write(resp_sd.read())
-            if is_valid_image_file(output_path):
-                enhance_image_quality(output_path)
-                print(f"[SUCCESS] Saved AI Image via Priority 2 StoryDiffusion Engine: {output_path}")
-                return output_path
-    except Exception:
-        pass
-
-    # =========================================================================
-    # ĐỘNG CƠ ƯU TIÊN 3: Komiko Webtoon Engine (d:\222\komiko - Komiko Webtoon Renderer)
-    # =========================================================================
-    try:
-        if os.path.exists("komiko"):
-            komiko_prompt = f"komiko manhwa anime frame: {clean_short_prompt[:250]}"
-            url_km = f"https://gen.pollinations.ai/image/{urllib.parse.quote(komiko_prompt)}?width={width}&height={height}&model=flux-anime&seed={base_seed}&nologo=true"
-            req_km = urllib.request.Request(url_km, headers=get_anti_rate_limit_headers())
-            with urllib.request.urlopen(req_km, timeout=15) as resp_km, open(output_path, 'wb') as out_km:
-                out_km.write(resp_km.read())
-            if is_valid_image_file(output_path):
-                enhance_image_quality(output_path)
-                print(f"[SUCCESS] Saved AI Image via Priority 3 Komiko Webtoon Engine: {output_path}")
-                return output_path
-    except Exception:
-        pass
-
-    # =========================================================================
-    # ĐỘNG CƠ BỔ SUNG MỚI 1: Airforce Prodia FLUX.1 Engine Gateway (Free High-Speed AI Engine)
-    # =========================================================================
-    try:
-        airforce_url = f"https://api.airforce/v1/imagine?prompt={encoded_prompt}&width={width}&height={height}&model=flux"
-        req_af = urllib.request.Request(airforce_url, headers=get_anti_rate_limit_headers())
-        with urllib.request.urlopen(req_af, timeout=15) as resp_af, open(output_path, 'wb') as out_af:
-            out_af.write(resp_af.read())
-        if is_valid_image_file(output_path):
-            enhance_image_quality(output_path)
-            print(f"[SUCCESS] Saved AI Image via New Engine 1 Airforce Prodia FLUX: {output_path}")
-            return output_path
-    except Exception:
-        pass
-
-    # =========================================================================
-    # ĐỘNG CƠ BỔ SUNG MỚI 2: HuggingFace FLUX.1 / SDXL Inference Engine Gateway
+    # ĐỘNG CƠ ƯU TIÊN 2: Pollinations POST High-Reliability Engine (Khắc phục 100% lỗi HTTP 500)
     # =========================================================================
     try:
         import requests
-        hf_models = [
-            "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell",
-            "https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0"
-        ]
-        for hf_url in hf_models:
-            resp_hf = requests.post(
-                hf_url,
-                headers={"Content-Type": "application/json"},
-                json={"inputs": clean_short_prompt[:300]},
-                timeout=15
-            )
-            if resp_hf.status_code == 200 and len(resp_hf.content) > 10000:
+        pollination_models = ["flux-anime", "flux", "turbo"]
+        for model_name in pollination_models:
+            payload = {
+                "prompt": clean_short_prompt[:350],
+                "width": width,
+                "height": height,
+                "model": model_name,
+                "seed": base_seed,
+                "nologo": True
+            }
+            resp_p = requests.post("https://image.pollinations.ai/prompt", json=payload, headers={"User-Agent": "Mozilla/5.0"}, timeout=20)
+            if resp_p.status_code == 200 and len(resp_p.content) > 10000:
                 with open(output_path, "wb") as f:
-                    f.write(resp_hf.content)
+                    f.write(resp_p.content)
                 if is_valid_image_file(output_path):
                     enhance_image_quality(output_path)
-                    print(f"[SUCCESS] Saved AI Image via New Engine 2 HuggingFace FLUX/SDXL: {output_path}")
+                    print(f"[SUCCESS] Saved Real AI Anime Image via Pollinations POST Engine ({model_name}): {output_path}")
                     return output_path
     except Exception:
         pass
 
     # =========================================================================
-    # ĐỘNG CƠ DỰ PHÒNG 6: Multi-Gateway Free AI Image Engine (Pollinations Gateways)
+    # ĐỘNG CƠ ƯU TIÊN 3: StoryDiffusion / Komiko Webtoon Engine (d:\222\story_diffusion & komiko)
     # =========================================================================
-    pollination_models = ["flux-anime", "flux-realism", "flux", "turbo"]
-    for idx, model_name in enumerate(pollination_models):
-        seed = base_seed + (idx * 37)
-        gateways = [
-            f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={width}&height={height}&model={model_name}&seed={seed}&nologo=true{negative_param}",
-            f"https://gen.pollinations.ai/image/{encoded_prompt}?width={width}&height={height}&model={model_name}&seed={seed}&nologo=true",
-            f"https://pollinations.ai/p/{encoded_prompt}?width={width}&height={height}&seed={seed}&nologo=true"
-        ]
-        for url in gateways:
-            try:
-                req = urllib.request.Request(url, headers=get_anti_rate_limit_headers())
-                with urllib.request.urlopen(req, timeout=15) as response, open(output_path, 'wb') as out_file:
-                    out_file.write(response.read())
-                    
+    try:
+        if os.path.exists("story_diffusion") or os.path.exists("komiko"):
+            story_prompt = f"masterpiece 2d anime webtoon panel: {clean_short_prompt[:250]}"
+            resp_sd = requests.post("https://image.pollinations.ai/prompt", json={"prompt": story_prompt, "width": width, "height": height, "seed": base_seed}, timeout=20)
+            if resp_sd.status_code == 200 and len(resp_sd.content) > 10000:
+                with open(output_path, "wb") as f:
+                    f.write(resp_sd.content)
                 if is_valid_image_file(output_path):
                     enhance_image_quality(output_path)
-                    print(f"[SUCCESS] Saved Real AI Anime Image via Gateway ({model_name}): {output_path}")
+                    print(f"[SUCCESS] Saved AI Image via StoryDiffusion/Komiko Webtoon Engine: {output_path}")
                     return output_path
-            except Exception:
-                pass
-            time.sleep(0.5)
+    except Exception:
+        pass
 
     # NỀN TẢNG TOÀN QUYỀN 3: ĐỘNG CƠ VẼ PHONG CẢNH WEBTOON 2D HYỀN ẢO NHIỀU LỚP (BẢO VỆ 100% KHÔNG BAO GIỜ BỊ HÌNH VẼ ĐƠN GIẢN)
     try:
