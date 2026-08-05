@@ -63,23 +63,22 @@ def find_chapter_needing_video(novel_id: str) -> dict:
             ch_id = ch.get("id", "")
             ch_content = ch.get("content", "")
             ch_num = ch.get("chapter_number", 0)
-            v_status = ch.get("video_status", "")
+            v_status = str(ch.get("video_status", "")).lower()
             v_url = ch.get("video_url", "")
-            audio_url = ch.get("audio_url", "")
+            audio_url = str(ch.get("audio_url", "")).lower()
             
             # Bỏ qua nếu chương đã hoàn thành 100% (Đã upload Telegram / Supabase)
-            if v_status in ["completed", "published", "done"] or "Completed" in audio_url or v_url:
+            if v_status in ["completed", "published", "done", "true"] or "completed" in audio_url or bool(v_url):
+                print(f"[INFO] Bỏ qua Chương {ch_num} (ID: {ch_id}) vì ĐÃ HOÀN THÀNH (video_status={v_status}).")
                 continue
                 
             # Bỏ qua nếu chưa viết xong nội dung (còn là BLUEPRINT)
             if not ch_content or ch_content.startswith("BLUEPRINT:") or len(ch_content.split()) < 1000:
                 continue
                 
-            # Kiểm tra xem audio đã có sẵn chưa để ưu tiên render video
-            has_audio = bool(audio_url) or os.path.exists(os.path.join("output", ch_id, f"{ch_id}_final.mp3"))
-            if has_audio and not v_status:
-                print(f"[INFO] TỰ ĐỘNG PHÁT HIỆN: Chương {ch_num} (ID: {ch_id}) đã có Audio nhưng CHƯA CÓ VIDEO!")
-                return ch
+            # Kiểm tra xem chương này có cần làm video không
+            print(f"[INFO] TỰ ĐỘNG PHÁT HIỆN: Chương {ch_num} (ID: {ch_id}) ĐANG CẦN XỬ LÝ MEDIA/VIDEO!")
+            return ch
     except Exception as e:
         print(f"[WARNING] Lỗi quét chương chưa có video: {e}")
         

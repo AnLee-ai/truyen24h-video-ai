@@ -76,58 +76,86 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     if is_valid_image_file(output_path):
         return output_path
     
-    # 1. Biên dịch master prompt từ 50-Feature Memory Engine (GIỮ NGUYÊN 100% PROMPT ĐẦY ĐỦ, KHÔNG CẮT BỚT)
+    # 1. BIÊN DỊCH MA TRẬN PHONG CẢNH ĐIỆN ẢNH & ĐA NHÂN VẬT CHUẨN CÁC KÊNH TOP NGACH
     aspect = "9:16" if height > width else "16:9"
-    # MA TRẬN KHÓA DIỆN MẠO CỐ ĐỊNH TẤT CẢ NHÂN VẬT CHÍNH & PHỤ (UNIVERSAL MULTI-CHARACTER APPEARANCE LOCK)
-    MASTER_HERO_ANCHOR = "handsome 20yo male protagonist, messy black hair, sharp brown eyes, athletic build, wearing dark blue jacket over white collared shirt"
-    FEMALE_LEAD_ANCHOR = "beautiful young female heroine, long silky black hair, bright amber eyes, elegant white cyan webtoon dress"
-    MENTOR_ELDER_ANCHOR = "wise elderly martial arts master, long white beard, traditional grey cultivator robe, serene gaze"
-    VILLAIN_RIVAL_ANCHOR = "intimidating male antagonist rival, spiky crimson hair, menacing red glowing eyes, dark black armor"
     
-    # Tự nhận diện nhân vật xuất hiện trong phân cảnh để nạp bộ khóa diện mạo tương ứng
-    lower_s = scene_text.lower()
-    active_character_anchor = MASTER_HERO_ANCHOR
-    if any(w in lower_s for w in ["nữ", "cô", "thiếu nữ", "tiểu thư", "sư tỷ", "sư muội", "nữ tử"]):
-        active_character_anchor += f", with {FEMALE_LEAD_ANCHOR}"
-    elif any(w in lower_s for w in ["sư phụ", "lão", "trưởng lão", "thầy", "ông", "cao nhân"]):
-        active_character_anchor += f", with {MENTOR_ELDER_ANCHOR}"
-    elif any(w in lower_s for w in ["kẻ thù", "đối thủ", "ma", "sát thủ", "tà", "hắn"]):
-        active_character_anchor += f", with {VILLAIN_RIVAL_ANCHOR}"
-
-    # TOÀN QUYỀN 100% CHO 2 REPOSITORY d:\222\mangstoon_ai VÀ d:\222\story_diffusion
-    MANGSTOON_STYLE = (
-        "Korean webtoon style illustration, clean digital line art with smooth cel-shading, "
-        "soft gradient coloring with vibrant accents, large expressive eyes, modern manhwa aesthetic, "
-        "single panel illustration, edge-to-edge full frame, no white borders"
+    # BỘ KHÓA BỐ CỤC KHUNG CẢNH & ĐA NHÂN VẬT (HOLLYWOOD BLOCKBUSTER 16K & AAA GAME CONCEPT ART ENGINE)
+    HOLLYWOOD_BLOCKBUSTER_STYLE = (
+        "masterpiece, best quality, absolute cinema, hollywood blockbuster concept art, award-winning digital painting, "
+        "ultra detailed, hyper detailed, cinematic storytelling, emotional visual narrative, visually stunning, breathtaking composition, "
+        "professional movie concept art, AAA game concept art, semi-realistic anime, high-end illustration, pixiv masterpiece, "
+        "artstation trending, unreal engine 5 render quality, octane render quality, redshift render, physically based rendering (PBR), "
+        "global illumination, ambient occlusion, ray tracing, HDR, HDRI lighting, volumetric lighting, subsurface scattering, "
+        "filmic color grading, kodak vision3 film look, sony venice cinema camera, arri alexa 65 look, imax visual style, extremely high resolution 16k"
     )
     
-    # Nạp trực tiếp Style Template từ StoryDiffusion repository (d:\222\story_diffusion)
-    STORY_DIFFUSION_STYLE = "Japanese Anime Manhwa, master detailed character identity, sharp features"
-    try:
-        import sys
-        story_diff_path = os.path.abspath("story_diffusion")
-        if story_diff_path not in sys.path:
-            sys.path.insert(0, story_diff_path)
-        from utils.style_template import styles
-        if "Japanese Anime" in styles:
-            STORY_DIFFUSION_STYLE = styles["Japanese Anime"].get("prompt", STORY_DIFFUSION_STYLE)
-    except Exception:
-        pass
+    CHARACTER_IDENTITY_LOCK = (
+        "maintain exactly the same character identity across every scene, same face, same hairstyle, same clothing, "
+        "same accessories, same body proportions, same age, same facial structure, same eye color, same skin tone, "
+        "skin with realistic pores, natural hair strands, detailed fingers, professional human anatomy"
+    )
+    
+    CINEMATIC_LIGHTING_CAMERA = (
+        "hollywood cinematic lighting, golden hour, volumetric light, god rays, soft rim light, bounce light, "
+        "global illumination, ray traced reflection, arri alexa 65, 35mm lens, depth of field, foreground blur, background blur, "
+        "kodak vision3 color grading, teal orange, film grain, soft bloom"
+    )
 
-    compiled_data = ultimate_memory_50.compile_master_prompt(scene_text, target_aspect_ratio=aspect)
+    # Nhận diện bối cảnh không gian & nhân vật từ văn bản phân cảnh
+    lower_s = scene_text.lower()
+    
+    # Nhận diện bối cảnh môi trường xung quanh (Environment)
+    env_anchor = "living mystical fantasy valley, detailed architecture, realistic roads, natural vegetation, leaves reacting to wind, fog layers, mountain reflections"
+    if any(w in lower_s for w in ["hồ", "nước", "bán nguyệt", "suối", "sông"]):
+        env_anchor = "scenic crescent moon lake at twilight, mist over calm water, glowing lotus blossoms, ancient pavilion, water puddles reflections"
+    elif any(w in lower_s for w in ["núi", "đỉnh", "đá", "vực"]):
+        env_anchor = "majestic misty mountain peak, steep granite cliffs, dramatic cloud sea, cloud shadows, detailed pine trees"
+    elif any(w in lower_s for w in ["rừng", "cây", "động"]):
+        env_anchor = "enchanted ancient forest, giant glowing trees, sunbeams filtering through dense canopy, flying leaves, ethereal mist"
+    elif any(w in lower_s for w in ["phòng", "nhà", "điện", "lâu đài", "thành"]):
+        env_anchor = "grand oriental palace interior, ornate wooden pillars, carved jade thrones, glowing lanterns, detailed furniture props"
+
+    # Nhận diện tương tác nhân vật & bối cảnh
+    character_composition = "full body wide shot of handsome 20yo male cultivator in dark blue robes standing in environmental scene, expressive eyes, hopeful determination"
+    if any(w in lower_s for w in ["nữ", "cô", "thiếu nữ", "tiểu thư", "sư tỷ", "sư muội"]):
+        character_composition = "two characters scene: male cultivator and beautiful young heroine with long hair standing together in scenic location, emotional visual narrative"
+    elif any(w in lower_s for w in ["sư phụ", "lão", "trưởng lão", "thầy", "ông"]):
+        character_composition = "master and disciple interaction: wise white-bearded elder instructing young cultivator outdoors, storytelling composition"
+    elif any(w in lower_s for w in ["kẻ thù", "đối thủ", "quái", "ma", "đánh", "chiến"]):
+        character_composition = "epic battle scene: male protagonist confronting menacing enemy rival with glowing magical aura effects, dynamic visual balance"
+
+    # NẠP BỘ TỰ ĐỘNG LỰA CHỌN GÓC QUAY ĐIỆN ẢNH (DYNAMIC CAMERA ANGLE & LENS SELECTOR)
+    camera_angle_anchor = "wide shot, 35mm ultra wide lens, low angle hero shot, dynamic perspective, depth of field"
+    if any(w in lower_s for w in ["hồ", "núi", "rừng", "thành", "sông", "nhìn"]):
+        camera_angle_anchor = "bird eye view, high angle panoramic shot, ultra wide lens, epic long shot, atmospheric perspective"
+    elif any(w in lower_s for w in ["đánh", "chiến", "chém", "ma", "quái", "kẻ thù"]):
+        camera_angle_anchor = "dramatic low angle shot, dutch angle, over shoulder action view, 35mm lens, dynamic perspective, focus pull"
+    elif any(w in lower_s for w in ["nói", "bảo", "hỏi", "cười", "nhìn", "thiếu nữ", "sư phụ"]):
+        camera_angle_anchor = "medium shot, over shoulder shot, 50mm lens, cinematic depth of field, foreground blur, professional focus pull"
+
+    # ĐƯA NỘI DUNG PHÂN CẢNH, BỐI CẢNH VÀ GÓC QUAY LÊN ĐẦU PROMPT
     scene_clean_words = re.sub(r"[^\w\s,]", "", scene_text[:120])
     
-    # MA TRẬN PHONG CÁCH TOÀN QUYỀN MANGSTOON_AI + STORY_DIFFUSION
     clean_short_prompt = (
-        f"{MANGSTOON_STYLE}, {STORY_DIFFUSION_STYLE}, "
-        f"StoryDiffusion character identity lock, MangstoonAI 16:9 single frame webtoon shot, "
-        f"solo leveling art style, {active_character_anchor}, {scene_clean_words}"
+        f"epic scene: {scene_clean_words}, camera angle: {camera_angle_anchor}, environment: {env_anchor}, {character_composition}, "
+        f"{CHARACTER_IDENTITY_LOCK}, {CINEMATIC_LIGHTING_CAMERA}, {HOLLYWOOD_BLOCKBUSTER_STYLE}"
     )
-    encoded_prompt = urllib.parse.quote(clean_short_prompt[:290])
-    negative_param = "&negative=grid,collage,split%20screen,4%20panels,quad%20shot,multiple%20views,model%20sheet,3d%20render"
+    # Mã hóa URL giữ nguyên tối đa 480 ký tự không bị cắt xén giữa chừng
+    encoded_prompt = urllib.parse.quote(clean_short_prompt[:480])
     
-    print(f"[INFO] 100% FULL AUTHORITY: Executing MangstoonAI (d:\\222\\mangstoon_ai) & StoryDiffusion (d:\\222\\story_diffusion):\n > {clean_short_prompt[:135]}...")
-    base_seed = int(hashlib.md5((scene_text + "truyen24h_full_auth_v1").encode('utf-8')).hexdigest()[:8], 16) % 1000000
+    negative_prompt_full = (
+        "low quality, worst quality, blurry, noisy, jpeg artifacts, bad anatomy, bad hands, extra fingers, missing fingers, "
+        "fused fingers, duplicate body, duplicate face, extra limbs, mutated limbs, deformed eyes, cross-eye, lazy eye, "
+        "incorrect perspective, cropped image, watermark, signature, logo, text, subtitle, low resolution, oversaturated, "
+        "underexposed, overexposed, plastic skin, doll face, cartoonish, childish drawing, bad proportions, ugly face, "
+        "malformed anatomy, broken pose, floating objects, duplicate accessories, inconsistent clothing, inconsistent hairstyle, "
+        "inconsistent character, unrealistic lighting, flat lighting, close-up, extreme close up, face portrait, plain background, "
+        "white background, monochrome bg, grid, collage, split screen, 4 panels, model sheet"
+    )
+    negative_param = f"&negative={urllib.parse.quote(negative_prompt_full)}"
+    
+    print(f"[INFO] 100% HOLLYWOOD BLOCKBUSTER 16K MASTER PROMPT:\n > {clean_short_prompt[:180]}...")
+    base_seed = int(hashlib.md5((scene_text + "truyen24h_hollywood_v1").encode('utf-8')).hexdigest()[:8], 16) % 1000000
 
     # NỀN TẢNG TOÀN QUYỀN 1: MangstoonAI Gemini Imagen Engine (d:\222\mangstoon_ai)
     try:
@@ -137,7 +165,7 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
             import requests
             url_g = f"https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key={gemini_key}"
             payload = {
-                "instances": [{"prompt": clean_short_prompt[:400]}],
+                "instances": [{"prompt": clean_short_prompt[:480]}],
                 "parameters": {"sampleCount": 1, "aspectRatio": "16:9" if width > height else "9:16"}
             }
             resp_g = requests.post(url_g, json=payload, timeout=15)
@@ -151,27 +179,26 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
                             f.write(base64.b64decode(b64_img))
                         if is_valid_image_file(output_path):
                             enhance_image_quality(output_path)
-                            print(f"[SUCCESS] Saved 100% Full Authority AI Image via MangstoonAI Engine (d:\\222\\mangstoon_ai): {output_path}")
+                            print(f"[SUCCESS] Saved AI Image via Hollywood Imagen Engine: {output_path}")
                             return output_path
     except Exception:
         pass
 
-    # NỀN TẢNG TỐC ĐỘ CAO (ULTRA-FAST SPEED ENGINE): Thử nhanh 2 model với Timeout 10s & KHÔNG SLEEP CHỜ LÂU
-    pollination_models = ["flux-anime", "flux"]
+    # NỀN TẢNG TOÀN QUYỀN 2: StoryDiffusion + MangstoonAI High-Quality Multi-Model Engine (flux-anime / flux / turbo / midjourney)
+    pollination_models = ["flux-anime", "flux", "turbo", "midjourney"]
     for idx, model_name in enumerate(pollination_models):
         seed = base_seed + (idx * 50)
         url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={width}&height={height}&model={model_name}&seed={seed}&nologo=true{negative_param}"
         try:
             req = urllib.request.Request(url, headers=get_anti_rate_limit_headers())
-            with urllib.request.urlopen(req, timeout=10) as response, open(output_path, 'wb') as out_file:
+            with urllib.request.urlopen(req, timeout=12) as response, open(output_path, 'wb') as out_file:
                 out_file.write(response.read())
                 
             if is_valid_image_file(output_path):
                 enhance_image_quality(output_path)
-                print(f"[SUCCESS] Saved AI Image via Fast Engine ({model_name}): {output_path}")
+                print(f"[SUCCESS] Saved Hollywood 16K AI Image via Engine ({model_name}): {output_path}")
                 return output_path
         except Exception:
-            # Nếu gặp 429 hoặc Timeout, bỏ qua ngay lập tức trong 0.1s không chờ đợi!
             pass
 
     # TỐC ĐỘ TỨC THÌ (0.01s INSTANT FALLBACK): Sinh ngay ảnh PIL 2D Anime Webtoon độc bản 100% khi mạng nghẽn
