@@ -154,14 +154,14 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
             if m and m not in groq_models:
                 groq_models.append(m)
         
-        max_tokens_options = [3200, 2400, 1800] if not json_mode else [1000]
+        max_tokens_options = [8000, 6000, 4000] if not json_mode else [1500]
         
         for attempt in range(retries):
             current_model = groq_models[attempt % len(groq_models)]
             current_max_tokens = max_tokens_options[min(attempt // len(groq_models), len(max_tokens_options)-1)]
             
             # Xử lý cắt giảm prompt cho model dung lượng nhỏ (llama-3.1-8b-instant) để tránh lỗi 413 Request too large
-            payload_prompt = prompt[:3500] if (current_model == "llama-3.1-8b-instant" and len(prompt) > 3500) else prompt
+            payload_prompt = prompt[:4500] if (current_model == "llama-3.1-8b-instant" and len(prompt) > 4500) else prompt
             
             data = {
                 "model": current_model,
@@ -667,30 +667,34 @@ def write_next_chapter(novel_id: str) -> dict:
                     print(f"[INFO] Automatically trimmed unfinished trailing sentence. Clean word count: {word_count} words.")
                     ends_abruptly = False
 
-            # VÒNG LẶP ÉP BẮT BUỘC ĐẠT >2500 TỪ (Guaranteed 2500+ Words Multi-Pass Expansion Loop)
-            if word_count >= 2500 and not ends_abruptly:
-                # INKOS MULTI-AGENT AUDITOR PASS: Khử AI cliché & Chuẩn hóa 37 tiêu chuẩn chất lượng truyện
+            # VÒNG LẶP ÉP BẮT BUỘC ĐẠT >2800 TỪ (Guaranteed 2800+ Words Multi-Pass Expansion Loop for 12-18 min Audio)
+            if word_count >= 2800 and not ends_abruptly:
+                # INKOS MULTI-AGENT AUDITOR PASS: Khử AI cliché & Bảo toàn 100% độ dài văn bản
                 try:
                     print("[INFO] InkOS Auditor Agent: Bắt đầu rà soát 37 tiêu chuẩn chất lượng & Khử AI cliché...")
-                    audit_prompt = prompts.INKOS_AUDITOR_PROMPT.format(chapter_content=final_content[:4000])
+                    audit_prompt = prompts.INKOS_AUDITOR_PROMPT.format(chapter_content=final_content[:6000])
                     audited_res = call_gemini(audit_prompt)
-                    if audited_res and len(audited_res.split()) > 400:
+                    if audited_res and len(audited_res.split()) >= len(final_content.split()) * 0.9:
                         final_content = clean_chapter_content(audited_res)
                         word_count = len(final_content.split())
                         print(f"[SUCCESS] InkOS Auditor Agent hoàn thành khử AI cliché. Tổng số từ tinh chế: {word_count} từ.")
+                    else:
+                        final_content = clean_chapter_content(final_content)
+                        word_count = len(final_content.split())
+                        print(f"[INFO] Giữ nguyên độ dài văn bản đầy đủ: {word_count} từ (Tránh bị rút ngắn).")
                 except Exception as audit_err:
                     print(f"[WARNING] InkOS Auditor Agent pass warning: {audit_err}")
                 break
                 
             expand_cycles = 0
-            while word_count < 2500 and expand_cycles < 5:
+            while word_count < 2800 and expand_cycles < 6:
                 expand_cycles += 1
-                print(f"[INFO] (Lượt nối tiếp {expand_cycles}/5) Chương hiện tại đạt {word_count} từ (<2500 từ). Tự động kích hoạt AI Viết Nối Tiếp...")
+                print(f"[INFO] (Lượt nối tiếp {expand_cycles}/6) Chương hiện tại đạt {word_count} từ (<2800 từ). Tự động kích hoạt AI Viết Nối Tiếp...")
                 
                 continuation_prompt = (
                     f"Dưới đây là phần trước của Chương {next_ch_number} (tổng {word_count} từ):\n\n"
                     f"{final_content[-1200:]}\n\n"
-                    f"YÊU CẦU BẮT BUỘC: Hãy viết tiếp đoạn nối theo câu chuyện trên (tối thiểu 1000 - 1500 từ nữa). "
+                    f"YÊU CẦU BẮT BUỘC: Hãy viết tiếp đoạn nối theo câu chuyện trên (tối thiểu 1200 - 1800 từ nữa). "
                     f"Miêu tả diễn biến tiếp theo, đối thoại sâu sắc, cảm xúc nhân vật và kết thúc bằng một nút thắt kịch tính. "
                     f"Viết thẳng vào nội dung truyện, không lặp lại đoạn cũ."
                 )
@@ -701,12 +705,12 @@ def write_next_chapter(novel_id: str) -> dict:
                     final_content = final_content + "\n\n" + cleaned_next
                     word_count = len(final_content.split())
                     print(f"[SUCCESS] Đã nối tiếp thành công! Tổng độ dài chương hiện tại: {word_count} từ.")
-                    if word_count >= 2500:
+                    if word_count >= 2800:
                         break
                 else:
                     time.sleep(2)
                     
-            if word_count >= 2500:
+            if word_count >= 2800:
                 break
                 
             if ends_abruptly:
