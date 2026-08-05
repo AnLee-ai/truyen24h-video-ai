@@ -111,6 +111,34 @@ def clean_chapter_content(text: str) -> str:
     cleaned = remove_repetitive_sentences(cleaned)
     return cleaned
 
+def expand_chapter_content(content: str, target_words: int = 3200) -> str:
+    """Nối dài kịch bản chương truyện nếu chưa đủ độ dài >10 phút audio (600 giây)."""
+    current_words = len(content.split()) if content else 0
+    if current_words >= target_words:
+        return content
+        
+    print(f"[INFO] ⚡ CHẾ ĐỘ LÀM LẠI (>10 PHÚT): Độ dài hiện tại {current_words} từ (<{target_words} từ). Đang gọi AI viết nối tiếp phân cảnh kịch tính...")
+    
+    continuation_prompt = (
+        f"Dưới đây là phần trước của chương truyện (tổng {current_words} từ):\n\n"
+        f"{content[-1500:]}\n\n"
+        f"YÊU CẦU BẮT BUỘC (ÉP THỜI LƯỢNG KÉO DÀI >10 PHÚT AUDIO):\n"
+        f"Hãy viết tiếp phân cảnh diễn biến kịch tính tiếp theo của câu chuyện trên (tối thiểu 1500 - 2000 từ nữa).\n"
+        f"1. Viết chi tiết cuộc đối thoại gay gắt, bộc phát cảm xúc giữa các nhân vật chính.\n"
+        f"2. Miêu tả chi tiết chiêu thức, giao phong kịch tính và suy nghĩ nội tâm dồn dập.\n"
+        f"3. Kết thúc bằng một nút thắt cliffhanger kịch tính.\n"
+        f"Viết thẳng vào câu chuyện 100% bằng Tiếng Việt mượt mà, không lặp lại đoạn cũ."
+    )
+    
+    part_next = call_gemini(continuation_prompt)
+    if part_next and len(part_next.split()) > 200:
+        cleaned_next = clean_chapter_content(part_next)
+        new_content = content + "\n\n" + cleaned_next
+        print(f"[SUCCESS] Đã nối dài chương truyện thành công! Tổng số từ mới: {len(new_content.split())} từ.")
+        return new_content
+        
+    return content
+
 def translate_to_vietnamese_with_gemini(text: str) -> str:
     """Tự động kiểm tra và dịch toàn bộ kịch bản tiểu thuyết từ tiếng Trung/tiếng Anh sang tiếng Việt chuẩn mượt mà 100% qua Gemini API."""
     if not text or not text.strip():

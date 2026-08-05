@@ -127,11 +127,35 @@ def _run_chapter_pipeline_impl(novel_id: str):
             print(f"[WARNING] Nội dung chương viết mới chưa đạt tiêu chuẩn BẮT BUỘC (>2500 từ). Độ dài thực tế: {len(chapter_content.split()) if chapter_content else 0} từ. Tự động dừng tiến trình an toàn.")
             return
             
-        # 2. Convert chapter text to raw speech audio & subtitles
-        raw_audio_path, srt_path = tts.generate_voice_and_subs(chapter_content, chapter_id)
+        # 2. CHẾ ĐỘ TỰ ĐỘNG LÀM LẠI BẮT BUỘC: Ép thời lượng Audio & Video kéo dài > 10 PHÚT (Tối thiểu 600 giây)
+        final_audio_path = ""
+        srt_path = ""
+        max_duration_attempts = 3
         
-        # 3. Mix speech audio with background music
-        final_audio_path = audio.mix_bgm_with_voice(raw_audio_path, chapter_id)
+        for duration_attempt in range(max_duration_attempts):
+            if duration_attempt > 0:
+                print(f"\n[WARNING] ⚡ KÍCH HOẠT CHẾ ĐỘ LÀM LẠI (Lượt {duration_attempt + 1}/{max_duration_attempts}): "
+                      f"Thời lượng audio cũ chưa đạt >10 phút. Tự động gọi AI viết nối dài phân cảnh kịch tính...")
+                chapter_content = writer.expand_chapter_content(chapter_content, target_words=3200)
+                database.create_chapter(novel_id, chapter_num, chapter_title, chapter_content)
+                
+            # Convert chapter text to raw speech audio & subtitles
+            raw_audio_path, srt_path = tts.generate_voice_and_subs(chapter_content, chapter_id)
+            
+            # Mix speech audio with background music
+            final_audio_path = audio.mix_bgm_with_voice(raw_audio_path, chapter_id)
+            
+            # Đo chính xác thời lượng thực tế của file Audio
+            current_duration = video.get_audio_duration_seconds(final_audio_path)
+            print(f"[INFO] ⏱️ Thời lượng Audio thực tế của Tập {chapter_num}: {current_duration:.1f} giây ({current_duration/60:.2f} phút).")
+            
+            if current_duration >= 600.0 or is_resuming_video:
+                print(f"[SUCCESS] 🟢 THỜI LƯỢNG ĐẠT CHUẨN > 10 PHÚT! ({current_duration/60:.2f} phút >= 10.0 phút). Tiến hành render Video...")
+                break
+            else:
+                print(f"[WARNING] 🔴 CHẾ ĐỘ LÀM LẠI: Thời lượng {current_duration/60:.2f} phút CHƯA ĐẠT MỐC >10 PHÚT (<600s). Đang chuẩn bị làm lại...")
+                if duration_attempt == max_duration_attempts - 1:
+                    print(f"[INFO] Đã thử làm lại {max_duration_attempts} lần. Tiếp tục tiến trình với thời lượng hiện tại.")
         
         # 4. Render Video Dài (16:9) qua AI-auto-generate-video / FFmpeg
         print(f"[INFO] Bắt đầu render video dài (16:9) cho Chương {chapter_num}...")
