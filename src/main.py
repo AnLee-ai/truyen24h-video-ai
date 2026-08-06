@@ -1,6 +1,7 @@
 import argparse
 import sys
 import os
+import json
 import contextlib
 import uvicorn
 from fastapi import FastAPI, BackgroundTasks
@@ -164,11 +165,14 @@ def _run_chapter_pipeline_impl(novel_id: str):
             current_duration = video.get_audio_duration_seconds(final_audio_path)
             print(f"[INFO] ⏱️ Thời lượng Audio thực tế của Tập {chapter_num}: {current_duration:.1f} giây ({current_duration/60:.2f} phút).")
             
-            if current_duration >= 600.0 or is_resuming_video:
+            if current_duration >= 600.0:
                 print(f"[SUCCESS] 🟢 THỜI LƯỢNG ĐẠT CHUẨN > 10 PHÚT! ({current_duration/60:.2f} phút >= 10.0 phút). Tiến hành render Video...")
                 break
             else:
-                print(f"[WARNING] 🔴 CHẾ ĐỘ LÀM LẠI: Thời lượng {current_duration/60:.2f} phút CHƯA ĐẠT MỐC >10 PHÚT (<600s). Đang chuẩn bị làm lại...")
+                print(f"[WARNING] 🔴 CHẾ ĐỘ LÀM LẠI: Thời lượng {current_duration/60:.2f} phút CHƯA ĐẠT MỐC >10 PHÚT (<600s). Đang chuẩn bị gọi AI làm lại & mở rộng kịch bản...")
+                # Gọi AI mở rộng kịch bản chương truyện lên >3200 từ
+                chapter_content = writer.expand_chapter_content(chapter_content, target_words=3200)
+                database.create_chapter(novel_id, chapter_num, chapter_title, chapter_content)
                 if duration_attempt == max_duration_attempts - 1:
                     print(f"[INFO] Đã thử làm lại {max_duration_attempts} lần. Tiếp tục tiến trình với thời lượng hiện tại.")
         

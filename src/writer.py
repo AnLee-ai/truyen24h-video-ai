@@ -164,79 +164,17 @@ def translate_to_vietnamese_with_gemini(text: str) -> str:
     return text
 
 def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
-    """Helper to call LLM (Groq multi-model pool with fallback, Gemini API & Pollinations 100% Free) with key rotator & fast failover."""
-    groq_key = key_rotator.get_groq_key() or config.GROQ_API_KEY
-    
-    if groq_key:
-        import requests
-        url = "https://api.groq.com/openai/v1/chat/completions"
-        headers = {
-            "Authorization": f"Bearer {groq_key}",
-            "Content-Type": "application/json"
-        }
-        
-        # Danh sách Model Groq hoạt động chuẩn 100% trên Groq API
-        raw_groq = [config.GROQ_MODEL_WRITER, "llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768"]
-        groq_models = []
-        for m in raw_groq:
-            if m and m not in groq_models:
-                groq_models.append(m)
-        
-        max_tokens_options = [8000, 6000, 4000] if not json_mode else [1500]
-        
-        for attempt in range(retries):
-            current_model = groq_models[attempt % len(groq_models)]
-            current_max_tokens = max_tokens_options[min(attempt // len(groq_models), len(max_tokens_options)-1)]
-            
-            # Xử lý cắt giảm prompt cho model dung lượng nhỏ (llama-3.1-8b-instant) để tránh lỗi 413 Request too large
-            payload_prompt = prompt[:4500] if (current_model == "llama-3.1-8b-instant" and len(prompt) > 4500) else prompt
-            
-            data = {
-                "model": current_model,
-                "messages": [{"role": "user", "content": payload_prompt}],
-                "temperature": 0.7,
-                "max_tokens": current_max_tokens
-            }
-            if json_mode:
-                data["response_format"] = {"type": "json_object"}
-                
-            try:
-                response = requests.post(url, json=data, headers=headers, timeout=120)  # type: ignore[arg-type]
-                if response.status_code == 200:
-                    resp_json = response.json()
-                    content = resp_json["choices"][0]["message"]["content"]
-                    if content and len(content.strip().split()) > 10:
-                        return content.strip()
-                        
-                if response.status_code in (401, 403):
-                    print(f"[WARNING] Groq API Key invalid ({response.status_code}). Switching directly to Gemini API...")
-                    key_rotator.mark_groq_key_failed(groq_key, is_permanent=True)
-                    break
-                    
-                if response.status_code == 429:
-                    key_rotator.mark_groq_key_failed(groq_key, is_permanent=False)
-                    groq_key = key_rotator.get_groq_key()
-                    if not groq_key:
-                        break
-                    headers["Authorization"] = f"Bearer {groq_key}"
-                
-                print(f"[WARNING] Groq ({current_model}) status {response.status_code}: {response.text[:100]}. Retrying (Attempt {attempt+1}/{retries})...")
-                time.sleep(2)
-                continue
-            except Exception as e:
-                print(f"[WARNING] Groq ({current_model}) error: {e}. Retrying (Attempt {attempt+1}/{retries})...")
-                time.sleep(2)
-                continue
-        
-        print("[WARNING] All Groq retries failed. Switching to Gemini API...")
-
-    # Fallback to Gemini API với Key Rotator (Chỉ sử dụng 2 Model ổn định chuẩn 100% của Google)
+    """
+    ƯU TIÊN 100% HÀNG ĐẦU: InkOS Multi-Agent Engine (Google Gemini 2.0 Flash API với Key Rotator).
+    Chỉ khi Gemini hết Key mới chuyển sang Groq / OpenRouter dự phòng.
+    """
+    # =========================================================================
+    # ĐỘNG CƠ ƯU TIÊN 1: InkOS Gemini 2.0 Flash Engine (Google API với Key Rotator)
+    # =========================================================================
     gemini_models = ["gemini-2.0-flash", "gemini-2.0-flash-lite"]
-    
     for attempt in range(min(retries, 4)):
         g_key = key_rotator.get_gemini_key() or config.GEMINI_API_KEY
         if not g_key:
-            print("[ERROR] No valid Gemini API key available.")
             break
             
         current_g_model = gemini_models[attempt % len(gemini_models)]
@@ -261,27 +199,62 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
                 response = model.generate_content(prompt)
 
             if response.text and len(response.text.strip().split()) > 10:
+                print(f"[SUCCESS] ⚡ InkOS Writer Agent [{current_g_model}]: Tạo kịch bản mượt mà thành công! ({len(response.text.strip().split())} từ).")
                 return response.text.strip()
-            raise ValueError("Empty response from Gemini API.")
         except Exception as e:
             err_str = str(e)
-            if "404" in err_str or "NOT_FOUND" in err_str:
-                print(f"[WARNING] Gemini Model '{current_g_model}' 404. Bỏ qua model.")
-                time.sleep(0.5)
-                continue
-            elif "401" in err_str or "UNAUTHENTICATED" in err_str:
-                print(f"[WARNING] Gemini Key bị lỗi 401 UNAUTHENTICATED. Khóa bị vô hiệu hóa hẳn.")
+            if "401" in err_str or "UNAUTHENTICATED" in err_str:
                 key_rotator.mark_gemini_key_failed(g_key, is_permanent=True)
-                time.sleep(0.5)
-                continue
             elif "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
-                print(f"[WARNING] Gemini ({current_g_model}) bị hết Quota (429). Đã chuyển sang Model/Key Gemini tiếp theo...")
                 key_rotator.mark_gemini_key_failed(g_key, is_permanent=False)
-                time.sleep(1.0)
-                continue
-            time.sleep(1.5)
+            time.sleep(0.5)
+
+    # =========================================================================
+    # ĐỘNG CƠ DỰ PHÒNG 2: Groq Multi-Model Engine (Dự phòng cấp 2)
+    # =========================================================================
+    groq_key = key_rotator.get_groq_key() or config.GROQ_API_KEY
+    if groq_key:
+        import requests
+        url = "https://api.groq.com/openai/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {groq_key}",
+            "Content-Type": "application/json"
+        }
+        raw_groq = [config.GROQ_MODEL_WRITER, "llama-3.3-70b-versatile", "llama-3.1-8b-instant"]
+        groq_models = [m for m in raw_groq if m and m != "mixtral-8x7b-32768"]
+        max_tokens_options = [8000, 6000, 4000] if not json_mode else [1500]
+        
+        for attempt in range(min(retries, 3)):
+            current_model = groq_models[attempt % len(groq_models)]
+            current_max_tokens = max_tokens_options[min(attempt, len(max_tokens_options)-1)]
+            payload_prompt = prompt[:2200] if (current_model == "llama-3.1-8b-instant" and len(prompt) > 2200) else prompt
             
-    print("[WARNING] All API Keys failed (401/429). Switching to OpenRouter 100% Free AI Engine...")
+            data = {
+                "model": current_model,
+                "messages": [{"role": "user", "content": payload_prompt}],
+                "temperature": 0.7,
+                "max_tokens": current_max_tokens
+            }
+            if json_mode:
+                data["response_format"] = {"type": "json_object"}
+                
+            try:
+                response = requests.post(url, json=data, headers=headers, timeout=45)  # type: ignore[arg-type]
+                if response.status_code == 200:
+                    resp_json = response.json()
+                    content = resp_json["choices"][0]["message"]["content"]
+                    if content and len(content.strip().split()) > 10:
+                        print(f"[SUCCESS] Groq Fallback Engine [{current_model}]: Đã sinh kịch bản ({len(content.strip().split())} từ).")
+                        return content.strip()
+                if response.status_code == 429:
+                    break
+            except Exception:
+                pass
+
+            except Exception:
+                pass
+
+    print("[WARNING] All primary AI keys failed. Switching to OpenRouter 100% Free AI Engine...")
     openrouter_res = call_openrouter_free_llm(prompt)
     if openrouter_res:
         return openrouter_res
