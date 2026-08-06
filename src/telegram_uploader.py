@@ -2,6 +2,22 @@ import os
 import requests
 from src import config
 
+def send_progress_status_to_telegram(status_text: str) -> bool:
+    """Send a quick progress status update text message to Telegram channel."""
+    if not config.TELEGRAM_BOT_TOKEN or not config.TELEGRAM_CHAT_ID:
+        return False
+    url = f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}/sendMessage"
+    try:
+        data = {
+            'chat_id': config.TELEGRAM_CHAT_ID,
+            'text': status_text,
+            'parse_mode': 'Markdown'
+        }
+        response = requests.post(url, data=data, timeout=15)
+        return response.status_code == 200
+    except Exception:
+        return False
+
 def send_audio_to_telegram(audio_path: str, caption: str, title: str | None = None, srt_path: str | None = None) -> bool:
     """
     Sends an audio file (and optional subtitle file) to a Telegram channel/chat.

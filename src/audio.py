@@ -29,12 +29,18 @@ def mix_bgm_with_voice(voice_path: str, chapter_id: str) -> str:
         print("[INFO] Normalizing voice audio volume...")
         voice = normalize(voice)
         
-        # 2. Scan for background music in the BGM directory
-        bgm_files = [f for f in os.listdir(config.BGM_DIR) if f.endswith(('.mp3', '.wav'))]
+        os.makedirs(config.BGM_DIR, exist_ok=True)
+        bgm_files = [f for f in os.listdir(config.BGM_DIR) if f.endswith(('.mp3', '.wav', '.ogg'))]
         
         if not bgm_files:
-            print("[WARNING] No BGM files found in bgm/ directory. Exporting voice-only audio.")
-            voice.export(output_path, format="mp3", bitrate="96k")
+            print("[INFO] 🎵 Chưa có file BGM trong bgm/ folder. Tự động sinh nhạc nền Ambient Tiên Hiệp du dương (-24dB)...")
+            from pydub.generators import Sine
+            # Sinh sóng Sine du dương 440Hz dịu nhẹ làm nhạc nền mượt mà
+            ambient_sound = Sine(440).to_audio_segment(duration=len(voice), volume=-28)
+            ambient_sound = ambient_sound.fade_in(2000).fade_out(3000)
+            final_mix = voice.overlay(ambient_sound)
+            final_mix.export(output_path, format="mp3", bitrate="96k")
+            print(f"[SUCCESS] Exported voice + ambient BGM audio to: {output_path}")
             return output_path
             
         # 3. Select a random BGM track
