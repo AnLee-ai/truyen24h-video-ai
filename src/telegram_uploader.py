@@ -65,6 +65,44 @@ def send_audio_to_telegram(audio_path: str, caption: str, title: str | None = No
         print(f"[ERROR] Error during Telegram upload: {e}")
         return False
 
+def send_photo_to_telegram(photo_path: str, caption: str) -> bool:
+    """Send a photo (like 16:9 YouTube Thumbnail) to the Telegram channel."""
+    if not config.TELEGRAM_BOT_TOKEN or not config.TELEGRAM_CHAT_ID:
+        print("[WARNING] Telegram credentials are not configured. Skipping photo upload.")
+        return False
+        
+    if not os.path.exists(photo_path):
+        print(f"[ERROR] Photo file does not exist: {photo_path}")
+        return False
+        
+    url = f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}/sendPhoto"
+    print(f"[INFO] Uploading 16:9 Thumbnail Photo to Telegram chat/channel: {config.TELEGRAM_CHAT_ID}...")
+    
+    try:
+        with open(photo_path, 'rb') as photo_file:
+            files = {
+                'photo': (os.path.basename(photo_path), photo_file, 'image/jpeg')
+            }
+            data = {
+                'chat_id': config.TELEGRAM_CHAT_ID,
+                'caption': caption,
+                'parse_mode': 'Markdown'
+            }
+            response = requests.post(url, data=data, files=files, timeout=60)
+            if response.status_code != 200 and "can't parse entities" in response.text:
+                data.pop('parse_mode', None)
+                response = requests.post(url, data=data, files=files, timeout=60)
+                
+            if response.status_code == 200:
+                print("[SUCCESS] 🖼️ 16:9 Thumbnail photo uploaded successfully to Telegram!")
+                return True
+            else:
+                print(f"[ERROR] Telegram photo upload failed ({response.status_code}): {response.text}")
+                return False
+    except Exception as e:
+        print(f"[ERROR] Error uploading photo to Telegram: {e}")
+        return False
+
 def send_document_to_telegram(doc_path: str, caption: str, custom_filename: str = None) -> bool:
     """Send any document (like SRT file) to the Telegram channel."""
     url = f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}/sendDocument"

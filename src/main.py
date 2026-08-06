@@ -213,13 +213,19 @@ def _run_chapter_pipeline_impl(novel_id: str):
         #     if youtube_url:
         #         database.update_chapter_video_status(chapter_id, status="published", video_url=youtube_url)
         
-        # 7. Upload file Audio, Subtitles & Video MP4 16:9 lên kênh Telegram
+        # 7. Upload file Audio, Subtitles, Thumbnail 16:9 & Video MP4 16:9 lên kênh Telegram
         caption_markdown = (
             f"🎙️ *Truyện 24h Audio - Tập {chapter_num}*\n\n"
             f"📖 *Chương {chapter_num}: {chapter_title}*\n\n"
             f"Tác phẩm được viết tự động bằng AI, chỉnh sửa âm thanh & video chất lượng cao."
         )
         
+        # Gửi Ảnh Bìa Thumbnail 16:9 4K lên Telegram
+        if thumbnail_path and os.path.exists(thumbnail_path):
+            print(f"[INFO] Uploading 16:9 Thumbnail 4K to Telegram ({os.path.getsize(thumbnail_path)} bytes)...")
+            thumb_caption = f"🖼️ *Ảnh Bìa Thumbnail 16:9 4K - Tập {chapter_num}: {chapter_title}*\n🔥 Thiết kế tự động phong cách MoneyPrinter/ComfyUI 16:9"
+            telegram_uploader.send_photo_to_telegram(thumbnail_path, thumb_caption)
+
         success = telegram_uploader.send_audio_to_telegram(
             audio_path=final_audio_path,
             caption=caption_markdown,
