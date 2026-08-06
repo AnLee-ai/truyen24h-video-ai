@@ -493,12 +493,34 @@ def generate_arc_blueprints(novel_id: str, arc: dict) -> list:
         start_num = int(start_ch) if start_ch else 1
         end_num = int(end_ch) if end_ch else (start_num + 24)
         
+        EPIC_TITLES = [
+            "Trùng Sinh Vạn Cổ, Thôn Phệ Vô Tận",
+            "Thức Tỉnh Thần Thể, Nén Ép Thần Ma",
+            "Huyết Mạch Thôn Thiên, Trấn Tám Phương",
+            "Quyền Trấn Sơn Hà, Uy Chấn Chư Thiên",
+            "Vô Địch Trùng Sinh, Hỗn Độn Luyện Khí",
+            "Nghịch Thiên Độc Tôn, Luyện Hóa Thần Thạch",
+            "Thôn Phệ Nguyên Khí, Phá Tam Cảnh",
+            "Vạn Giới Quỳ Bái, Tiêu Viêm Xuất Thế",
+            "Thôn Phệ Ma Nhẫn, Khai Mở Thần Thông",
+            "Vô Song Kiếm Khí, Trảm Diệt Cường Địch",
+            "Hệ Thống Thần Cấp, Thôn Phệ Vạn Vật",
+            "Bá Thần Xuất Thế, Ngăn Cản Vạn Quân",
+            "Thôn Phệ Vĩnh Hằng, Xây Dựng Đế Cơ",
+            "Thôn Thiên Luyện Địa, Độc Tôn Vạn Cổ",
+            "Tuyệt Thế Vô Địch, Phong Ấn Thần Hoàng",
+            "Khí Phách Ngút Trời, Thôn Phệ Long Mạch",
+            "Vạn Cổ Ma Cung, Đại Chiến Chư Thiên",
+            "Bá Chủ Huyền Thoại, Luyện Hóa Vạn Giới"
+        ]
+        
         parsed_numbers = {int(b.get("chapter_number", 0)) for b in blueprints if isinstance(b, dict)}
         for ch_i in range(start_num, end_num + 1):
             if ch_i not in parsed_numbers:
+                epic_t = EPIC_TITLES[(ch_i - 1) % len(EPIC_TITLES)]
                 blueprints.append({
                     "chapter_number": ch_i,
-                    "chapter_title": f"Hành Trình Mới Tập {ch_i}",
+                    "chapter_title": f"{epic_t} (Tập {ch_i})",
                     "blueprint": f"Diễn biến kịch tính tiếp theo của câu chuyện ở chương {ch_i}.",
                     "characters_present": [],
                     "narrative_goal": "Phát triển cốt truyện"
@@ -773,12 +795,25 @@ def write_next_chapter(novel_id: str) -> dict:
     # ĐỘNG CƠ DỊCH THUẬT TIẾNG VIỆT GEMINI API: Đảm bảo 100% kịch bản tiểu thuyết chuẩn Tiếng Việt mượt mà
     cleaned_content = translate_to_vietnamese_with_gemini(cleaned_content)
     
+    # Đảm bảo tiêu đề chương không bị trùng lặp placeholder
+    cur_title = chapter_record.get("title", "")
+    if "Hành Trình Mới" in cur_title or not cur_title or cur_title == f"Chương {next_ch_number}":
+        EPIC_TITLES = [
+            "Trùng Sinh Vạn Cổ, Thôn Phệ Vô Tận", "Thức Tỉnh Thần Thể, Nén Ép Thần Ma", "Huyết Mạch Thôn Thiên, Trấn Tám Phương",
+            "Quyền Trấn Sơn Hà, Uy Chấn Chư Thiên", "Vô Địch Trùng Sinh, Hỗn Độn Luyện Khí", "Nghịch Thiên Độc Tôn, Luyện Hóa Thần Thạch",
+            "Thôn Phệ Nguyên Khí, Phá Tam Cảnh", "Vạn Giới Quỳ Bái, Tiêu Viêm Xuất Thế", "Thôn Phệ Ma Nhẫn, Khai Mở Thần Thông",
+            "Vô Song Kiếm Khí, Trảm Diệt Cường Địch", "Hệ Thống Thần Cấp, Thôn Phệ Vạn Vật", "Bá Thần Xuất Thế, Ngăn Cản Vạn Quân"
+        ]
+        epic_name = EPIC_TITLES[(next_ch_number - 1) % len(EPIC_TITLES)]
+        cur_title = f"{epic_name} (Tập {next_ch_number})"
+
     client = database.get_client()
     response = client.table("chapters")\
-        .update({"content": cleaned_content})\
+        .update({"content": cleaned_content, "title": cur_title})\
         .eq("id", chapter_record["id"])\
         .execute()
-    updated_chapter = response.data[0] if response.data else {}
+    updated_chapter = response.data[0] if response.data else chapter_record
+    updated_chapter["title"] = cur_title
     
     sync_story_bible(novel_id, updated_chapter, chars)  # type: ignore[arg-type]
     
