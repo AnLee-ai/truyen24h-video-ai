@@ -216,11 +216,28 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
         print("[INFO] Dev-Enhance: Kích hoạt Hiệu Ứng Cinematic Dynamic Motion Panning 4K...")
         vf_filter = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,eq=brightness=0.02:contrast=1.08:saturation=1.18[bg]"
         
+    if not (srt_escaped and os.path.exists(srt_path)):
+        fallback_srt = os.path.join(out_dir, "subtitles_fallback.srt")
+        print(f"[INFO] 🎯 Tự động sinh file SRT phụ đề dự phòng cho video tại: {fallback_srt}...")
+        try:
+            with open(fallback_srt, "w", encoding="utf-8") as f_sub:
+                f_sub.write(f"1\n00:00:01,000 --> 00:00:08,000\n{title}\n\n")
+                for s_i, s_item in enumerate(scene_data_list):
+                    t_start = s_i * 7.0
+                    t_end = t_start + 6.8
+                    h1, m1, s1 = int(t_start//3600), int((t_start%3600)//60), int(t_start%60)
+                    h2, m2, s2 = int(t_end//3600), int((t_end%3600)//60), int(t_end%60)
+                    f_sub.write(f"{s_i+2}\n{h1:02d}:{m1:02d}:{s1:02d},000 --> {h2:02d}:{m2:02d}:{s2:02d},800\n{s_item['text']}\n\n")
+            srt_path = fallback_srt
+            srt_abs = os.path.abspath(srt_path).replace("\\", "/")
+            srt_escaped = srt_abs.replace(":", "\\:").replace("'", "'\\\\''").replace("[", "\\[").replace("]", "\\]")
+        except Exception as sub_e:
+            print(f"[WARNING] Fallback srt creation warning: {sub_e}")
+
     if srt_escaped and os.path.exists(srt_path):
-        print(f"[INFO] Chèn phụ đề Chữ Trắng Viền Đen từ file SRT: {srt_escaped}")
+        print(f"[INFO] Chèn phụ đề Kinetic 4K từ file SRT: {srt_escaped}")
         vf_filter += f";[bg]subtitles=filename='{srt_escaped}':force_style='{subtitle_style}'[out]"
     else:
-        print("[WARNING] Không tìm thấy file SRT phụ đề. Render video không phụ đề.")
         vf_filter += ";[bg]null[out]"
         
     # 7. Tự động kiểm tra phần cứng GPU Encoder (NVIDIA NVENC -> Intel QSV -> AMD AMF -> CPU libx264)

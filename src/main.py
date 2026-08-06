@@ -176,6 +176,19 @@ def _run_chapter_pipeline_impl(novel_id: str):
                 if duration_attempt == max_duration_attempts - 1:
                     print(f"[INFO] Đã thử làm lại {max_duration_attempts} lần. Tiếp tục tiến trình với thời lượng hiện tại.")
         
+        # Tự động tìm lại file SRT phụ đề nếu bị thiếu
+        if not srt_path or not os.path.exists(srt_path):
+            possible_srt_paths = [
+                os.path.join("output", chapter_id, f"{chapter_id}.srt"),
+                os.path.join("output", chapter_id, "subtitles.srt"),
+                os.path.join("output", chapter_id, "chapter.srt")
+            ]
+            for p_srt in possible_srt_paths:
+                if os.path.exists(p_srt):
+                    srt_path = p_srt
+                    print(f"[INFO] 🎯 Đã tự động khôi phục file SRT phụ đề tại: {srt_path}")
+                    break
+
         # 4. Render Video Dài (16:9) qua AI-auto-generate-video / FFmpeg
         print(f"[INFO] Bắt đầu render video dài (16:9) cho Chương {chapter_num}...")
         video_path = video.render_novel_video(final_audio_path, srt_path, chapter_title, chapter_id)
