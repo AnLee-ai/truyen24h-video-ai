@@ -575,18 +575,28 @@ def get_current_arc(novel_id: str, chapter_number: int) -> dict:
     }
 
 def write_next_chapter(novel_id: str) -> dict:
+    import os
+    completed_nums = set()
+    prog_file = "data/chapters_progress.json"
+    if os.path.exists(prog_file):
+        try:
+            with open(prog_file, "r", encoding="utf-8") as f:
+                pdata = json.load(f)
+                completed_nums = {x for x in pdata.get("completed_chapters", []) if isinstance(x, int)}
+        except Exception:
+            pass
+
     all_chapters = database.get_all_chapters(novel_id)
-    next_ch_record = next((c for c in all_chapters if c["content"].startswith("BLUEPRINT:")), None)
+    # Lọc bỏ các chương đã nằm trong danh sách completed_chapters local
+    uncompleted_blueprints = [c for c in all_chapters if c["content"].startswith("BLUEPRINT:") and c["chapter_number"] not in completed_nums]
     
-    if next_ch_record:
-        next_ch_number = next_ch_record["chapter_number"]
+    if uncompleted_blueprints:
+        next_ch_number = uncompleted_blueprints[0]["chapter_number"]
     else:
-        if all_chapters:
-            next_ch_number = all_chapters[-1]["chapter_number"] + 1
-        else:
-            next_ch_number = 1
+        existing_nums = [c["chapter_number"] for c in all_chapters] + list(completed_nums)
+        next_ch_number = (max(existing_nums) + 1) if existing_nums else 1
         
-    print(f"[INFO] Initiating writing process for Chapter {next_ch_number}...")
+    print(f"[INFO] Initiating writing process for Chapter {next_ch_number} (Skipped completed: {completed_nums})...")
     
     current_arc = get_current_arc(novel_id, next_ch_number)
     chapter_record = next((c for c in all_chapters if c["chapter_number"] == next_ch_number), None)

@@ -122,8 +122,39 @@ def update_chapter_video_status(chapter_id: str, status: str, video_url: str = N
         print(f"[INFO] Trạng thái video ({status}) đã ghi nhận thành công.")
         return {}
 
-def mark_chapter_completed_atomic(chapter_id: str, audio_url: str = "", video_url: str = "") -> dict:
+def record_completed_chapter_local(chapter_id: str, chapter_number: int = 0):
+    """Lưu tiến độ chương đã hoàn thành 100% vào file data/chapters_progress.json (chống lặp lại)."""
+    import os, json, datetime
+    prog_file = "data/chapters_progress.json"
+    data = {"novel_id": "van-co-than-vuong-v1", "completed_chapters": [], "current_chapter": 1}
+    if os.path.exists(prog_file):
+        try:
+            with open(prog_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except Exception:
+            pass
+            
+    completed = set(data.get("completed_chapters", []))
+    if chapter_number > 0:
+        completed.add(chapter_number)
+    if chapter_id:
+        completed.add(str(chapter_id))
+        
+    data["completed_chapters"] = sorted(list(completed), key=lambda x: str(x))
+    data["current_chapter"] = max([x for x in completed if isinstance(x, int)] or [0]) + 1
+    data["last_updated"] = datetime.datetime.utcnow().isoformat() + "Z"
+    
+    try:
+        os.makedirs("data", exist_ok=True)
+        with open(prog_file, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        print(f"[SUCCESS] Đã lưu tiến độ hoàn thành Chương {chapter_number} (ID: {chapter_id}) vào data/chapters_progress.json!")
+    except Exception as e:
+        print(f"[WARNING] Không thể lưu file data/chapters_progress.json: {e}")
+
+def mark_chapter_completed_atomic(chapter_id: str, audio_url: str = "", video_url: str = "", chapter_number: int = 0) -> dict:
     """Atomic update: Đánh dấu chương hoàn thành 100% cả audio lẫn video trong 1 query duy nhất."""
+    record_completed_chapter_local(chapter_id, chapter_number)
     try:
         client = get_client()
         data = {

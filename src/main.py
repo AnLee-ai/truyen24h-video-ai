@@ -53,10 +53,21 @@ class CallbackStream:
 
 def find_chapter_needing_video(novel_id: str) -> dict:
     """
-    Tự động quét các chương đã viết trong CSDL:
+    Tự động quét các chương đã viết trong CSDL & File Cục Bộ:
     Nếu phát hiện chương nào ĐÃ CÓ NỘI DUNG VĂN BẢN nhưng CHƯA TẠO VIDEO và CHƯA HOÀN THÀNH,
     thì mới trả về để render Video. Ngược lại, nếu chương đó ĐÃ HOÀN THÀNH thì bỏ qua để viết chương mới (Chương 2, 3, 4...).
     """
+    import os, json
+    completed_chapters_set = set()
+    prog_file = "data/chapters_progress.json"
+    if os.path.exists(prog_file):
+        try:
+            with open(prog_file, "r", encoding="utf-8") as f:
+                pdata = json.load(f)
+                completed_chapters_set = set(pdata.get("completed_chapters", []))
+        except Exception:
+            pass
+
     try:
         all_chapters = database.get_all_chapters(novel_id)
         for ch in all_chapters:
@@ -67,7 +78,11 @@ def find_chapter_needing_video(novel_id: str) -> dict:
             v_url = ch.get("video_url", "")
             audio_url = str(ch.get("audio_url", "")).lower()
             
-            # Bỏ qua nếu chương đã hoàn thành 100% (Đã upload Telegram / Supabase)
+            # Bỏ qua nếu chương nằm trong danh sách đã hoàn thành local hoặc Supabase
+            if ch_num in completed_chapters_set or ch_id in completed_chapters_set:
+                print(f"[INFO] Bỏ qua Chương {ch_num} (ID: {ch_id}) vì ĐÃ HOÀN THÀNH trong data/chapters_progress.json.")
+                continue
+
             if v_status in ["completed", "published", "done", "true"] or "completed" in audio_url or bool(v_url):
                 print(f"[INFO] Bỏ qua Chương {ch_num} (ID: {ch_id}) vì ĐÃ HOÀN THÀNH (video_status={v_status}).")
                 continue
@@ -216,11 +231,12 @@ def _run_chapter_pipeline_impl(novel_id: str):
         else:
             print(f"[WARNING] Video 16:9 path invalid or not found: {video_path}")
         
-        if success:
+        if success or (video_path and os.path.exists(video_path)):
             print(f"[INFO] Pipeline execution complete for Chapter {chapter_num}!")
-            database.mark_chapter_completed_atomic(chapter_id, audio_url="Completed All Media & Uploads", video_url=video_public_url or "completed")
+            database.mark_chapter_completed_atomic(chapter_id, audio_url="Completed All Media & Uploads", video_url=video_public_url or "completed", chapter_number=chapter_num)
         else:
-            print("[WARNING] Pipeline finished but Telegram upload failed.")
+            print("[WARNING] Pipeline finished but Telegram upload failed. Preserving local completion state...")
+            database.record_completed_chapter_local(chapter_id, chapter_num)
             
     except Exception as e:
         print(f"[ERROR] Critical error in pipeline execution: {e}")
