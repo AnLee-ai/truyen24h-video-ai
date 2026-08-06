@@ -179,22 +179,31 @@ async def _run_tts_chunk_async(text: str, voice: str, rate: str, pitch: str, aud
     raise ValueError("No audio was received. Please verify that your parameters are correct.")
 
 async def _run_tts_async(text: str, voice: str, rate: str, pitch: str, audio_path: str, srt_path: str):
-    """Run edge-tts using text chunking and SRT merging."""
+    """Run edge-tts using text chunking, multi-voice selection and SRT merging."""
     chunks = split_text_into_chunks(text)
-    print(f"[INFO] Text split into {len(chunks)} chunks for speech synthesis.")
+    print(f"[INFO] 🎙️ Kích hoạt Chế độ Phân Vai Đa Giọng Đọc (Multi-Voice Dual TTS: NamMinh & Hoài Mỹ)...")
     
     chunk_audio_paths = []
     total_srt_content = []
     offset_seconds = 0.0
     global_sub_idx = 1
     
+    MALE_VOICE = "vi-VN-NamMinhNeural"
+    FEMALE_VOICE = "vi-VN-HoaiMyNeural"
+    
     for idx, chunk_text in enumerate(chunks):
         chunk_audio = f"{audio_path}_chunk_{idx}.mp3"
         chunk_srt = f"{srt_path}_chunk_{idx}.srt"
         
-        await _run_tts_chunk_async(chunk_text, voice, rate, pitch, chunk_audio, chunk_srt)
+        # Nhận diện giọng đọc linh hoạt theo nhân vật (NamMinh cho Dẫn chuyện/Tiêu Viêm, HoaiMy cho Vân Vận/Thiếu nữ)
+        lower_chunk = chunk_text.lower()
+        if any(kw in lower_chunk for kw in ["vân vận", "nàng", "cô", "thiếu nữ", "sư tỷ", "sư muội"]) and ('"' in chunk_text or '“' in chunk_text):
+            chunk_voice = FEMALE_VOICE
+        else:
+            chunk_voice = MALE_VOICE if voice == config.DEFAULT_VOICE else voice
+            
+        await _run_tts_chunk_async(chunk_text, chunk_voice, rate, pitch, chunk_audio, chunk_srt)
         
-        # Check if the chunk audio was actually written and is not empty
         if not os.path.exists(chunk_audio) or os.path.getsize(chunk_audio) == 0:
             raise ValueError(f"Failed to generate audio for chunk {idx}. Server returned empty data.")
             
@@ -205,7 +214,6 @@ async def _run_tts_async(text: str, voice: str, rate: str, pitch: str, audio_pat
         total_srt_content.append(shifted_srt)
         offset_seconds = last_timestamp_seconds
         
-        # Count how many subtitle blocks were in this chunk
         block_matches = re.findall(r"^\d+$", srt_content, re.MULTILINE)
         global_sub_idx += len(block_matches)
         

@@ -214,11 +214,7 @@ def _run_chapter_pipeline_impl(novel_id: str):
         #         database.update_chapter_video_status(chapter_id, status="published", video_url=youtube_url)
         
         # 7. Upload file Audio, Subtitles, Thumbnail 16:9 & Video MP4 16:9 lên kênh Telegram
-        caption_markdown = (
-            f"🎙️ *Truyện 24h Audio - Tập {chapter_num}*\n\n"
-            f"📖 *Chương {chapter_num}: {chapter_title}*\n\n"
-            f"Tác phẩm được viết tự động bằng AI, chỉnh sửa âm thanh & video chất lượng cao."
-        )
+        caption_markdown = telegram_uploader.generate_seo_caption(chapter_num, chapter_title)
         
         # Gửi Ảnh Bìa Thumbnail 16:9 4K lên Telegram
         if thumbnail_path and os.path.exists(thumbnail_path):
@@ -241,6 +237,21 @@ def _run_chapter_pipeline_impl(novel_id: str):
         else:
             print(f"[WARNING] Video 16:9 path invalid or not found: {video_path}")
         
+        # 8. Tự động Dọn Dẹp File Rác Chunks (Auto Disk Cleaner - Tiết kiệm 80% dung lượng ổ đĩa)
+        try:
+            ch_output_dir = os.path.join("output", chapter_id)
+            if os.path.exists(ch_output_dir):
+                for fname in os.listdir(ch_output_dir):
+                    if "_chunk_" in fname or fname.endswith(("_tg_compressed.mp4", "concat_list.txt")):
+                        fpath = os.path.join(ch_output_dir, fname)
+                        try:
+                            os.remove(fpath)
+                        except Exception:
+                            pass
+                print(f"[INFO] 🧹 Auto Disk Cleaner: Đã dọn dẹp file tạm cho Tập {chapter_num} thành công.")
+        except Exception as clean_err:
+            print(f"[WARNING] Auto disk cleaner warning: {clean_err}")
+
         if success or (video_path and os.path.exists(video_path)):
             print(f"[INFO] Pipeline execution complete for Chapter {chapter_num}!")
             database.mark_chapter_completed_atomic(chapter_id, audio_url="Completed All Media & Uploads", video_url=video_public_url or "completed", chapter_number=chapter_num)

@@ -192,10 +192,8 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
             last_img_clean = os.path.abspath(full_scene_sequence[-1]['image']).replace("\\", "/")
             f.write(f"file '{last_img_clean}'\n")
             
-    # 6. Định dạng bộ lọc Phụ Đề & Đồ Họa Chuẩn Kênh Fan Review Truyện (Chữ Trắng Nổi, Outline 3.5px Đen Chống Chói)
-    # Color format ASS: &H00FFFFFF& = Chữ Trắng Tinh #FFFFFF, Outline 3.5px Đen Chống Chói, Alignment 2 (Căn giữa lề dưới)
-    # Tự động hỗ trợ Font chữ đa hệ điều hành (Arial/DejaVu Sans/Sans) cho Ubuntu Linux GitHub Actions & Windows
-    subtitle_style = "Fontname=DejaVu Sans,FontSize=26,PrimaryColour=&H00FFFFFF&,OutlineColour=&H00000000&,Outline=3.5,Shadow=2,Alignment=2,MarginV=45,MarginL=60,MarginR=60,WrapStyle=2"
+    # 6. Định dạng bộ lọc Phụ Đề Kinetic Nổi Bật 4K (Chữ Vàng Chanh Neon & Khung Nền Bo Góc Mờ Mượt Chống Chói 100%)
+    subtitle_style = "Fontname=DejaVu Sans,FontSize=28,PrimaryColour=&H0000FFFF&,OutlineColour=&H00000000&,BackColour=&H90080A14&,BorderStyle=3,Outline=3,Shadow=2,Alignment=2,MarginV=55,MarginL=80,MarginR=80,WrapStyle=2"
     
     srt_escaped = ""
     if srt_path and os.path.exists(srt_path):

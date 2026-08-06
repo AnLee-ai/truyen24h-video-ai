@@ -2,6 +2,17 @@ import os
 import requests
 from src import config
 
+def generate_seo_caption(chapter_num: int, chapter_title: str) -> str:
+    """Generate SEO-optimized caption with hashtags and chapter summary formatting."""
+    hashtags = "#VạnCổThầnVương #TiêuViêm #VânVận #ReviewTruyện #Webtoon2D #PhimHoạtHình #TiênHiệp #HuyềnHuyễn"
+    return (
+        f"🎙️ *Truyện 24h Audio - Tập {chapter_num}*\n\n"
+        f"📖 *Chương {chapter_num}: {chapter_title}*\n\n"
+        f"🔥 Tiêu Viêm trùng sinh mang theo Hệ Thống Thôn Phệ Vô Tận, nén ép vạn giới thần ma!\n"
+        f"✨ Tác phẩm sản xuất tự động bằng AI 4K, kịch bản kịch tính & video 16:9 sắc nét.\n\n"
+        f"🏷️ {hashtags}"
+    )
+
 def send_progress_status_to_telegram(status_text: str) -> bool:
     """Send a quick progress status update text message to Telegram channel."""
     if not config.TELEGRAM_BOT_TOKEN or not config.TELEGRAM_CHAT_ID:
