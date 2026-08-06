@@ -204,10 +204,14 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
         except Exception as e:
             err_str = str(e)
             if "401" in err_str or "UNAUTHENTICATED" in err_str:
+                print(f"[WARNING] API Key [Gemini] ...{g_key[-6:] if len(g_key)>6 else g_key} invalid (401). Switched key.")
                 key_rotator.mark_gemini_key_failed(g_key, is_permanent=True)
             elif "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
+                print(f"[WARNING] API Key [Gemini] ...{g_key[-6:] if len(g_key)>6 else g_key} rate limited (429). Switched key.")
                 key_rotator.mark_gemini_key_failed(g_key, is_permanent=False)
-            time.sleep(0.5)
+                time.sleep(2.5)
+            else:
+                time.sleep(1.0)
 
     # =========================================================================
     # ĐỘNG CƠ DỰ PHÒNG 2: Groq Multi-Model Engine (Dự phòng cấp 2)
