@@ -178,31 +178,72 @@ async def _run_tts_chunk_async(text: str, voice: str, rate: str, pitch: str, aud
             
     raise ValueError("No audio was received. Please verify that your parameters are correct.")
 
+def detect_speaker_role(text_segment: str, default_voice: str) -> tuple[str, str, str, str]:
+    """Phân tích sâu văn bản kịch bản để gán 10 Vai Nhân Vật Tiên Hiệp & Phân tích Cảm xúc Thoại linh hoạt."""
+    lower_segment = text_segment.lower()
+    has_quotes = any(q in text_segment for q in ['"', '“', '”'])
+    has_exclamation = '!' in text_segment or '！' in text_segment
+    
+    # 1. 🤖 Hệ Thống Thôn Phệ Vô Tận / Thông Báo AI (Giọng Công Nghệ Lạnh Băng, Vang Vọt)
+    if any(kw in lower_segment for kw in ["hệ thống", "[thông báo]", "kích hoạt", "thôn phệ", "thăng cấp", "[nhiệm vụ]"]):
+        return ("vi-VN-NamMinhNeural", "+0Hz", "+22%", "🤖 Hệ Thống Thôn Phệ (AI)")
+        
+    # 2. 👿 Phản Diện Hồn Điện / Tà Ma / Sát Thủ (Giọng U Tối, Ma Mị, Đáng Sợ)
+    if any(kw in lower_segment for kw in ["hồn điện", "tà ma", "phản diện", "sát thủ", "ma vương", "huyết tộc", "hắc y nhân"]):
+        return ("vi-VN-NamMinhNeural", "-12Hz", "-5%", "👿 Phản Diện Hồn Điện")
+        
+    # 3. 🐉 Ma Thú / Rồng / Thần Thú Thượng Cổ (Giọng Trầm Đục, Vang Rền)
+    if any(kw in lower_segment for kw in ["ma thú", "yêu thú", "cổ long", "thần long", "gầm lên", "hung thú"]):
+        return ("vi-VN-NamMinhNeural", "-15Hz", "-8%", "🐉 Ma Thú Thượng Cổ")
+
+    # 4. 👑 Nữ Đế / Nữ Vương Kiêu Hãnh (Giọng Quyến Rũ, Lạnh Lùng, Kiêu Hãnh)
+    if any(kw in lower_segment for kw in ["nữ đế", "nữ vương", "mỹ đỗ toa nữ vương", "xà nhân族"]):
+        return ("vi-VN-HoaiMyNeural", "-3Hz", "+6%", "👑 Nữ Đế / Xà Nhân Nữ Vương")
+
+    # 5. 🧙 Dược Lão / Thượng Cổ Tôn Giả (Giọng Trầm Ấm, Uy Nghiêm)
+    if any(kw in lower_segment for kw in ["dược lão", "dược trần", "lão giả", "sư phụ", "tiền bối", "khí linh"]):
+        return ("vi-VN-NamMinhNeural", "-7Hz", "-2%", "🧙 Dược Lão (Sư Phụ)")
+        
+    # 6. 🧝 Vân Vận / Tông Chủ Vân Lam Tông (Giọng Nữ Kiều Diễm, Thanh Cao)
+    if any(kw in lower_segment for kw in ["vân vận", "vân tông chủ", "nữ vương", "sư tỷ"]):
+        return ("vi-VN-HoaiMyNeural", "+0Hz", "+8%", "🧝 Vân Vận (Nữ Chính)")
+        
+    # 7. 👶 Đệ Tử Nhỏ / Thiếu Niên Trẻ Tuổi (Giọng Ngây Thơ, Háo Hức)
+    if has_quotes and any(kw in lower_segment for kw in ["đệ tử", "tiểu sư đệ", "tiểu tử", "đồng tử"]):
+        return ("vi-VN-HoaiMyNeural", "+6Hz", "+16%", "👶 Tiểu Đệ Tử")
+
+    # 8. 🌸 Huân Nhi / Tiếu Thiếu Nữ (Giọng Nữ Ngọt Ngào, Trong Trẻo)
+    if has_quotes and any(kw in lower_segment for kw in ["huân nhi", "tiểu y tiên", "nàng", "cô", "thiếu nữ", "sư muội"]):
+        return ("vi-VN-HoaiMyNeural", "+4Hz", "+12%", "🌸 Huân Nhi / Thiếu Nữ")
+        
+    # 9. 🔥 Tiêu Viêm / Nam Chính Trùng Sinh (Giọng Nam Ngạo Khí, Uy Phong)
+    if has_quotes or any(kw in lower_segment for kw in ["tiêu viêm", "hắn", "nam tử", "thiếu niên"]):
+        rate_mod = "+18%" if has_exclamation else "+14%"
+        return ("vi-VN-NamMinhNeural", "+3Hz", rate_mod, "🔥 Tiêu Viêm (Nam Chính)")
+        
+    # 10. 🎙️ Người Dẫn Chuyện Tiên Hiệp (Narrator Trầm Hùng, Lôi Cuốn)
+    n_voice = "vi-VN-NamMinhNeural" if default_voice == config.DEFAULT_VOICE else default_voice
+    return (n_voice, "-2Hz", "+10%", "🎙️ Người Dẫn Chuyện")
+
 async def _run_tts_async(text: str, voice: str, rate: str, pitch: str, audio_path: str, srt_path: str):
-    """Run edge-tts using text chunking, multi-voice selection and SRT merging."""
+    """Run edge-tts using fine-grained 10-role Tiên Hiệp character voice acting and SRT merging."""
     chunks = split_text_into_chunks(text)
-    print(f"[INFO] 🎙️ Kích hoạt Chế độ Phân Vai Đa Giọng Đọc (Multi-Voice Dual TTS: NamMinh & Hoài Mỹ)...")
+    print(f"[INFO] 🎙️ KÍCH HOẠT ĐỘNG CƠ PHÂN VAI ĐA GIỌNG ĐỌC ĐIỆN ẢNH ĐỈNH CAO (10 Vai Nhân Vật Tiên Hiệp)...")
     
     chunk_audio_paths = []
     total_srt_content = []
     offset_seconds = 0.0
     global_sub_idx = 1
     
-    MALE_VOICE = "vi-VN-NamMinhNeural"
-    FEMALE_VOICE = "vi-VN-HoaiMyNeural"
-    
     for idx, chunk_text in enumerate(chunks):
         chunk_audio = f"{audio_path}_chunk_{idx}.mp3"
         chunk_srt = f"{srt_path}_chunk_{idx}.srt"
         
-        # Nhận diện giọng đọc linh hoạt theo nhân vật (NamMinh cho Dẫn chuyện/Tiêu Viêm, HoaiMy cho Vân Vận/Thiếu nữ)
-        lower_chunk = chunk_text.lower()
-        if any(kw in lower_chunk for kw in ["vân vận", "nàng", "cô", "thiếu nữ", "sư tỷ", "sư muội"]) and ('"' in chunk_text or '“' in chunk_text):
-            chunk_voice = FEMALE_VOICE
-        else:
-            chunk_voice = MALE_VOICE if voice == config.DEFAULT_VOICE else voice
+        # Tự động phân vai nhân vật & điều chỉnh Cao độ (Pitch) / Tốc độ (Rate)
+        chunk_voice, chunk_pitch, chunk_rate, role_name = detect_speaker_role(chunk_text, voice)
+        print(f"   ↳ [Chunk {idx+1}/{len(chunks)}] {role_name} -> Voice: {chunk_voice} (Pitch: {chunk_pitch}, Rate: {chunk_rate})")
             
-        await _run_tts_chunk_async(chunk_text, chunk_voice, rate, pitch, chunk_audio, chunk_srt)
+        await _run_tts_chunk_async(chunk_text, chunk_voice, chunk_rate, chunk_pitch, chunk_audio, chunk_srt)
         
         if not os.path.exists(chunk_audio) or os.path.getsize(chunk_audio) == 0:
             raise ValueError(f"Failed to generate audio for chunk {idx}. Server returned empty data.")
