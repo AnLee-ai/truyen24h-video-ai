@@ -152,7 +152,7 @@ def _run_chapter_pipeline_impl(novel_id: str):
             if duration_attempt > 0:
                 print(f"\n[WARNING] ⚡ KÍCH HOẠT CHẾ ĐỘ LÀM LẠI (Lượt {duration_attempt + 1}/{max_duration_attempts}): "
                       f"Thời lượng audio cũ chưa đạt >10 phút. Tự động gọi AI viết nối dài phân cảnh kịch tính...")
-                chapter_content = writer.expand_chapter_content(chapter_content, target_words=3200)
+                chapter_content = writer.expand_chapter_content(chapter_content, target_words=2800)
                 database.create_chapter(novel_id, chapter_num, chapter_title, chapter_content)
                 
             # Convert chapter text to raw speech audio & subtitles
@@ -170,8 +170,8 @@ def _run_chapter_pipeline_impl(novel_id: str):
                 break
             else:
                 print(f"[WARNING] 🔴 CHẾ ĐỘ LÀM LẠI: Thời lượng {current_duration/60:.2f} phút CHƯA ĐẠT MỐC >10 PHÚT (<600s). Đang chuẩn bị gọi AI làm lại & mở rộng kịch bản...")
-                # Gọi AI mở rộng kịch bản chương truyện lên >3200 từ
-                chapter_content = writer.expand_chapter_content(chapter_content, target_words=3200)
+                # Gọi AI mở rộng kịch bản chương truyện lên ~2800 từ (13-15 phút)
+                chapter_content = writer.expand_chapter_content(chapter_content, target_words=2800)
                 database.create_chapter(novel_id, chapter_num, chapter_title, chapter_content)
                 if duration_attempt == max_duration_attempts - 1:
                     print(f"[INFO] Đã thử làm lại {max_duration_attempts} lần. Tiếp tục tiến trình với thời lượng hiện tại.")

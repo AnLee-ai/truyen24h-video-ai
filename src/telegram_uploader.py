@@ -166,24 +166,35 @@ def send_video_to_telegram(video_path: str, caption: str, public_url: str = "") 
     
     target_upload_path = video_path
     
-    # Nếu file > 48MB (vượt giới hạn 50MB của Telegram Bot API), nén siêu tốc bằng FFmpeg xuống <45MB
-    if file_size_mb > 48.0:
+    # Nếu file > 45MB (vượt giới hạn 50MB của Telegram Bot API), nén động siêu tốc bằng FFmpeg xuống <45MB
+    if file_size_mb > 45.0:
         compressed_path = video_path.replace(".mp4", "_tg_compressed.mp4")
-        print(f"[INFO] Video ({file_size_mb:.2f}MB) vượt giới hạn 50MB Telegram. Đang tự động nén mượt xuống <45MB...")
+        print(f"[INFO] Video ({file_size_mb:.2f}MB) vượt giới hạn 50MB Telegram. Đang tính bitrate động nén mượt xuống <45MB...")
         import subprocess
+        from src.video import get_audio_duration_seconds
+        
+        dur_s = get_audio_duration_seconds(video_path)
+        if dur_s <= 0:
+            dur_s = 600.0
+            
+        # Nén chuẩn dung lượng < 45MB = 360.000.000 bits
+        # Bitrate (kbit/s) = 360000 / dur_s - 96 (audio)
+        calc_bitrate_k = int((340000.0 / dur_s) - 96.0)
+        calc_bitrate_k = max(200, min(1000, calc_bitrate_k))
+        
+        print(f"[INFO] ⚡ Bitrate nén động Telegram: {calc_bitrate_k}k (Thời lượng {dur_s/60:.1f} phút)...")
         try:
-            # Bitrate 600k giữ độ phân giải 1080p sắc nét và kích thước file chuẩn Telegram
             cmd_comp = [
                 "ffmpeg", "-y", "-i", video_path,
-                "-c:v", "libx264", "-preset", "ultrafast", "-b:v", "650k", "-maxrate", "900k", "-bufsize", "1500k",
-                "-c:a", "aac", "-b:a", "128k", "-pix_fmt", "yuv420p", "-movflags", "+faststart",
+                "-c:v", "libx264", "-preset", "ultrafast", "-b:v", f"{calc_bitrate_k}k", "-maxrate", f"{int(calc_bitrate_k*1.3)}k", "-bufsize", f"{int(calc_bitrate_k*2)}k",
+                "-c:a", "aac", "-b:a", "96k", "-pix_fmt", "yuv420p", "-movflags", "+faststart",
                 compressed_path
             ]
             comp_res = subprocess.run(cmd_comp, capture_output=True, text=True, timeout=300)
             if comp_res.returncode == 0 and os.path.exists(compressed_path) and os.path.getsize(compressed_path) > 1000:
                 target_upload_path = compressed_path
                 new_size = os.path.getsize(target_upload_path) / (1024 * 1024)
-                print(f"[SUCCESS] Đã nén video Telegram thành công: {new_size:.2f} MB")
+                print(f"[SUCCESS] 🟢 Đã nén video Telegram thành công: {new_size:.2f} MB (< 45MB)")
         except Exception as e:
             print(f"[WARNING] Auto compression error: {e}")
 
