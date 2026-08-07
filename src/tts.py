@@ -179,56 +179,64 @@ async def _run_tts_chunk_async(text: str, voice: str, rate: str, pitch: str, aud
     raise ValueError("No audio was received. Please verify that your parameters are correct.")
 
 def detect_speaker_role(text_segment: str, default_voice: str) -> tuple[str, str, str, str]:
-    """Phân tích sâu văn bản kịch bản để gán 10 Vai Nhân Vật Tiên Hiệp & Phân tích Cảm xúc Thoại linh hoạt."""
+    """Phân tích sâu văn bản kịch bản để gán Hệ Thống Đa Giọng Đọc Đa Ngôn Ngữ & Đa Vai Nhân Vật Điện Ảnh."""
     lower_segment = text_segment.lower()
     has_quotes = any(q in text_segment for q in ['"', '“', '”'])
     has_exclamation = '!' in text_segment or '！' in text_segment
     
-    # 1. 🤖 Hệ Thống Thôn Phệ Vô Tận / Thông Báo AI (Giọng Công Nghệ Lạnh Băng, Vang Vọt)
+    # 1. ☯️ Khẩu Quyết Thần Chú / Kinh Văn Tiên Hiệp (Giọng Âm Hán Việt / Tiên Phụ Trầm Hùng zh-CN-YunjianNeural)
+    if any(kw in lower_segment for kw in ["khẩu quyết", "thần chú", "chu chú", "kinh văn", "ấn quyết", "thần thông bi"]):
+        return ("zh-CN-YunjianNeural", "-2Hz", "+5%", "☯️ Khẩu Quyết Thần Chú (Trang Nghiêm)")
+
+    # 2. ⚡ Hống Thanh Chiến Đấu Kịch Tính (Giọng Anime Shout ja-JP-KeitaNeural)
+    if has_exclamation and any(kw in lower_segment for kw in ["bộc phát", "tuyệt chiêu", "trùng sinh", "diệt cho ta", "chết đi"]):
+        return ("ja-JP-KeitaNeural", "+2Hz", "+18%", "⚡ Hống Thanh Chiến Đấu Anime")
+
+    # 3. 🤖 Hệ Thống Thôn Phệ Vô Tận / Thông Báo AI (Giọng Công Nghệ Lạnh Băng, Vang Vọt)
     if any(kw in lower_segment for kw in ["hệ thống", "[thông báo]", "kích hoạt", "thôn phệ", "thăng cấp", "[nhiệm vụ]"]):
-        return ("vi-VN-NamMinhNeural", "+0Hz", "+22%", "🤖 Hệ Thống Thôn Phệ (AI)")
+        return ("vi-VN-NamMinhNeural", "+0Hz", "+22%", "🤖 Hệ Thống Thôn Phệ (AI System)")
         
-    # 2. 👿 Phản Diện Hồn Điện / Tà Ma / Sát Thủ (Giọng U Tối, Ma Mị, Đáng Sợ)
+    # 4. 👿 Phản Diện Hồn Điện / Tà Ma / Sát Thủ (Giọng U Tối, Ma Mị, Đáng Sợ)
     if any(kw in lower_segment for kw in ["hồn điện", "tà ma", "phản diện", "sát thủ", "ma vương", "huyết tộc", "hắc y nhân"]):
-        return ("vi-VN-NamMinhNeural", "-12Hz", "-5%", "👿 Phản Diện Hồn Điện")
+        return ("vi-VN-NamMinhNeural", "-12Hz", "-5%", "👿 Phản Diện Hồn Điện (Nam Minh -12Hz)")
         
-    # 3. 🐉 Ma Thú / Rồng / Thần Thú Thượng Cổ (Giọng Trầm Đục, Vang Rền)
+    # 5. 🐉 Ma Thú / Rồng / Thần Thú Thượng Cổ (Giọng Trầm Đục, Vang Rền)
     if any(kw in lower_segment for kw in ["ma thú", "yêu thú", "cổ long", "thần long", "gầm lên", "hung thú"]):
-        return ("vi-VN-NamMinhNeural", "-15Hz", "-8%", "🐉 Ma Thú Thượng Cổ")
+        return ("vi-VN-NamMinhNeural", "-15Hz", "-8%", "🐉 Ma Thú Thượng Cổ (Nam Minh -15Hz)")
 
-    # 4. 👑 Nữ Đế / Nữ Vương Kiêu Hãnh (Giọng Quyến Rũ, Lạnh Lùng, Kiêu Hãnh)
+    # 6. 👑 Nữ Đế / Nữ Vương Kiêu Hãnh (Giọng Quyến Rũ, Lạnh Lùng, Kiêu Hãnh)
     if any(kw in lower_segment for kw in ["nữ đế", "nữ vương", "mỹ đỗ toa nữ vương", "xà nhân族"]):
-        return ("vi-VN-HoaiMyNeural", "-3Hz", "+6%", "👑 Nữ Đế / Xà Nhân Nữ Vương")
+        return ("vi-VN-HoaiMyNeural", "-3Hz", "+6%", "👑 Nữ Đế / Xà Nhân Nữ Vương (Hoài Mỹ -3Hz)")
 
-    # 5. 🧙 Dược Lão / Thượng Cổ Tôn Giả (Giọng Trầm Ấm, Uy Nghiêm)
+    # 7. 🧙 Dược Lão / Thượng Cổ Tôn Giả (Giọng Trầm Ấm, Uy Nghiêm)
     if any(kw in lower_segment for kw in ["dược lão", "dược trần", "lão giả", "sư phụ", "tiền bối", "khí linh"]):
-        return ("vi-VN-NamMinhNeural", "-7Hz", "-2%", "🧙 Dược Lão (Sư Phụ)")
+        return ("vi-VN-NamMinhNeural", "-7Hz", "-2%", "🧙 Dược Lão (Nam Minh -7Hz)")
         
-    # 6. 🧝 Vân Vận / Tông Chủ Vân Lam Tông (Giọng Nữ Kiều Diễm, Thanh Cao)
+    # 8. 🧝 Vân Vận / Tông Chủ Vân Lam Tông (Giọng Nữ Kiều Diễm, Thanh Cao)
     if any(kw in lower_segment for kw in ["vân vận", "vân tông chủ", "nữ vương", "sư tỷ"]):
-        return ("vi-VN-HoaiMyNeural", "+0Hz", "+8%", "🧝 Vân Vận (Nữ Chính)")
+        return ("vi-VN-HoaiMyNeural", "+0Hz", "+8%", "🧝 Vân Vận - Nữ Chính (Hoài Mỹ Standard)")
         
-    # 7. 👶 Đệ Tử Nhỏ / Thiếu Niên Trẻ Tuổi (Giọng Ngây Thơ, Háo Hức)
+    # 9. 👶 Tiểu Đệ Tử / Đồng Tử (Giọng Ngây Thơ, Háo Hức)
     if has_quotes and any(kw in lower_segment for kw in ["đệ tử", "tiểu sư đệ", "tiểu tử", "đồng tử"]):
-        return ("vi-VN-HoaiMyNeural", "+6Hz", "+16%", "👶 Tiểu Đệ Tử")
+        return ("vi-VN-HoaiMyNeural", "+6Hz", "+16%", "👶 Tiểu Đệ Tử (Hoài Mỹ +6Hz)")
 
-    # 8. 🌸 Huân Nhi / Tiếu Thiếu Nữ (Giọng Nữ Ngọt Ngào, Trong Trẻo)
+    # 10. 🌸 Huân Nhi / Tiếu Thiếu Nữ (Giọng Nữ Ngọt Ngào, Trong Trẻo)
     if has_quotes and any(kw in lower_segment for kw in ["huân nhi", "tiểu y tiên", "nàng", "cô", "thiếu nữ", "sư muội"]):
-        return ("vi-VN-HoaiMyNeural", "+4Hz", "+12%", "🌸 Huân Nhi / Thiếu Nữ")
+        return ("vi-VN-HoaiMyNeural", "+4Hz", "+12%", "🌸 Huân Nhi / Thiếu Nữ (Hoài Mỹ +4Hz)")
         
-    # 9. 🔥 Tiêu Viêm / Nam Chính Trùng Sinh (Giọng Nam Ngạo Khí, Uy Phong)
+    # 11. 🔥 Tiêu Viêm / Nam Chính Trùng Sinh (Giọng Nam Ngạo Khí, Uy Phong)
     if has_quotes or any(kw in lower_segment for kw in ["tiêu viêm", "hắn", "nam tử", "thiếu niên"]):
         rate_mod = "+18%" if has_exclamation else "+14%"
-        return ("vi-VN-NamMinhNeural", "+3Hz", rate_mod, "🔥 Tiêu Viêm (Nam Chính)")
+        return ("vi-VN-NamMinhNeural", "+3Hz", rate_mod, "🔥 Tiêu Viêm - Nam Chính (Nam Minh +3Hz)")
         
-    # 10. 🎙️ Người Dẫn Chuyện Tiên Hiệp (Narrator Trầm Hùng, Lôi Cuốn)
+    # 12. 🎙️ Người Dẫn Chuyện Tiên Hiệp (Narrator Trầm Hùng, Lôi Cuốn)
     n_voice = "vi-VN-NamMinhNeural" if default_voice == config.DEFAULT_VOICE else default_voice
-    return (n_voice, "-2Hz", "+10%", "🎙️ Người Dẫn Chuyện")
+    return (n_voice, "-2Hz", "+10%", "🎙️ Người Dẫn Chuyện (Nam Minh Standard)")
 
 async def _run_tts_async(text: str, voice: str, rate: str, pitch: str, audio_path: str, srt_path: str):
-    """Run edge-tts using fine-grained 10-role Tiên Hiệp character voice acting and SRT merging."""
+    """Run edge-tts using fine-grained multi-lingual character voice acting and SRT merging."""
     chunks = split_text_into_chunks(text)
-    print(f"[INFO] 🎙️ KÍCH HOẠT ĐỘNG CƠ PHÂN VAI ĐA GIỌNG ĐỌC ĐIỆN ẢNH ĐỈNH CAO (10 Vai Nhân Vật Tiên Hiệp)...")
+    print(f"[INFO] 🎙️ KÍCH HOẠT ĐỘNG CƠ ĐA GIỌNG ĐỌC ĐA NGÔN NGỮ & ĐA VÙNG MIỀN (12 Bộ Giọng Đọc Tiên Hiệp)...")
     
     chunk_audio_paths = []
     total_srt_content = []
