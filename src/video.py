@@ -141,12 +141,14 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
     scene_texts = [s['text'] for s in scene_data_list]
     print(f"[INFO] Tổng số phân cảnh sinh ảnh AI khớp thoại: {len(scene_texts)}")
     
-    # 3. Sinh ảnh AI cho tất cả phân cảnh thoại (lên đến 30 phân cảnh độc lập)
+    # 3. GIAI ĐOẠN 3.5: AI VISUAL DIRECTOR - XỬ LÝ SONG SONG ĐA LUỒNG PROMPTS (PARALLEL WORKERS=10)
+    from src.visual_prompt_engine import batch_enrich_visual_prompts_parallel
     from src.image_generator import batch_generate_scene_images, generate_scene_image, is_valid_image_file
     chapter_id = os.path.basename(out_dir)
     target_scenes = scene_texts[:30]
     
-    image_files = batch_generate_scene_images(target_scenes, chapter_id, max_workers=5, width=1920, height=1080)
+    _, enriched_prompts = batch_enrich_visual_prompts_parallel(target_scenes, novel_id="", chapter_id=chapter_id, max_workers=10)
+    image_files = batch_generate_scene_images(enriched_prompts, chapter_id, max_workers=5, width=1920, height=1080)
                 
     if not image_files:
         bg_image = os.path.join(img_dir, "scene_001.jpg")
