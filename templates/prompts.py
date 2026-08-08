@@ -82,7 +82,9 @@ INKOS 10-AGENT CORE DIRECTIVES (MUST FOLLOW AT ALL COSTS):
 6. **NAMING & DIALOGUE STYLE**:
    - Use natural 2-word Vietnamese names ONLY (e.g. Trần Lam, Linh Vy, Minh Đức). NEVER use 3-word full names (do NOT write Nguyễn Minh Đức) and NEVER use English proper nouns.
    - **TẢI TRỌNG LỜI THOẠI ĐỐI THOẠI CỰC ĐẠI (70% - 80% DIRECT DIALOGUE RATIO)**: BẮT BUỘC câu chuyện phải chiếm từ 70% ĐẾN 80% LỜI NÓI TRỰC TIẾP và ĐỐI THOẠI giữa các nhân vật trong ngoặc kép ("..."). Mọi phân cảnh đều là sự đối đáp dồn dập, tranh luận gay gắt, khiêu khích, thì thầm, bàn chiến thuật và phản ứng bộc phát giữa nhân vật chính và các nhân vật xung quanh!
-
+7. **DYNAMIC CHARACTER CREATION DIRECTIVE**:
+   - BẠN ĐƯỢC HOÀN TOÀN TỰ DO SÁNG TẠO VÀ THÊM CÁC NHÂN VẬT MỚI CHUYÊN NGHIỆP (phản diện, cao thủ ẩn thế, tông chủ thế lực khác, sát thủ Hồn Điện, sư huynh, trưởng lão, nhân vật quần chúng...). TUYỆT ĐỐI KHÔNG BỊ GÒ BÓ hay giới hạn chỉ ở các nhân vật đã có sẵn!
+ 
 Write the chapter in 100% natural, evocative Vietnamese. Output ONLY the raw story text without conversational intro/outro text, headers, or sections like 'Dẫn lược:' or 'Chương X:'. Write straight into the narrative.
 """
 
@@ -101,7 +103,7 @@ Audit Tasks:
 """
 
 EXTRACT_ENTITIES_PROMPT = """
-Read the following chapter and extract all character status updates, world lore additions, and active narrative threads.
+Read the following chapter and extract all character status updates, newly introduced characters, world lore additions, and active narrative threads.
 
 Chapter Content:
 {chapter_content}
@@ -111,21 +113,30 @@ Current Character States:
 
 Analyze the narrative and output a strictly formatted JSON object (no markdown wrappers):
 {{
+  "new_characters": [
+    {{
+      "name": "Tên Nhân Vật Mới",
+      "description": "Mô tả ngoại hình, trang phục, khí chất và vũ khí của nhân vật mới",
+      "power_tier": "Cảnh giới tu luyện (VD: Đấu Hoàng / Đấu Tôn / Sát Thủ / Trưởng Lão)",
+      "combat_stats": {{ "element": "Thuộc tính", "role": "Phản diện / Đồng minh / Trưởng lão" }},
+      "relationships": {{ "Tiêu Viêm": "Đối đầu / Đồng minh" }}
+    }}
+  ],
   "character_updates": [
     {{
-      "name": "Trần Lam",
-      "power_tier": "Novice",
-      "combat_stats": {{ "attack": 15, "defense": 10 }},
-      "relationships": {{ "Linh Vy": "ally" }},
+      "name": "Tiêu Viêm",
+      "power_tier": "Bá Chủ Trùng Sinh (Đấu Vương)",
+      "combat_stats": {{ "level": "Đấu Vương" }},
+      "relationships": {{ "Vân Vận": "Bằng hữu" }},
       "failure_flag": true,
       "breakthrough_written": false
     }}
   ],
   "new_lore": [
-    {{ "keyword": "Tinh Thần Ấn", "description": "Ấn ký bảo hộ cổ đại chứa sức mạnh các vị thần" }}
+    {{ "keyword": "Từ Khóa Bối Cảnh Mới", "description": "Mô tả chi tiết bối cảnh thế giới hoặc bảo vật mới" }}
   ],
   "new_threads": [
-    {{ "thread_name": "Bí Mật Chiếc Hộp Đông Sơn", "description": "Trần Lam tìm kiếm chìa khóa mở chiếc hộp cổ" }}
+    {{ "thread_name": "Tên Tuyến Truyện Mới", "description": "Mô tả diễn biến tuyến truyện mới" }}
   ]
 }}
 """

@@ -831,6 +831,26 @@ def sync_story_bible(novel_id: str, chapter: dict, current_chars: list):
     try:
         data = safe_loads(extract_json)
         
+        # 1. TỰ ĐỘNG LƯU CÁC NHÂN VẬT MỚI SÁNG TẠO VÀO CSDL SUPABASE
+        new_chars = data.get("new_characters", [])
+        if new_chars:
+            print(f"[INFO] 🌟 Đã phát hiện {len(new_chars)} nhân vật MỚI được AI sáng tạo trong chương!")
+            for n_char in new_chars:
+                n_name = n_char.get("name")
+                if n_name and n_name.strip():
+                    database.upsert_character(
+                        novel_id=novel_id,
+                        name=n_name.strip(),
+                        description=n_char.get("description", "Nhân vật mới xuất hiện trong kịch bản"),
+                        power_tier=n_char.get("power_tier", "Cao Thủ Mới"),
+                        combat_stats=n_char.get("combat_stats", {}),
+                        relationships=n_char.get("relationships", {}),
+                        failure_flag=False,
+                        last_breakthrough_chapter=0
+                    )
+                    print(f"   [SUPABASE] + Da tu dong nhat Nhan Vat MOI: {n_name} ({n_char.get('power_tier')})")
+
+        # 2. CẬP NHẬT TRẠNG THÁI CÁC NHÂN VẬT CŨ
         for char_up in data.get("character_updates", []):
             name = char_up["name"]
             exist = database.get_character_by_name(novel_id, name)
