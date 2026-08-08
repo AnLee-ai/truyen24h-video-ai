@@ -14,14 +14,30 @@ def get_client() -> Client:
 
 # Novel Operations
 def init_novel(title: str, description: str = "") -> dict:
-    """Create a new novel record."""
+    """Create or fetch existing novel record strictly avoiding duplicate novel rows."""
     client = get_client()
-    response = client.table("novels").insert({
-        "title": title,
-        "description": description,
-        "status": "writing"
-    }).execute()
-    return response.data[0] if response.data else {}  # type: ignore[return-value]
+    try:
+        existing = client.table("novels").select("*").eq("title", title).execute()
+        if existing.data and len(existing.data) > 0:
+            primary_novel = existing.data[0]
+            # Clean up any extra duplicate novel rows with same title
+            if len(existing.data) > 1:
+                extra_ids = [r["id"] for r in existing.data[1:]]
+                for e_id in extra_ids:
+                    try:
+                        client.table("novels").delete().eq("id", e_id).execute()
+                    except Exception:
+                        pass
+            return primary_novel
+        response = client.table("novels").insert({
+            "title": title,
+            "description": description,
+            "status": "writing"
+        }).execute()
+        return response.data[0] if response.data else {}
+    except Exception as e:
+        print(f"[WARNING] init_novel failed: {e}")
+        return {}
 
 def get_novel(novel_id: str) -> dict:
     """Fetch novel details by ID with local active novel fallback."""
@@ -328,7 +344,7 @@ def upsert_character(novel_id: str, name: str, description: str = "", power_tier
                      failure_flag: bool = False, last_breakthrough_chapter: int = 0,
                      novel_title: str = "Vạn Cổ Thần Vương: Ta Có Hệ Thống Thôn Phệ Vô Tận",
                      world_name: str = "Đấu Khí Đại Lục / Vạn Cổ Thần Vương Universe") -> dict:
-    """Insert or update character details with novel_title and world_name identification."""
+    """Insert or update character details with strict deduplication check."""
     client = get_client()
     data = {
         "novel_id": novel_id,
@@ -344,14 +360,38 @@ def upsert_character(novel_id: str, name: str, description: str = "", power_tier
     }
     
     try:
-        response = client.table("characters").upsert(data, on_conflict="novel_id,name").execute()
-        return response.data[0] if response.data else {}
+        # Check if character already exists by novel_id and name
+        existing = client.table("characters").select("id").eq("novel_id", novel_id).eq("name", name).execute()
+        if existing.data and len(existing.data) > 0:
+            char_id = existing.data[0]["id"]
+            # If multiple duplicates exist, delete extra ones
+            if len(existing.data) > 1:
+                extra_ids = [r["id"] for r in existing.data[1:]]
+                for e_id in extra_ids:
+                    try:
+                        client.table("characters").delete().eq("id", e_id).execute()
+                    except Exception:
+                        pass
+            try:
+                res = client.table("characters").update(data).eq("id", char_id).execute()
+                return res.data[0] if res.data else {}
+            except Exception:
+                data.pop("novel_title", None)
+                data.pop("world_name", None)
+                res = client.table("characters").update(data).eq("id", char_id).execute()
+                return res.data[0] if res.data else {}
+        else:
+            try:
+                res = client.table("characters").insert(data).execute()
+                return res.data[0] if res.data else {}
+            except Exception:
+                data.pop("novel_title", None)
+                data.pop("world_name", None)
+                res = client.table("characters").insert(data).execute()
+                return res.data[0] if res.data else {}
     except Exception as e:
-        # Fallback if novel_title column doesn't exist yet
-        data.pop("novel_title", None)
-        data.pop("world_name", None)
-        response = client.table("characters").upsert(data, on_conflict="novel_id,name").execute()
-        return response.data[0] if response.data else {}
+        print(f"[WARNING] upsert_character failed: {e}")
+        return {}
 
 # World Lore Operations
 def get_world_lore(novel_id: str) -> list:
@@ -363,7 +403,7 @@ def get_world_lore(novel_id: str) -> list:
 def upsert_world_lore(novel_id: str, keyword: str, description: str,
                       novel_title: str = "Vạn Cổ Thần Vương: Ta Có Hệ Thống Thôn Phệ Vô Tận",
                       world_name: str = "Đấu Khí Đại Lục / Vạn Cổ Thần Vương Universe") -> dict:
-    """Insert or update lore entries with novel_title and world_name identification."""
+    """Insert or update lore entries with strict deduplication check."""
     client = get_client()
     data = {
         "novel_id": novel_id,
@@ -373,13 +413,35 @@ def upsert_world_lore(novel_id: str, keyword: str, description: str,
         "description": description
     }
     try:
-        response = client.table("world_lore").upsert(data, on_conflict="novel_id,keyword").execute()
-        return response.data[0] if response.data else {}
-    except Exception:
-        data.pop("novel_title", None)
-        data.pop("world_name", None)
-        response = client.table("world_lore").upsert(data, on_conflict="novel_id,keyword").execute()
-        return response.data[0] if response.data else {}
+        existing = client.table("world_lore").select("id").eq("keyword", keyword).execute()
+        if existing.data and len(existing.data) > 0:
+            lore_id = existing.data[0]["id"]
+            if len(existing.data) > 1:
+                for e_row in existing.data[1:]:
+                    try:
+                        client.table("world_lore").delete().eq("id", e_row["id"]).execute()
+                    except Exception:
+                        pass
+            try:
+                res = client.table("world_lore").update(data).eq("id", lore_id).execute()
+                return res.data[0] if res.data else {}
+            except Exception:
+                data.pop("novel_title", None)
+                data.pop("world_name", None)
+                res = client.table("world_lore").update(data).eq("id", lore_id).execute()
+                return res.data[0] if res.data else {}
+        else:
+            try:
+                res = client.table("world_lore").insert(data).execute()
+                return res.data[0] if res.data else {}
+            except Exception:
+                data.pop("novel_title", None)
+                data.pop("world_name", None)
+                res = client.table("world_lore").insert(data).execute()
+                return res.data[0] if res.data else {}
+    except Exception as e:
+        print(f"[WARNING] upsert_world_lore failed: {e}")
+        return {}
 
 # Narrative Threads Operations
 def get_narrative_threads(novel_id: str, status: str | None = None) -> list:
@@ -393,7 +455,7 @@ def get_narrative_threads(novel_id: str, status: str | None = None) -> list:
 
 def upsert_narrative_thread(novel_id: str, thread_name: str, description: str, status: str = "open",
                             novel_title: str = "Vạn Cổ Thần Vương: Ta Có Hệ Thống Thôn Phệ Vô Tận") -> dict:
-    """Insert or update a narrative thread."""
+    """Insert or update a narrative thread with strict deduplication check."""
     client = get_client()
     data = {
         "novel_id": novel_id,
@@ -403,12 +465,33 @@ def upsert_narrative_thread(novel_id: str, thread_name: str, description: str, s
         "status": status
     }
     try:
-        response = client.table("narrative_threads").upsert(data, on_conflict="id").execute()
-        return response.data[0] if response.data else {}
-    except Exception:
-        data.pop("novel_title", None)
-        response = client.table("narrative_threads").upsert(data, on_conflict="id").execute()
-        return response.data[0] if response.data else {}
+        existing = client.table("narrative_threads").select("id").eq("thread_name", thread_name).execute()
+        if existing.data and len(existing.data) > 0:
+            thread_id = existing.data[0]["id"]
+            if len(existing.data) > 1:
+                for e_row in existing.data[1:]:
+                    try:
+                        client.table("narrative_threads").delete().eq("id", e_row["id"]).execute()
+                    except Exception:
+                        pass
+            try:
+                res = client.table("narrative_threads").update(data).eq("id", thread_id).execute()
+                return res.data[0] if res.data else {}
+            except Exception:
+                data.pop("novel_title", None)
+                res = client.table("narrative_threads").update(data).eq("id", thread_id).execute()
+                return res.data[0] if res.data else {}
+        else:
+            try:
+                res = client.table("narrative_threads").insert(data).execute()
+                return res.data[0] if res.data else {}
+            except Exception:
+                data.pop("novel_title", None)
+                res = client.table("narrative_threads").insert(data).execute()
+                return res.data[0] if res.data else {}
+    except Exception as e:
+        print(f"[WARNING] upsert_narrative_thread failed: {e}")
+        return {}
 
 def update_novel_description(novel_id: str, description: str) -> dict:
     """Update description of a novel."""
