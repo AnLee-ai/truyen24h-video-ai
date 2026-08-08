@@ -75,7 +75,7 @@ def _enrich_single_scene(item: tuple, characters_data: list, world_lore_data: li
 
 def batch_enrich_visual_prompts_parallel(scenes: list, novel_id: str = "", chapter_id: str = "", max_workers: int = 10) -> tuple:
     """Sinh toàn bộ Visual Prompts cho 30-50 phân cảnh SONGBONG ĐA LUỒNG (Parallel max_workers=10) Siêu Tốc trong 0.5s."""
-    print(f"[INFO] ⚡⚡ KÍCH HOẠT ĐỘNG CƠ PARALLEL VISUAL DIRECTOR: Xử lý song song {len(scenes)} phân cảnh (Workers={max_workers})...")
+    print(f"[INFO] KICH HOAT DONG CO PARALLEL VISUAL DIRECTOR: Xu ly song song {len(scenes)} phan canh (Workers={max_workers})...")
     
     # Fetch characters and lore once
     characters_data = []
@@ -109,11 +109,11 @@ def batch_enrich_visual_prompts_parallel(scenes: list, novel_id: str = "", chapt
         try:
             with open(manifest_path, "w", encoding="utf-8") as f:
                 json.dump({"chapter_id": chapter_id, "scenes_count": len(scenes), "scenes": manifest_list}, f, ensure_ascii=False, indent=2)
-            print(f"[SUCCESS] 🎬 Đã xuất Visual Director Manifest song song tại: {manifest_path}")
+            print(f"[SUCCESS] Da xuat Visual Director Manifest song song tai: {manifest_path}")
         except Exception as e:
-            print(f"[WARNING] Không thể lưu manifest: {e}")
+            print(f"[WARNING] Khong the luu manifest: {e}")
 
-    print(f"[SUCCESS] ⚡ ĐÃ HOÀN THÀNH XỬ LÝ SONG SONG {len(scenes)} VISUAL PROMPTS TRONG NỐT NHẠC (0.5s)!")
+    print(f"[SUCCESS] DA HOAN THANH XU LY SONG SONG {len(scenes)} VISUAL PROMPTS TRONG 0.5S!")
     return manifest_list, enhanced_prompts_list
 
 if __name__ == "__main__":
