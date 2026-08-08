@@ -218,12 +218,23 @@ def send_video_to_telegram(video_path: str, caption: str, public_url: str = "") 
                 response = requests.post(url, data=data, files=files, timeout=600)
                 
             if response.status_code == 200:
-                print("[SUCCESS] Video MP4 uploaded successfully to Telegram!")
+                print("[SUCCESS] 🎬 Video MP4 uploaded successfully to Telegram!")
                 return True
             else:
-                print(f"[ERROR] Telegram video upload failed ({response.status_code}): {response.text}")
+                print(f"[WARNING] sendVideo failed ({response.status_code}): {response.text}. Attempting sendDocument fallback...")
+                doc_url = f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}/sendDocument"
+                with open(target_upload_path, 'rb') as video_doc_file:
+                    doc_files = {'document': (os.path.basename(target_upload_path), video_doc_file, 'video/mp4')}
+                    doc_data = {'chat_id': config.TELEGRAM_CHAT_ID, 'caption': caption, 'parse_mode': 'Markdown'}
+                    doc_res = requests.post(doc_url, data=doc_data, files=doc_data, timeout=600)
+                    if doc_res.status_code != 200 and "can't parse entities" in doc_res.text:
+                        doc_data.pop('parse_mode', None)
+                        doc_res = requests.post(doc_url, data=doc_data, files=doc_files, timeout=600)
+                    if doc_res.status_code == 200:
+                        print("[SUCCESS] 🎬 Video MP4 uploaded successfully to Telegram via sendDocument!")
+                        return True
+
                 if public_url:
-                    # Gửi tin nhắn thông báo link nếu upload file thất bại
                     msg_url = f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}/sendMessage"
                     requests.post(msg_url, data={'chat_id': config.TELEGRAM_CHAT_ID, 'text': f"{caption}\n\n🔗 Xem Video HD: {public_url}"})
                 return False

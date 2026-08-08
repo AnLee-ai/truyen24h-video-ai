@@ -325,11 +325,15 @@ def get_character_by_name(novel_id: str, name: str) -> dict:
 
 def upsert_character(novel_id: str, name: str, description: str = "", power_tier: str = "Ordinary", 
                      combat_stats: dict | None = None, relationships: dict | None = None, 
-                     failure_flag: bool = False, last_breakthrough_chapter: int = 0) -> dict:
-    """Insert or update character details."""
+                     failure_flag: bool = False, last_breakthrough_chapter: int = 0,
+                     novel_title: str = "Vạn Cổ Thần Vương: Ta Có Hệ Thống Thôn Phệ Vô Tận",
+                     world_name: str = "Đấu Khí Đại Lục / Vạn Cổ Thần Vương Universe") -> dict:
+    """Insert or update character details with novel_title and world_name identification."""
     client = get_client()
     data = {
         "novel_id": novel_id,
+        "novel_title": novel_title,
+        "world_name": world_name,
         "name": name,
         "description": description,
         "power_tier": power_tier,
@@ -339,9 +343,15 @@ def upsert_character(novel_id: str, name: str, description: str = "", power_tier
         "last_breakthrough_chapter": last_breakthrough_chapter
     }
     
-    # We use upsert on (novel_id, name)
-    response = client.table("characters").upsert(data, on_conflict="novel_id,name").execute()  # type: ignore[arg-type]
-    return response.data[0] if response.data else {}  # type: ignore[return-value]
+    try:
+        response = client.table("characters").upsert(data, on_conflict="novel_id,name").execute()
+        return response.data[0] if response.data else {}
+    except Exception as e:
+        # Fallback if novel_title column doesn't exist yet
+        data.pop("novel_title", None)
+        data.pop("world_name", None)
+        response = client.table("characters").upsert(data, on_conflict="novel_id,name").execute()
+        return response.data[0] if response.data else {}
 
 # World Lore Operations
 def get_world_lore(novel_id: str) -> list:
@@ -350,16 +360,26 @@ def get_world_lore(novel_id: str) -> list:
     response = client.table("world_lore").select("*").eq("novel_id", novel_id).execute()
     return response.data if response.data else []
 
-def upsert_world_lore(novel_id: str, keyword: str, description: str) -> dict:
-    """Insert or update lore entries."""
+def upsert_world_lore(novel_id: str, keyword: str, description: str,
+                      novel_title: str = "Vạn Cổ Thần Vương: Ta Có Hệ Thống Thôn Phệ Vô Tận",
+                      world_name: str = "Đấu Khí Đại Lục / Vạn Cổ Thần Vương Universe") -> dict:
+    """Insert or update lore entries with novel_title and world_name identification."""
     client = get_client()
     data = {
         "novel_id": novel_id,
+        "novel_title": novel_title,
+        "world_name": world_name,
         "keyword": keyword,
         "description": description
     }
-    response = client.table("world_lore").upsert(data, on_conflict="novel_id,keyword").execute()
-    return response.data[0] if response.data else {}  # type: ignore[return-value]
+    try:
+        response = client.table("world_lore").upsert(data, on_conflict="novel_id,keyword").execute()
+        return response.data[0] if response.data else {}
+    except Exception:
+        data.pop("novel_title", None)
+        data.pop("world_name", None)
+        response = client.table("world_lore").upsert(data, on_conflict="novel_id,keyword").execute()
+        return response.data[0] if response.data else {}
 
 # Narrative Threads Operations
 def get_narrative_threads(novel_id: str, status: str | None = None) -> list:
@@ -371,16 +391,24 @@ def get_narrative_threads(novel_id: str, status: str | None = None) -> list:
     response = query.execute()
     return response.data if response.data else []
 
-def upsert_narrative_thread(novel_id: str, thread_name: str, description: str, status: str = "open") -> dict:
+def upsert_narrative_thread(novel_id: str, thread_name: str, description: str, status: str = "open",
+                            novel_title: str = "Vạn Cổ Thần Vương: Ta Có Hệ Thống Thôn Phệ Vô Tận") -> dict:
     """Insert or update a narrative thread."""
     client = get_client()
-    response = client.table("narrative_threads").upsert({
+    data = {
         "novel_id": novel_id,
+        "novel_title": novel_title,
         "thread_name": thread_name,
         "description": description,
         "status": status
-    }, on_conflict="id").execute()
-    return response.data[0] if response.data else {}  # type: ignore[return-value]
+    }
+    try:
+        response = client.table("narrative_threads").upsert(data, on_conflict="id").execute()
+        return response.data[0] if response.data else {}
+    except Exception:
+        data.pop("novel_title", None)
+        response = client.table("narrative_threads").upsert(data, on_conflict="id").execute()
+        return response.data[0] if response.data else {}
 
 def update_novel_description(novel_id: str, description: str) -> dict:
     """Update description of a novel."""
