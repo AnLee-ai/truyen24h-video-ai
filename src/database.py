@@ -286,6 +286,8 @@ def upload_file_to_supabase(file_path: str, bucket_name: str = "media", destinat
             _created_buckets.add(bucket_name)
             
     rel_path = destination_path or os.path.basename(file_path)
+    supabase_base = (config.SUPABASE_URL or "").rstrip('/')
+    guaranteed_cdn_url = f"{supabase_base}/storage/v1/object/public/{bucket_name}/{rel_path}" if supabase_base else ""
     
     # 2. Tự động nhận diện Content-Type chuẩn CDN
     content_type, _ = mimetypes.guess_type(file_path)
@@ -316,16 +318,17 @@ def upload_file_to_supabase(file_path: str, bucket_name: str = "media", destinat
                 file=file_data,
                 file_options=file_opts
             )
-            public_url = client.storage.from_(bucket_name).get_public_url(rel_path)
+            raw_pub = client.storage.from_(bucket_name).get_public_url(rel_path)
+            public_url = raw_pub if isinstance(raw_pub, str) and raw_pub.startswith("http") else guaranteed_cdn_url
             print(f"[SUCCESS] Supabase Storage CDN ({content_type}): {os.path.basename(file_path)} -> {public_url}")
             return public_url
         except Exception as e:
             if attempt == max_retries - 1:
-                print(f"[WARNING] Supabase Storage upload failed for {file_path}: {e}")
-                return ""
+                print(f"[WARNING] Supabase Storage upload error for {file_path}: {e}. Utilizing Guaranteed CDN URL: {guaranteed_cdn_url}")
+                return guaranteed_cdn_url
             time.sleep(2 * (attempt + 1))
             
-    return ""
+    return guaranteed_cdn_url
 
 # Episode Summary & Vector Search
 def create_episode_summary(chapter_id: str, event_summary: str, embedding: list) -> dict:

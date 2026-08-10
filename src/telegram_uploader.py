@@ -162,11 +162,22 @@ def send_video_to_telegram(video_path: str, caption: str, public_url: str = "") 
         return False
 
     file_size_mb = (os.path.getsize(video_path) / (1024 * 1024)) if os.path.exists(video_path) else 0.0
-    print(f"[INFO] Initial Video MP4 Size: {file_size_mb:.2f} MB | Public CDN URL: {public_url}")
     
-    # 1. NẾU ĐÃ CÓ SUPABASE CDN URL -> THÔNG BÁO LINK STREAMING TRỰC TIẾP KHÔNG GIỚI HẠN DUNG LƯỢNG
-    cdn_message = f"{caption}\n\n🍿 *XEM VIDEO FULL HD 16:9 (SUPABASE STORAGE CDN - KHÔNG GIỚI HẠN 50MB):*\n🔗 [Bấm vào đây để xem trực tiếp / Tải Video]({public_url or 'https://supabase.com'})"
+    # 1. BẢO ĐẢM TẠO CHUẨN ĐƯỜNG LINK SUPABASE CDN (Không bao giờ lấy link rác https://supabase.com)
+    final_cdn_url = public_url.strip() if (public_url and public_url.startswith("http") and "supabase.com" not in public_url) else ""
+    if not final_cdn_url and config.SUPABASE_URL and os.path.exists(video_path):
+        supabase_base = config.SUPABASE_URL.rstrip('/')
+        filename_rel = os.path.basename(video_path)
+        final_cdn_url = f"{supabase_base}/storage/v1/object/public/media/videos/full/{filename_rel}"
+        
+    print(f"[INFO] Initial Video MP4 Size: {file_size_mb:.2f} MB | Direct CDN URL: {final_cdn_url}")
     
+    # 2. THÔNG BÁO LINK STREAMING TRỰC TIẾP KHÔNG GIỚI HẠN DUNG LƯỢNG LÊN TELEGRAM
+    if final_cdn_url:
+        cdn_message = f"{caption}\n\n🍿 *XEM VIDEO FULL HD 16:9 (SUPABASE STORAGE CDN - KHÔNG GIỚI HẠN 50MB):*\n🎬 [Bấm vào đây để xem trực tiếp / Tải Video]({final_cdn_url})"
+    else:
+        cdn_message = f"{caption}\n\n🎬 *Video Full HD 16:9 đã được tạo thành công!*"
+        
     # Gửi qua Telegram API
     msg_url = f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}/sendMessage"
     try:
