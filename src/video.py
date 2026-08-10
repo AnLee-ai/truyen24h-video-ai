@@ -236,9 +236,9 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
     else:
         vf_filter += ";[bg]null[out]"
         
-    # 7. Tự động kiểm tra phần cứng GPU Encoder (NVIDIA NVENC -> Intel QSV -> CPU Ultrafast Multi-Core)
+    # 7. Tự động kiểm tra phần cứng GPU Encoder (NVIDIA NVENC -> Intel QSV -> CPU Ultrafast Multi-Core 5x Speed)
     codec = "libx264"
-    encoder_opts = ["-preset", "ultrafast", "-tune", "zerolatency", "-threads", "0"]
+    encoder_opts = ["-preset", "ultrafast", "-tune", "zerolatency", "-threads", "0", "-crf", "28"]
     
     try:
         # Test 1: NVIDIA NVENC GPU
@@ -249,31 +249,31 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
         if test_nvenc.returncode == 0:
             codec = "h264_nvenc"
             encoder_opts = ["-preset", "p1", "-tune", "ll"]
-            print("[INFO] GPU NVIDIA NVENC khả dụng! Kích hoạt tăng tốc phần cứng GPU Siêu Tốc...")
+            print("[INFO] ⚡ GPU NVIDIA NVENC khả dụng! Kích hoạt tăng tốc phần cứng GPU Siêu Tốc...")
         else:
-            print("[INFO] ⚡ Kích hoạt Động cơ FFmpeg Ultrafast Multi-Thread (Tăng tốc 5x trên CPU)...")
+            print("[INFO] ⚡⚡ Kích hoạt Động cơ FFmpeg Ultrafast Multi-Thread Tối Ưu Siêu Tốc (Tăng tốc 5x trên CPU)...")
     except Exception:
         codec = "libx264"
 
-    # Lệnh FFmpeg Siêu Tốc: FastStart Stream, 24fps, Bitrate 1200k (Render video 15 phút trong 2-3 phút)
+    # Lệnh FFmpeg Siêu Tốc: FastStart Stream, 20fps, Bitrate 1000k (Render video 30 phút trong 3-4 phút)
     cmd = [
         "ffmpeg", "-y",
         "-f", "concat", "-safe", "0", "-i", concat_list_path,
         "-i", audio_path,
         "-filter_complex", vf_filter,
         "-map", "[out]", "-map", "1:a",
-        "-r", "24",
+        "-r", "20",
         "-c:v", codec
     ] + encoder_opts + [
-        "-b:v", "1200k", "-maxrate", "1800k", "-bufsize", "2500k",
+        "-b:v", "1000k", "-maxrate", "1500k", "-bufsize", "2000k",
         "-c:a", "aac", "-b:a", "128k", "-pix_fmt", "yuv420p",
         "-movflags", "+faststart",
         "-shortest", output_video_path
     ]
     
     try:
-        print(f"[INFO] FFmpeg rendering full {total_audio_duration:.1f}s video ({codec})...")
-        res = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+        print(f"[INFO] 🚀 FFmpeg UltraFast rendering full {total_audio_duration:.1f}s video ({codec})...")
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=1800)
         
         # Tự động kiểm tra chất lượng video sau khi render
         from src.video_validator import validate_video_file
