@@ -218,7 +218,9 @@ def _run_chapter_pipeline_impl(novel_id: str):
         video_path = video.render_novel_video(final_audio_path, srt_path, chapter_title, chapter_id)
         video_public_url = ""
         if video_path:
-            print(f"[INFO] Video dài đã được tạo tại: {video_path}")
+            file_mb = os.path.getsize(video_path) / (1024 * 1024) if os.path.exists(video_path) else 0
+            print(f"[INFO] 🎬 Video dài đã được tạo tại: {video_path} (Kích thước: {file_mb:.1f} MB)")
+            print(f"[INFO] 📤 Đang đẩy Video MP4 ({file_mb:.1f} MB) lên Supabase Storage CDN tốc độ cao...")
             video_public_url = database.upload_file_to_supabase(video_path, bucket_name="media", destination_path=f"videos/full/{chapter_id}_16_9.mp4")
             database.update_chapter_video_status(chapter_id, status="completed", video_url=video_public_url or video_path)
             
@@ -229,19 +231,24 @@ def _run_chapter_pipeline_impl(novel_id: str):
         thumbnail_path = thumbnail_generator.generate_youtube_thumbnail(chapter_num, chapter_title, scene_img_p, thumb_out_p)
         if thumbnail_path and os.path.exists(thumbnail_path):
             database.upload_file_to_supabase(thumbnail_path, bucket_name="media", destination_path=f"thumbnails/{chapter_id}_thumbnail.jpg")
-            
-        # 5. (Đã tắt phần render Video Shorts 9:16 theo yêu cầu người dùng)
-        shorts_path = ""
-        # print(f"[INFO] Bắt đầu render Video Shorts (9:16) cho Chương {chapter_num}...")
-        # shorts_path = shorts_generator.generate_shorts_video(final_audio_path, srt_path, chapter_id, chapter_title)
 
-        # 5b. Tải toàn bộ Ảnh AI 2D của chương lên Supabase Storage
+        # 5b. Tải toàn bộ Ảnh AI 2D của chương lên Supabase Storage SONG SONG ĐA LUỒNG (Workers=10) trong 2s
         img_dir = os.path.join("output", chapter_id, "images")
         if os.path.exists(img_dir):
-            for img_name in os.listdir(img_dir):
-                if img_name.endswith((".jpg", ".png", ".jpeg")):
-                    img_p = os.path.join(img_dir, img_name)
-                    database.upload_file_to_supabase(img_p, bucket_name="media", destination_path=f"images/{chapter_id}/{img_name}")
+            img_files = [
+                os.path.join(img_dir, fname) for fname in os.listdir(img_dir) 
+                if fname.endswith((".jpg", ".png", ".jpeg"))
+            ]
+            if img_files:
+                print(f"[INFO] ⚡ Đang đẩy {len(img_files)} Ảnh AI 2D lên Supabase Storage SONG SONG ĐA LUỒNG (Workers=10)...")
+                import concurrent.futures
+                def _up_img(img_p):
+                    fname = os.path.basename(img_p)
+                    database.upload_file_to_supabase(img_p, bucket_name="media", destination_path=f"images/{chapter_id}/{fname}")
+                
+                with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+                    list(executor.map(_up_img, img_files))
+                print(f"[SUCCESS] 🟢 Đã đẩy hoàn tất {len(img_files)} Ảnh AI 2D lên Supabase CDN!")
             
         # 6. (Tạm thời bỏ qua Upload YouTube - Đã tắt theo yêu cầu)
         # print(f"[INFO] Bỏ qua upload YouTube. Tập trung gửi Telegram Channel...")
