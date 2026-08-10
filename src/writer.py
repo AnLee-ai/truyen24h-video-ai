@@ -581,21 +581,37 @@ def write_next_chapter(novel_id: str) -> dict:
         try:
             with open(prog_file, "r", encoding="utf-8") as f:
                 pdata = json.load(f)
-                completed_nums = {x for x in pdata.get("completed_chapters", []) if isinstance(x, int)}
+                completed_nums = {int(x) for x in pdata.get("completed_chapters", []) if str(x).isdigit()}
         except Exception:
             pass
 
     all_chapters = database.get_all_chapters(novel_id)
-    # Lọc bỏ các chương đã nằm trong danh sách completed_chapters local
-    uncompleted_blueprints = [c for c in all_chapters if c["content"].startswith("BLUEPRINT:") and c["chapter_number"] not in completed_nums]
+    
+    # Tập hợp tất cả các số chương đã viết xong nội dung (>1200 từ và không phải BLUEPRINT) trong Supabase CSDL
+    completed_in_db = {
+        int(c["chapter_number"]) for c in all_chapters 
+        if isinstance(c.get("chapter_number"), (int, str)) and str(c.get("chapter_number")).isdigit()
+        and not str(c.get("content", "")).startswith("BLUEPRINT:")
+        and len(str(c.get("content", "")).split()) >= 1200
+    }
+    
+    # Hợp nhất danh sách các chương đã xong
+    all_done_nums = completed_nums.union(completed_in_db)
+    
+    # Lọc các blueprint chưa viết
+    uncompleted_blueprints = [
+        c for c in all_chapters 
+        if str(c.get("content", "")).startswith("BLUEPRINT:") 
+        and int(c["chapter_number"]) not in all_done_nums
+    ]
     
     if uncompleted_blueprints:
-        next_ch_number = uncompleted_blueprints[0]["chapter_number"]
+        next_ch_number = int(uncompleted_blueprints[0]["chapter_number"])
     else:
-        existing_nums = [c["chapter_number"] for c in all_chapters] + list(completed_nums)
+        existing_nums = [int(c["chapter_number"]) for c in all_chapters if str(c.get("chapter_number", "")).isdigit()] + list(all_done_nums)
         next_ch_number = (max(existing_nums) + 1) if existing_nums else 1
         
-    print(f"[INFO] Initiating writing process for Chapter {next_ch_number} (Skipped completed: {completed_nums})...")
+    print(f"[INFO] BẮT ĐẦU QUY TRÌNH VIẾT CHƯƠNG MỚI: Chương {next_ch_number} (Đã hoàn thành các tập: {sorted(list(all_done_nums))})...")
     
     current_arc = get_current_arc(novel_id, next_ch_number)
     chapter_record = next((c for c in all_chapters if c["chapter_number"] == next_ch_number), None)

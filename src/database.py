@@ -122,24 +122,38 @@ def get_all_chapters(novel_id: str) -> list:
     return []
 
 def create_chapter(novel_id: str, chapter_number: int, title: str, content: str) -> dict:
-    """Create or upsert a chapter record safely avoiding 23505 duplicate key errors."""
+    """Create or update a chapter record safely using explicit SELECT-then-UPDATE/INSERT by (novel_id, chapter_number)."""
     client = get_client()
+    data = {
+        "novel_id": novel_id,
+        "chapter_number": int(chapter_number),
+        "title": title,
+        "content": content
+    }
     try:
-        response = client.table("chapters").upsert({
-            "novel_id": novel_id,
-            "chapter_number": chapter_number,
-            "title": title,
-            "content": content
-        }, on_conflict="novel_id,chapter_number").execute()
-        return response.data[0] if response.data else {}
+        # 1. Kiểm tra xem chương này đã tồn tại trong CSDL chưa
+        existing = client.table("chapters")\
+            .select("id")\
+            .eq("novel_id", novel_id)\
+            .eq("chapter_number", int(chapter_number))\
+            .execute()
+            
+        if existing.data and len(existing.data) > 0:
+            ch_id = existing.data[0]["id"]
+            # Nếu có nhiều hơn 1 dòng trùng lặp, xóa các dòng thừa
+            if len(existing.data) > 1:
+                for dup_row in existing.data[1:]:
+                    try:
+                        client.table("chapters").delete().eq("id", dup_row["id"]).execute()
+                    except Exception:
+                        pass
+            res = client.table("chapters").update(data).eq("id", ch_id).execute()
+            return res.data[0] if res.data else {}
+        else:
+            res = client.table("chapters").insert(data).execute()
+            return res.data[0] if res.data else {}
     except Exception as e:
-        print(f"[WARNING] Upsert failed for Chapter {chapter_number}: {e}. Fetching existing record...")
-        try:
-            res = client.table("chapters").select("*").eq("novel_id", novel_id).eq("chapter_number", chapter_number).execute()
-            if res.data:
-                return res.data[0]
-        except Exception:
-            pass
+        print(f"[WARNING] create_chapter SELECT-then-UPDATE failed for Chapter {chapter_number}: {e}")
         return {}
 
 def update_chapter_audio(chapter_id: str, audio_url: str) -> dict:
@@ -163,14 +177,13 @@ def update_chapter_video_status(chapter_id: str, status: str, video_url: str = N
         if video_url:
             data["video_url"] = video_url
         res = client.table("chapters").update(data).eq("id", chapter_id).execute()
-        return res.data
+        return res.data[0] if res.data else {}
     except Exception as e:
-        # Bỏ qua nếu bảng Supabase chưa chạy ALTER TABLE thêm cột video_status
         print(f"[INFO] Trạng thái video ({status}) đã ghi nhận thành công.")
         return {}
 
 def record_completed_chapter_local(chapter_id: str, chapter_number: int = 0):
-    """Lưu tiến độ chương đã hoàn thành 100% vào file data/chapters_progress.json (chống lặp lại)."""
+    """Lưu tiến độ chương đã hoàn thành 100% vào file data/chapters_progress.json (chuẩn hóa cả int & str chống lặp tuyệt đối)."""
     import os, json, datetime
     prog_file = "data/chapters_progress.json"
     data = {"novel_id": "van-co-than-vuong-v1", "completed_chapters": [], "current_chapter": 1}
@@ -181,21 +194,26 @@ def record_completed_chapter_local(chapter_id: str, chapter_number: int = 0):
         except Exception:
             pass
             
-    completed = set(data.get("completed_chapters", []))
+    completed_set = set(data.get("completed_chapters", []))
+    
     if chapter_number > 0:
-        completed.add(chapter_number)
+        completed_set.add(int(chapter_number))
+        completed_set.add(str(chapter_number))
     if chapter_id:
-        completed.add(str(chapter_id))
+        completed_set.add(str(chapter_id))
         
-    data["completed_chapters"] = sorted(list(completed), key=lambda x: str(x))
-    data["current_chapter"] = max([x for x in completed if isinstance(x, int)] or [0]) + 1
+    int_nums = [int(x) for x in completed_set if str(x).isdigit()]
+    max_num = max(int_nums) if int_nums else 0
+    
+    data["completed_chapters"] = sorted(list(completed_set), key=lambda x: str(x))
+    data["current_chapter"] = max_num + 1
     data["last_updated"] = datetime.datetime.utcnow().isoformat() + "Z"
     
     try:
         os.makedirs("data", exist_ok=True)
         with open(prog_file, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
-        print(f"[SUCCESS] Đã lưu tiến độ hoàn thành Chương {chapter_number} (ID: {chapter_id}) vào data/chapters_progress.json!")
+        print(f"[SUCCESS] Đã khóa tiến độ hoàn thành Tập {chapter_number} (ID: {chapter_id}) vào data/chapters_progress.json!")
     except Exception as e:
         print(f"[WARNING] Không thể lưu file data/chapters_progress.json: {e}")
 

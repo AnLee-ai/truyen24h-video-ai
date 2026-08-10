@@ -59,41 +59,49 @@ def find_chapter_needing_video(novel_id: str) -> dict:
     thì mới trả về để render Video. Ngược lại, nếu chương đó ĐÃ HOÀN THÀNH thì bỏ qua để viết chương mới (Chương 2, 3, 4...).
     """
     import os, json
-    completed_chapters_set = set()
+    completed_set = set()
     prog_file = "data/chapters_progress.json"
     if os.path.exists(prog_file):
         try:
             with open(prog_file, "r", encoding="utf-8") as f:
                 pdata = json.load(f)
-                completed_chapters_set = set(pdata.get("completed_chapters", []))
+                raw_list = pdata.get("completed_chapters", [])
+                for item in raw_list:
+                    completed_set.add(item)
+                    completed_set.add(str(item))
+                    if str(item).isdigit():
+                        completed_set.add(int(item))
         except Exception:
             pass
 
     try:
         all_chapters = database.get_all_chapters(novel_id)
         for ch in all_chapters:
-            ch_id = ch.get("id", "")
-            ch_content = ch.get("content", "")
-            ch_num = ch.get("chapter_number", 0)
-            v_status = str(ch.get("video_status", "")).lower()
-            v_url = ch.get("video_url", "")
-            audio_url = str(ch.get("audio_url", "")).lower()
+            ch_id = str(ch.get("id", ""))
+            ch_content = str(ch.get("content", ""))
+            ch_num = int(ch.get("chapter_number", 0)) if str(ch.get("chapter_number", "")).isdigit() else 0
+            v_status = str(ch.get("video_status", "")).strip().lower()
+            v_url = str(ch.get("video_url", "")).strip()
+            audio_url = str(ch.get("audio_url", "")).strip().lower()
             
-            # Bỏ qua nếu chương nằm trong danh sách đã hoàn thành local hoặc Supabase
-            if ch_num in completed_chapters_set or ch_id in completed_chapters_set:
-                print(f"[INFO] Bỏ qua Chương {ch_num} (ID: {ch_id}) vì ĐÃ HOÀN THÀNH trong data/chapters_progress.json.")
+            # 1. Bỏ qua nếu chương nằm trong danh sách đã hoàn thành local hoặc Supabase
+            if ch_num in completed_set or str(ch_num) in completed_set or ch_id in completed_set:
+                print(f"[INFO] 🛡️ Bỏ qua Chương {ch_num} (ID: {ch_id}) vì ĐÃ HOÀN THÀNH trong data/chapters_progress.json.")
                 continue
 
+            # 2. Bỏ qua nếu video_status hoặc video_url hoặc audio_url đã đánh dấu hoàn thành
             if v_status in ["completed", "published", "done", "true"] or "completed" in audio_url or bool(v_url):
-                print(f"[INFO] Bỏ qua Chương {ch_num} (ID: {ch_id}) vì ĐÃ HOÀN THÀNH (video_status={v_status}).")
+                print(f"[INFO] 🛡️ Bỏ qua Chương {ch_num} (ID: {ch_id}) vì ĐÃ HOÀN THÀNH trên Supabase (video_status={v_status}).")
+                # Đánh dấu bổ sung vào local file
+                database.record_completed_chapter_local(ch_id, ch_num)
                 continue
                 
-            # Bỏ qua nếu chưa viết xong nội dung (còn là BLUEPRINT)
+            # 3. Bỏ qua nếu chưa viết xong nội dung (còn là BLUEPRINT hoặc < 1000 từ)
             if not ch_content or ch_content.startswith("BLUEPRINT:") or len(ch_content.split()) < 1000:
                 continue
                 
             # Kiểm tra xem chương này có cần làm video không
-            print(f"[INFO] TỰ ĐỘNG PHÁT HIỆN: Chương {ch_num} (ID: {ch_id}) ĐANG CẦN XỬ LÝ MEDIA/VIDEO!")
+            print(f"[INFO] 🎯 TỰ ĐỘNG PHÁT HIỆN CHƯƠNG CHƯA HOÀN THÀNH: Chương {ch_num} (ID: {ch_id}) đang cần xử lý Media/Video!")
             return ch
     except Exception as e:
         print(f"[WARNING] Lỗi quét chương chưa có video: {e}")
