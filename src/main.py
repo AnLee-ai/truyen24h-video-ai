@@ -52,59 +52,75 @@ class CallbackStream:
     def flush(self):
         self.original_stream.flush()
 
+def audit_chapter_quality(ch: dict) -> tuple:
+    """
+    BỘ BẢO VỆ & RÀ SOÁT TIÊU CHUẨN TỰ ĐỘNG (Quality Auditor Engine):
+    Rà soát 4 Tiêu chuẩn bắt buộc cho mỗi chương truyện:
+    1. Kịch bản văn bản đầy đủ ≥ 1,000 từ (chuẩn audio > 10 phút).
+    2. Không chứa tên nhân vật cũ rác (Trần Lam, Linh Vy, Minh Đức).
+    3. Đã render Video xong (video_status == 'completed'/'published' hoặc video_url hợp lệ).
+    """
+    ch_num = ch.get("chapter_number", 0)
+    ch_content = str(ch.get("content", ""))
+    word_count = len(ch_content.split()) if ch_content else 0
+    v_status = str(ch.get("video_status", "")).strip().lower()
+    v_url = str(ch.get("video_url", "")).strip()
+    
+    # 1. Tiêu chuẩn 1: Kịch bản text ngắn (<1000 từ) hoặc còn là BLUEPRINT
+    if not ch_content or ch_content.startswith("BLUEPRINT:") or word_count < 1000:
+        return False, f"Kịch bản quá ngắn ({word_count} từ < 1000 từ tiêu chuẩn)"
+        
+    # 2. Tiêu chuẩn 2: Chứa tên nhân vật rác cũ
+    for old_name in ["Trần Lam", "Linh Vy", "Minh Đức"]:
+        if old_name in ch_content:
+            return False, f"Kịch bản chứa tên nhân vật cũ rác '{old_name}'"
+            
+    # 3. Tiêu chuẩn 3: Trạng thái Video Media
+    is_video_done = (v_status in ["completed", "published", "done", "true"]) or bool(v_url)
+    if not is_video_done:
+        return False, f"Video chưa hoàn thành (video_status='{v_status}')"
+        
+    return True, "PASSED"
+
 def find_chapter_needing_video(novel_id: str) -> dict:
     """
-    Tự động quét các chương đã viết trong CSDL & File Cục Bộ:
-    Nếu phát hiện chương nào ĐÃ CÓ NỘI DUNG VĂN BẢN nhưng CHƯA TẠO VIDEO và CHƯA HOÀN THÀNH,
-    thì mới trả về để render Video. Ngược lại, nếu chương đó ĐÃ HOÀN THÀNH thì bỏ qua để viết chương mới (Chương 2, 3, 4...).
+    TỰ ĐỘNG QUÉT & ÉP LÀM LẠI NẾU KHÔNG ĐẠT TIÊU CHUẨN:
+    Duyệt toàn bộ các tập từ Tập 1 trở đi. Nếu phát hiện tập nào CHƯA ĐẠT 100% TIÊU CHUẨN 
+    (Kịch bản <1000 từ, tên nhân vật lỗi, hoặc chưa xong Video), BẮT BUỘC ÉP LÀM LẠI TẬP ĐÓ NGAY LẬP TỨC.
     """
-    import os, json
-    completed_set = set()
-    prog_file = "data/chapters_progress.json"
-    if os.path.exists(prog_file):
-        try:
-            with open(prog_file, "r", encoding="utf-8") as f:
-                pdata = json.load(f)
-                raw_list = pdata.get("completed_chapters", [])
-                for item in raw_list:
-                    completed_set.add(item)
-                    completed_set.add(str(item))
-                    if str(item).isdigit():
-                        completed_set.add(int(item))
-        except Exception:
-            pass
-
     try:
         all_chapters = database.get_all_chapters(novel_id)
         for ch in all_chapters:
             ch_id = str(ch.get("id", ""))
-            ch_content = str(ch.get("content", ""))
             ch_num = int(ch.get("chapter_number", 0)) if str(ch.get("chapter_number", "")).isdigit() else 0
-            v_status = str(ch.get("video_status", "")).strip().lower()
-            v_url = str(ch.get("video_url", "")).strip()
-            audio_url = str(ch.get("audio_url", "")).strip().lower()
             
-            # 1. Bỏ qua nếu chương nằm trong danh sách đã hoàn thành local hoặc Supabase
-            if ch_num in completed_set or str(ch_num) in completed_set or ch_id in completed_set:
-                print(f"[INFO] 🛡️ Bỏ qua Chương {ch_num} (ID: {ch_id}) vì ĐÃ HOÀN THÀNH trong data/chapters_progress.json.")
-                continue
-
-            # 2. Bỏ qua nếu video_status hoặc video_url hoặc audio_url đã đánh dấu hoàn thành
-            if v_status in ["completed", "published", "done", "true"] or "completed" in audio_url or bool(v_url):
-                print(f"[INFO] 🛡️ Bỏ qua Chương {ch_num} (ID: {ch_id}) vì ĐÃ HOÀN THÀNH trên Supabase (video_status={v_status}).")
-                # Đánh dấu bổ sung vào local file
-                database.record_completed_chapter_local(ch_id, ch_num)
-                continue
+            # Rà soát tiêu chuẩn chất lượng của Tập ch_num
+            passed, reason = audit_chapter_quality(ch)
+            
+            if not passed:
+                print(f"[QUALITY AUDITOR] ⚠️ TẬP {ch_num} (ID: {ch_id}) KHÔNG ĐẠT TIÊU CHUẨN! Lý do: {reason}.")
+                print(f"[QUALITY AUDITOR] 🛠️ BẮT BUỘC KÍCH HOẠT QUY TRÌNH ÉP LÀM LẠI TẬP {ch_num} TỪ ĐẦU...")
                 
-            # 3. Bỏ qua nếu chưa viết xong nội dung (còn là BLUEPRINT hoặc < 1000 từ)
-            if not ch_content or ch_content.startswith("BLUEPRINT:") or len(ch_content.split()) < 1000:
-                continue
+                # Rút khỏi danh sách local progress nếu có
+                try:
+                    prog_file = "data/chapters_progress.json"
+                    if os.path.exists(prog_file):
+                        with open(prog_file, "r", encoding="utf-8") as f:
+                            pdata = json.load(f)
+                        raw_c = pdata.get("completed_chapters", [])
+                        new_c = [x for x in raw_c if str(x) != str(ch_num) and str(x) != str(ch_id)]
+                        pdata["completed_chapters"] = new_c
+                        with open(prog_file, "w", encoding="utf-8") as f:
+                            json.dump(pdata, f, ensure_ascii=False, indent=2)
+                except Exception:
+                    pass
+                    
+                return ch
                 
-            # Kiểm tra xem chương này có cần làm video không
-            print(f"[INFO] 🎯 TỰ ĐỘNG PHÁT HIỆN CHƯƠNG CHƯA HOÀN THÀNH: Chương {ch_num} (ID: {ch_id}) đang cần xử lý Media/Video!")
-            return ch
+            print(f"[QUALITY AUDITOR] 🟢 Tập {ch_num} (ID: {ch_id}) ĐẠT 100% TIÊU CHUẨN CHẤT LƯỢNG (Word count & Video OK).")
+            
     except Exception as e:
-        print(f"[WARNING] Lỗi quét chương chưa có video: {e}")
+        print(f"[WARNING] Lỗi quét kiểm tra tiêu chuẩn chất lượng: {e}")
         
     return {}
 
