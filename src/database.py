@@ -16,19 +16,32 @@ def get_client() -> Client:
 def init_novel(title: str, description: str = "") -> dict:
     """Create or fetch existing novel record strictly avoiding duplicate novel rows."""
     client = get_client()
+    MASTER_ID = "d1c402ea-4882-4ffa-81e5-639e93fed463"
     try:
+        # 1. Nếu là bộ Vạn Cổ Thần Vương, ưu tiên tra cứu theo Master ID trước
+        if "Vạn Cổ Thần Vương" in title or "van-co-than-vuong" in title:
+            master_res = client.table("novels").select("*").eq("id", MASTER_ID).execute()
+            if master_res.data:
+                return master_res.data[0]
+
+        # 2. Tìm kiếm theo tiêu đề chính xác hoặc tiêu đề tương tự
         existing = client.table("novels").select("*").eq("title", title).execute()
+        if not existing.data and len(title) > 10:
+            prefix = title[:15]
+            existing = client.table("novels").select("*").ilike("title", f"%{prefix}%").execute()
+            
         if existing.data and len(existing.data) > 0:
             primary_novel = existing.data[0]
-            # Clean up any extra duplicate novel rows with same title
+            # Xóa sạch các dòng trùng lặp thừa nếu có
             if len(existing.data) > 1:
-                extra_ids = [r["id"] for r in existing.data[1:]]
-                for e_id in extra_ids:
+                for dup in existing.data[1:]:
                     try:
-                        client.table("novels").delete().eq("id", e_id).execute()
+                        client.table("novels").delete().eq("id", dup["id"]).execute()
                     except Exception:
                         pass
             return primary_novel
+
+        # 3. Chỉ khởi tạo dòng mới nếu thực sự chưa tồn tại
         response = client.table("novels").insert({
             "title": title,
             "description": description,
