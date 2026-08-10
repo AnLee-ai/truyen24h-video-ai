@@ -721,7 +721,7 @@ def write_next_chapter(novel_id: str) -> dict:
         prologue_instruction = (
             f"- Phần mở đầu (Prologue): BẮT BUỘC mở đầu chương bằng một phân cảnh cuốn hút (khoảng 300 - 500 từ) miêu tả bối cảnh thế giới linh hồn, hệ thống Tinh Thần Ấn và bí mật chiếc hộp đồng Đông Sơn.\n"
             f"- **CẢNH BÁO QUAN TRỌNG VỀ NHÂN VẬT**: Trong phần mở đầu này, CHỈ TẬP TRUNG duy nhất vào nhân vật chính ({protagonist_name}). "
-            f"TUYỆT ĐỐI KHÔNG liệt kê hay giới thiệu các nhân vật phụ (như Linh Vy, Minh Đức, Thùy Linh, Cao Bá). Các nhân vật phụ sẽ chỉ xuất hiện tự nhiên khi có tình huống đối thoại trong câu chuyện.\n"
+            f"TUYỆT ĐỐI KHÔNG liệt kê hay giới thiệu tràn lan các nhân vật phụ. Các nhân vật phụ sẽ chỉ xuất hiện tự nhiên khi có tình huống đối thoại trong câu chuyện.\n"
             f"- **CẢNH BÁO QUAN TRỌNG VỀ TIÊU ĐỀ**: TUYỆT ĐỐI KHÔNG VIẾT CHỮ 'Dẫn lược', 'Dẫn lược:', 'Giới thiệu:', hay 'Prologue:'. "
             f"Hãy nhập vai viết thẳng vào nội dung truyện một cách tự nhiên nhất."
         )
