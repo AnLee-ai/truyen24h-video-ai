@@ -139,25 +139,65 @@ def expand_chapter_content(content: str, target_words: int = 3200) -> str:
         
     return content
 
+def verify_and_sanitize_chapter_content(text: str, novel_id: str = "") -> tuple:
+    """
+    BỘ KIỂM TRA TỰ ĐỘNG BẢO VỆ CHƯƠNG TRUYỆN (Automated Chapter Auditor):
+    Tự động rà soát và khử toàn bộ tên nhân vật cũ rác (Trần Lam, Linh Vy, Minh Đức...) 
+    để ép chuẩn 100% nhân vật bộ truyện đang viết (Tiêu Viêm, Vân Vận, Dược Lão, Huân Nhi).
+    """
+    if not text:
+        return text, False
+        
+    LEGACY_INVALID_NAMES = {
+        "Trần Lam": "Tiêu Viêm",
+        "Linh Vy": "Vân Vận",
+        "Minh Đức": "Dược Lão",
+        "Thùy Linh": "Huân Nhi",
+        "Cao Bá": "Tiêu Chiến"
+    }
+    
+    found_invalid = []
+    sanitized_text = text
+    for old_n, new_n in LEGACY_INVALID_NAMES.items():
+        if old_n in sanitized_text:
+            found_invalid.append(old_n)
+            sanitized_text = re.sub(rf"\b{re.escape(old_n)}\b", new_n, sanitized_text)
+            
+    if found_invalid:
+        print(f"[WARNING] ⚠️ PHÁT HIỆN LỖI TÊN NHÂN VẬT CŨ: {found_invalid}! Đã tự động thay thế chuẩn thành nhân vật bộ truyện hiện tại.")
+        return sanitized_text, True
+        
+    return text, False
+
 def translate_to_vietnamese_with_gemini(text: str) -> str:
     """Tự động kiểm tra và dịch toàn bộ kịch bản tiểu thuyết từ tiếng Trung/tiếng Anh sang tiếng Việt chuẩn mượt mà 100% qua Gemini API."""
     if not text or not text.strip():
         return text
         
-    has_chinese = bool(re.search(r"[\u4e00-\u9fff]", text))
-    print(f"[INFO] Bắt đầu rà soát ngôn ngữ kịch bản (Has Chinese: {has_chinese})...")
+    # Tự động rà soát và khử tên nhân vật cũ rác
+    text, _ = verify_and_sanitize_chapter_content(text)
     
+    has_chinese = bool(re.search(r"[\u4e00-\u9fff]", text))
+    if not has_chinese:
+        return text
+        
+    print(f"[INFO] Bắt đầu rà soát ngôn ngữ kịch bản (Has Chinese: {has_chinese})...")
     print("[INFO] Kích hoạt Động Cơ Dịch Thuật Gemini API: Dịch/Tối ưu toàn bộ kịch bản tiểu thuyết sang Tiếng Việt mượt mà...")
     translate_prompt = (
         "Bạn là dịch giả tiểu thuyết webtoon hàng đầu. Hãy dịch/chuyển ngữ toàn bộ chương tiểu thuyết sau đây sang tiếng Việt tự nhiên, giàu cảm xúc và hấp dẫn.\n"
         "YÊU CẦU DỊCH THUẬT BẮT BUỘC:\n"
         "1. Dịch 100% sang tiếng Việt thuần túy, mượt mà, văn phong tiểu thuyết hành động/huyền ảo kịch tính.\n"
         "2. Giữ nguyên 100% độ dài văn bản, lời thoại trong ngoặc kép (\"...\"), và cấu trúc câu chuyện. TUYỆT ĐỐI KHÔNG tóm tắt hay bỏ sót chi tiết nào.\n"
-        "3. Sử dụng tên nhân vật tiếng Việt 2 từ tự nhiên (Trần Lam, Linh Vy, Minh Đức). Cấm dùng tên riêng tiếng Anh.\n"
+        "3. Giữ nguyên 100% tên nhân vật chuẩn từ nguyên bản. Cấm tự đổi sang tên khác.\n"
         "4. Chỉ xuất ra duy nhất văn bản truyện đã dịch sang tiếng Việt, không kèm lời dẫn hay giải thích.\n\n"
         f"VĂN BẢN CẦN DỊCH:\n{text[:12000]}"
     )
     translated_res = call_gemini(translate_prompt)
+    if translated_res and len(translated_res.split()) > 200:
+        cleaned_res = clean_chapter_content(translated_res)
+        cleaned_res, _ = verify_and_sanitize_chapter_content(cleaned_res)
+        return cleaned_res
+    return text
     if translated_res and len(translated_res.split()) > 300:
         print(f"[SUCCESS] Đã hoàn thành dịch kịch bản sang Tiếng Việt qua Gemini API! Độ dài: {len(translated_res.split())} từ.")
         return clean_chapter_content(translated_res)

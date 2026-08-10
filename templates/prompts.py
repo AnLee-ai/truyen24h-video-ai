@@ -7,7 +7,7 @@ Description: {description}
 InkOS Architecture Directives:
 1. Break down the entire story into 6-8 major Story Arcs (spanning 150+ chapters total).
 2. Pacing: Deep world-building, slow-burn character growth, emotional resonance, and escalating stakes. Avoid rushing main plot points.
-3. Character Naming Protocol: Use natural 2-word Vietnamese names ONLY (e.g. Minh Đức, Thùy Linh, Linh Vy, Trần Lam, Cao Bá). STRICTLY avoid using 3-word full names (do NOT use Nguyễn Minh Đức, Lê Thùy Linh) and NEVER use English proper nouns.
+3. Character Naming Protocol: Use natural character names aligned strictly with the active story bible and genre. STRICTLY avoid using English proper nouns.
 4. InkOS Audit Protocol: Establish 37-dimension narrative truth files (character growth, plot hooks, world lore rules, and emotional arcs).
 5. Output a strictly formatted JSON object (no markdown wrappers):
 {{
@@ -35,14 +35,14 @@ Global Story State: {global_status}
 InkOS Directives:
 1. Break down the arc into chapter blueprints. Each blueprint must specify the core conflict, characters involved, emotional beats, and a compelling hook.
 2. Maintain slow-burn progression, realistic struggles, and high engagement.
-3. Use natural 2-word Vietnamese names for all characters (e.g. Minh Đức, Thùy Linh, Linh Vy, Trần Lam). Strictly avoid 3-word full names and English proper nouns.
+3. Use character names from the active story bible ONLY. Strictly avoid English proper nouns.
 4. Output as a strictly formatted JSON array of chapters (no markdown wrappers):
 [
   {{
     "chapter_number": 1,
     "chapter_title": "Chapter Title",
     "blueprint": "Detailed breakdown of the chapter events, character interactions, atmosphere, and cliffhanger setup",
-    "characters_present": ["Trần Lam", "Linh Vy"],
+    "characters_present": ["Protagonist", "Supporting Character"],
     "narrative_goal": "Primary emotional or plot objective of this chapter"
   }}
 ]
@@ -80,7 +80,7 @@ INKOS 10-AGENT CORE DIRECTIVES (MUST FOLLOW AT ALL COSTS):
    - Protagonist: {protagonist_name} | Current Power: {protagonist_power} | Stats: {protagonist_stats} | Failure Flag: {failure_flag}
    - **CRITICAL RULE**: The protagonist CANNOT level up or obtain new powers unless failure_flag is TRUE. If failure_flag is False, they must face intense struggle, difficulty, or setback without a breakthrough.
 6. **NAMING & DIALOGUE STYLE**:
-   - Use natural 2-word Vietnamese names ONLY (e.g. Trần Lam, Linh Vy, Minh Đức). NEVER use 3-word full names (do NOT write Nguyễn Minh Đức) and NEVER use English proper nouns.
+   - Use character names aligned strictly with the active story bible and genre. NEVER use English proper nouns.
    - **TẢI TRỌNG LỜI THOẠI ĐỐI THOẠI CỰC ĐẠI (70% - 80% DIRECT DIALOGUE RATIO)**: BẮT BUỘC câu chuyện phải chiếm từ 70% ĐẾN 80% LỜI NÓI TRỰC TIẾP và ĐỐI THOẠI giữa các nhân vật trong ngoặc kép ("..."). Mọi phân cảnh đều là sự đối đáp dồn dập, tranh luận gay gắt, khiêu khích, thì thầm, bàn chiến thuật và phản ứng bộc phát giữa nhân vật chính và các nhân vật xung quanh!
 7. **DYNAMIC CHARACTER CREATION DIRECTIVE**:
    - BẠN ĐƯỢC HOÀN TOÀN TỰ DO SÁNG TẠO VÀ THÊM CÁC NHÂN VẬT MỚI CHUYÊN NGHIỆP (phản diện, cao thủ ẩn thế, tông chủ thế lực khác, sát thủ Hồn Điện, sư huynh, trưởng lão, nhân vật quần chúng...). TUYỆT ĐỐI KHÔNG BỊ GÒ BÓ hay giới hạn chỉ ở các nhân vật đã có sẵn!

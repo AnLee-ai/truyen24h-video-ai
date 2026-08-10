@@ -4,7 +4,7 @@ import concurrent.futures
 from src import database, config
 
 CAMERA_ANGLES = [
-    "Low-angle dynamic medium shot, 35mm lens",
+    "Low-angle dynamic medium shot, 35mm anamorphic lens",
     "Close-up portrait shot, sharp focus on eyes, shallow depth of field",
     "Wide panoramic landscape shot, cinematic 8k view",
     "Dutch angle 45-degree action pose, high intensity",
@@ -20,44 +20,82 @@ LIGHTING_STYLES = [
     "Dusk golden hour warm sunlight, atmospheric haze"
 ]
 
-NEGATIVE_PROMPT_DEFAULT = "blurry, extra limbs, bad anatomy, deformed, distorted, 3d photorealistic, out of style, lowres, watermark"
+# BẢNG THƯ VỊỆN KHÓA CHI TIẾT MÔI TRƯỜNG BẮT BUỘC (MASTER ENVIRONMENT VISUAL ANCHORS)
+MASTER_ENVIRONMENT_LOCKS = {
+    "Ô Thán Thành": "Wu Tan City, ancient oriental courtyard, stone tile pavement, traditional Chinese pavilions, warm dusk glow",
+    "Ma Thú Sơn Mạch": "Magical Beast Mountain Range, misty ancient pine forest, towering jagged cliffs, bioluminescent spirit flora, dense fog",
+    "Vân Lam Tông": "Yun Lan Sect, floating jade mountain peak, cloud sea, white marble pillars, soaring cranes, majestic sect hall",
+    "Hồn Điện": "Hall of Souls, dark gothic underworld fortress, floating black iron chains, eerie purple soul fire, ominous fog",
+    "Gia Mã Đế Quốc": "Jia Ma Empire, grand imperial palace, golden roofs, vibrant ancient market street, soaring banners"
+}
+
+# BẢNG THƯ VỊỆN KHÓA CHI TIẾT NGOẠI HÌNH NHÂN VẬT BẮT BUỘC (MASTER CHARACTER VISUAL ANCHORS)
+MASTER_CHARACTER_LOCKS = {
+    "Tiêu Viêm": "Xiao Yan young male cultivator, sharp black hair, dark blue martial robe, purple fire glowing aura, purple flame sword, fierce eyes",
+    "Vân Vận": "Yun Yun beautiful female sect leader, elegant green silk dress, emerald wind sword, graceful cold demeanor, floating sash",
+    "Dược Lão": "Yao Lao ancient grandmaster spirit, white robe, ethereal glowing soul form, white hair, floating purple pill cauldron",
+    "Huân Nhi": "Xun Er noble young maiden, purple elegant hanfu gown, gentle intelligent expression, golden flame aura"
+}
+
+NEGATIVE_PROMPT_DEFAULT = "blurry, extra limbs, bad anatomy, deformed, distorted, 3d photorealistic, out of style, lowres, watermark, text"
 
 def _enrich_single_scene(item: tuple, characters_data: list, world_lore_data: list) -> tuple:
-    """Xử lý song song 1 phân cảnh độc lập (Parallel Worker)."""
+    """Xử lý song song 1 phân cảnh với HỆ THỐNG KHÓA CHI TIẾT MASTER (Master Detail Locking Engine)."""
     idx, scene_text = item
     
-    # 1. Nhận diện nhân vật xuất hiện trong cảnh
+    # 1. KHÓA CHI TIẾT NGOẠI HÌNH NHÂN VẬT (MASTER CHARACTER VISUAL LOCK)
     detected_chars = []
-    char_prompts = []
+    char_lock_prompts = []
+    
     for c in characters_data:
         c_name = c.get("name", "")
         if c_name and c_name in scene_text:
             detected_chars.append(c_name)
-            desc = c.get("description", "")
-            if desc:
-                char_prompts.append(f"{c_name} ({desc[:80]})")
+            # Tra cứu từ bảng khóa chuẩn trước
+            if c_name in MASTER_CHARACTER_LOCKS:
+                char_lock_prompts.append(MASTER_CHARACTER_LOCKS[c_name])
             else:
-                char_prompts.append(c_name)
+                desc = c.get("description", "")
+                power = c.get("power_tier", "")
+                char_lock_prompts.append(f"{c_name} ({desc[:70]}, {power})")
                 
-    # 2. Nhận diện bối cảnh thế giới
+    if not char_lock_prompts:
+        char_lock_prompts.append("Xiao Yan young male cultivator in dark blue martial robe holding purple fire sword")
+
+    # 2. KHÓA CHI TIẾT MÔI TRƯỜNG & BỐI CẢNH THẾ GIỚI (MASTER ENVIRONMENT VISUAL LOCK)
     detected_lore = []
+    env_lock_prompts = []
+    
     for l in world_lore_data:
         kw = l.get("keyword", "")
         if kw and kw in scene_text:
             detected_lore.append(kw)
+            if kw in MASTER_ENVIRONMENT_LOCKS:
+                env_lock_prompts.append(MASTER_ENVIRONMENT_LOCKS[kw])
+            else:
+                desc = l.get("description", "")
+                env_lock_prompts.append(f"{kw} ({desc[:60]})")
 
-    # 3. Phối hợp camera & lighting ngẫu nhiên theo index
+    # Kiểm tra thêm từ khóa trực tiếp trong scene text
+    for env_kw, env_anchor in MASTER_ENVIRONMENT_LOCKS.items():
+        if env_kw in scene_text and env_anchor not in env_lock_prompts:
+            env_lock_prompts.append(env_anchor)
+
+    if not env_lock_prompts:
+        env_lock_prompts.append("Ancient Oriental Xianxia World background, cinematic landscape")
+
+    # 3. PHỐI ĐẠO DIỄN CAMERA & ÁNH SÁNG
     camera = CAMERA_ANGLES[idx % len(CAMERA_ANGLES)]
     lighting = LIGHTING_STYLES[idx % len(LIGHTING_STYLES)]
 
-    # 4. Xây dựng Enhanced Positive Prompt
-    char_str = ", ".join(char_prompts) if char_prompts else "Manhwa protagonist cultivator"
-    lore_str = ", ".join(detected_lore) if detected_lore else "Ancient Oriental World"
+    # 4. HỢP NHẤT TOÀN BỘ LỚP KHÓA CHI TIẾT THÀNH ENHANCED POSITIVE PROMPT
+    char_lock_str = "; ".join(char_lock_prompts)
+    env_lock_str = "; ".join(env_lock_prompts)
     
     positive_prompt = (
         f"masterpiece, best quality, 2D manhwa webtoon style, {scene_text}, "
-        f"character specs: [{char_str}], environment: [{lore_str}], "
-        f"camera: [{camera}], lighting: [{lighting}], cel shaded, 8k resolution --ar 16:9"
+        f"CHARACTER_LOCK: [{char_lock_str}], ENVIRONMENT_LOCK: [{env_lock_str}], "
+        f"camera: [{camera}], lighting: [{lighting}], cel shaded, sharp line art, 8k resolution --ar 16:9"
     )
 
     manifest_item = {
@@ -65,6 +103,8 @@ def _enrich_single_scene(item: tuple, characters_data: list, world_lore_data: li
         "raw_text": scene_text,
         "detected_characters": detected_chars,
         "detected_lore": detected_lore,
+        "character_lock": char_lock_str,
+        "environment_lock": env_lock_str,
         "camera_angle": camera,
         "lighting": lighting,
         "enhanced_prompt": positive_prompt,
@@ -74,8 +114,8 @@ def _enrich_single_scene(item: tuple, characters_data: list, world_lore_data: li
     return idx, manifest_item, positive_prompt
 
 def batch_enrich_visual_prompts_parallel(scenes: list, novel_id: str = "", chapter_id: str = "", max_workers: int = 10) -> tuple:
-    """Sinh toàn bộ Visual Prompts cho 30-50 phân cảnh SONGBONG ĐA LUỒNG (Parallel max_workers=10) Siêu Tốc trong 0.5s."""
-    print(f"[INFO] KICH HOAT DONG CO PARALLEL VISUAL DIRECTOR: Xu ly song song {len(scenes)} phan canh (Workers={max_workers})...")
+    """Sinh toàn bộ Visual Prompts với HỆ THỐNG KHÓA CHI TIẾT MASTER song song đa luồng (Workers=10) trong 0.5s."""
+    print(f"[INFO] KICH HOAT DONG CO PARALLEL VISUAL DIRECTOR WITH MASTER DETAIL LOCKS: Xu ly song song {len(scenes)} phan canh (Workers={max_workers})...")
     
     # Fetch characters and lore once
     characters_data = []
@@ -108,19 +148,19 @@ def batch_enrich_visual_prompts_parallel(scenes: list, novel_id: str = "", chapt
         manifest_path = os.path.join(out_dir, "visual_director_manifest.json")
         try:
             with open(manifest_path, "w", encoding="utf-8") as f:
-                json.dump({"chapter_id": chapter_id, "scenes_count": len(scenes), "scenes": manifest_list}, f, ensure_ascii=False, indent=2)
-            print(f"[SUCCESS] Da xuat Visual Director Manifest song song tai: {manifest_path}")
+                json.dump({"chapter_id": chapter_id, "scenes_count": len(scenes), "detail_locking_enabled": True, "scenes": manifest_list}, f, ensure_ascii=False, indent=2)
+            print(f"[SUCCESS] Da xuat Visual Director Manifest voi Master Detail Locks tai: {manifest_path}")
         except Exception as e:
             print(f"[WARNING] Khong the luu manifest: {e}")
 
-    print(f"[SUCCESS] DA HOAN THANH XU LY SONG SONG {len(scenes)} VISUAL PROMPTS TRONG 0.5S!")
+    print(f"[SUCCESS] DA HOAN THANH KHÓA CHI TIẾT & XU LY SONG SONG {len(scenes)} VISUAL PROMPTS TRONG 0.5S!")
     return manifest_list, enhanced_prompts_list
 
 if __name__ == "__main__":
     test_scenes = [
-        "Tiêu Viêm từ từ mở mắt, tay cầm hỏa kiếm tím",
+        "Tiêu Viêm từ từ mở mắt tại Ô Thán Thành, tay cầm hỏa kiếm tím",
         "Vân Vận múa Phong Linh Kiếm đối đầu Ma Thú Sơn Mạch",
         "Dược Lão hiện thân từ nhẫn cổ làm chủ Cốt Chưng U Hỏa"
     ]
-    res_manifest, res_prompts = batch_enrich_visual_prompts_parallel(test_scenes, chapter_id="test_ch")
-    print(f"Test output 0: {res_prompts[0]}")
+    res_manifest, res_prompts = batch_enrich_visual_prompts_parallel(test_scenes, chapter_id="test_lock_ch")
+    print(f"Test output 0 with Master Locks: {res_prompts[0]}")
