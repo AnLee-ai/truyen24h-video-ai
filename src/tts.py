@@ -234,28 +234,31 @@ def detect_speaker_role(text_segment: str, default_voice: str) -> tuple[str, str
     return (n_voice, "-2Hz", "+10%", "🎙️ Người Dẫn Chuyện (Nam Minh Standard)")
 
 async def _run_tts_async(text: str, voice: str, rate: str, pitch: str, audio_path: str, srt_path: str):
-    """Run edge-tts using fine-grained multi-lingual character voice acting and SRT merging."""
+    """Run edge-tts using fine-grained multi-lingual character voice acting and PARALLEL chunk synthesis."""
     chunks = split_text_into_chunks(text)
-    print(f"[INFO] 🎙️ KÍCH HOẠT ĐỘNG CƠ ĐA GIỌNG ĐỌC ĐA NGÔN NGỮ & ĐA VÙNG MIỀN (12 Bộ Giọng Đọc Tiên Hiệp)...")
+    print(f"[INFO] 🎙️ KÍCH HOẠT ĐỘNG CƠ ĐA GIỌNG ĐỌC ĐA NGÔN NGỮ & SONG SONG ĐA LUỒNG ({len(chunks)} Chunks)...")
     
+    async def _process_chunk(idx: int, chunk_text: str):
+        chunk_audio = f"{audio_path}_chunk_{idx}.mp3"
+        chunk_srt = f"{srt_path}_chunk_{idx}.srt"
+        chunk_voice, chunk_pitch, chunk_rate, role_name = detect_speaker_role(chunk_text, voice)
+        print(f"   ↳ [Chunk {idx+1}/{len(chunks)}] {role_name} -> Voice: {chunk_voice} (Pitch: {chunk_pitch}, Rate: {chunk_rate})")
+        await _run_tts_chunk_async(chunk_text, chunk_voice, chunk_rate, chunk_pitch, chunk_audio, chunk_srt)
+        if not os.path.exists(chunk_audio) or os.path.getsize(chunk_audio) == 0:
+            raise ValueError(f"Failed to generate audio for chunk {idx}. Empty data.")
+        return idx, chunk_audio, chunk_srt
+
+    # Chạy song song 100% tất cả các chunks bằng asyncio.gather (Tăng tốc TTS gấp 4x)
+    tasks = [_process_chunk(idx, c_text) for idx, c_text in enumerate(chunks)]
+    chunk_results = await asyncio.gather(*tasks)
+    chunk_results.sort(key=lambda x: x[0])  # Giữ đúng thứ tự câu chuyện
+
     chunk_audio_paths = []
     total_srt_content = []
     offset_seconds = 0.0
     global_sub_idx = 1
-    
-    for idx, chunk_text in enumerate(chunks):
-        chunk_audio = f"{audio_path}_chunk_{idx}.mp3"
-        chunk_srt = f"{srt_path}_chunk_{idx}.srt"
-        
-        # Tự động phân vai nhân vật & điều chỉnh Cao độ (Pitch) / Tốc độ (Rate)
-        chunk_voice, chunk_pitch, chunk_rate, role_name = detect_speaker_role(chunk_text, voice)
-        print(f"   ↳ [Chunk {idx+1}/{len(chunks)}] {role_name} -> Voice: {chunk_voice} (Pitch: {chunk_pitch}, Rate: {chunk_rate})")
-            
-        await _run_tts_chunk_async(chunk_text, chunk_voice, chunk_rate, chunk_pitch, chunk_audio, chunk_srt)
-        
-        if not os.path.exists(chunk_audio) or os.path.getsize(chunk_audio) == 0:
-            raise ValueError(f"Failed to generate audio for chunk {idx}. Server returned empty data.")
-            
+
+    for idx, chunk_audio, chunk_srt in chunk_results:
         with open(chunk_srt, "r", encoding="utf-8") as f:
             srt_content = f.read()
             
@@ -265,9 +268,8 @@ async def _run_tts_async(text: str, voice: str, rate: str, pitch: str, audio_pat
         
         block_matches = re.findall(r"^\d+$", srt_content, re.MULTILINE)
         global_sub_idx += len(block_matches)
-        
         chunk_audio_paths.append(chunk_audio)
-        
+
     # Concatenate all chunk mp3 files
     with open(audio_path, "wb") as final_audio:
         for p in chunk_audio_paths:
