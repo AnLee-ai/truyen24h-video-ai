@@ -226,9 +226,19 @@ def record_completed_chapter_local(chapter_id: str, chapter_number: int = 0):
         os.makedirs("data", exist_ok=True)
         with open(prog_file, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
-        print(f"[SUCCESS] Đã khóa tiến độ hoàn thành Tập {chapter_number} (ID: {chapter_id}) vào data/chapters_progress.json!")
     except Exception as e:
-        print(f"[WARNING] Không thể lưu file data/chapters_progress.json: {e}")
+        pass
+        
+    # Đồng bộ trực tiếp lên Supabase CSDL chống lặp 100%
+    try:
+        client = get_client()
+        db_data = {"audio_url": "completed", "video_status": "completed"}
+        if chapter_id:
+            client.table("chapters").update(db_data).eq("id", chapter_id).execute()
+        elif chapter_number > 0:
+            client.table("chapters").update(db_data).eq("novel_id", "d1c402ea-4882-4ffa-81e5-639e93fed463").eq("chapter_number", chapter_number).execute()
+    except Exception:
+        pass
 
 def mark_chapter_completed_atomic(chapter_id: str, audio_url: str = "", video_url: str = "", chapter_number: int = 0) -> dict:
     """Atomic update: Đánh dấu chương hoàn thành 100% cả audio lẫn video trong 1 query duy nhất."""

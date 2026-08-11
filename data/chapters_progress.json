@@ -1,4 +1,22 @@
 {
-  "completed_chapters": [],
-  "current_chapter": 1
+  "novel_id": "van-co-than-vuong-v1",
+  "completed_chapters": [
+    1,
+    "1",
+    2,
+    "2",
+    3,
+    "3",
+    4,
+    "4",
+    5,
+    "5",
+    "8bb3c458-cabb-44d0-89ef-c4bf84e877bd",
+    "c64870e3-78ec-4563-8959-22344e1727b5",
+    "c835ddbb-7f4f-46a1-b483-4a9adb5cab41",
+    "e7406047-3fcc-4d7c-a6b7-68439b1abd5d",
+    "fc9cdab9-4514-4f72-bb26-d39462688fa3"
+  ],
+  "current_chapter": 6,
+  "last_updated": "2026-08-11T01:46:00.142419Z"
 }
