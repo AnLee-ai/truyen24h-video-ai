@@ -178,14 +178,31 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
         
     # 5. Tạo file danh sách FFmpeg concat với thời lượng riêng biệt KHỚP THOẠI CHO TỪNG ẢNH
     concat_list_path = os.path.join(out_dir, "concat_list.txt")
+    valid_sequences = []
+    
+    for item in full_scene_sequence:
+        img_p = item['image']
+        if not is_valid_image_file(img_p):
+            print(f"[WARNING] 🖼️ Phát hiện ảnh chưa đạt chuẩn {img_p}. Đang tạo lại ảnh AI HD...")
+            generate_scene_image(title, img_p, width=1920, height=1080)
+            
+        if is_valid_image_file(img_p):
+            valid_sequences.append(item)
+
+    # Nếu không có ảnh nào đạt chuẩn, tạo 1 ảnh nền HD chuẩn làm fallback
+    if not valid_sequences:
+        default_img = os.path.join(img_dir, "scene_default.jpg")
+        generate_scene_image(title, default_img, width=1920, height=1080)
+        valid_sequences = [{'image': default_img, 'duration': max_duration}]
+
     with open(concat_list_path, "w", encoding="utf-8") as f:
-        for item in full_scene_sequence:
+        for item in valid_sequences:
             img_clean = os.path.abspath(item['image']).replace("\\", "/")
             f.write(f"file '{img_clean}'\n")
             f.write(f"duration {item['duration']}\n")
         # Dòng cuối lặp ảnh cuối cùng để tránh trôi frame
-        if full_scene_sequence:
-            last_img_clean = os.path.abspath(full_scene_sequence[-1]['image']).replace("\\", "/")
+        if valid_sequences:
+            last_img_clean = os.path.abspath(valid_sequences[-1]['image']).replace("\\", "/")
             f.write(f"file '{last_img_clean}'\n")
             
     # 6. Định dạng bộ lọc Phụ Đề Kinetic Nổi Bật 4K (Chữ Vàng Chanh Neon & Khung Nền Bo Góc Mờ Mượt Chống Chói 100%)
@@ -194,23 +211,10 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
     srt_escaped = ""
     if srt_path and os.path.exists(srt_path):
         srt_abs = os.path.abspath(srt_path).replace("\\", "/")
-        # Escaping chuẩn FFmpeg cho cả Windows & Linux
         srt_escaped = srt_abs.replace(":", "\\:").replace("'", "'\\\\''").replace("[", "\\[").replace("]", "\\]")
     
-    # 6b. ĐỘNG CƠ TỰ ĐỘNG CHUYỂN CẢNH ĐIỆN ẢNH & ZOOM CẬN CẢNH KHUÔN MẶT 4K
-    all_context_text = (str(title) + " " + " ".join(scene_texts)).lower()
-    has_combat = any(w in all_context_text for w in ["chém", "đánh", "bá chủ", "thức tỉnh", "bộc phát", "giao phong", "quyết đấu"])
-    has_emotional_dialogue = any(w in all_context_text for w in ["quát", "gầm", "hát", "thì thầm", "mắt", "nét mặt"])
-    
-    if has_combat and has_emotional_dialogue:
-        print("[INFO] Dev-Enhance: Kích hoạt Hiệu Ứng Rung Lắc Camera Va Chạm 4K + Zoom Cận Cảnh Khuôn Mặt...")
-        vf_filter = "scale=2160:1215:force_original_aspect_ratio=increase,crop=1920:1080:x=120:y=67,eq=brightness=0.04:contrast=1.15:saturation=1.25[bg]"
-    elif has_combat:
-        print("[INFO] Dev-Enhance: Kích hoạt Hiệu Ứng Rung Lắc Kinetic Impact + Combat Speed Lines 4K...")
-        vf_filter = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,eq=brightness=0.03:contrast=1.12:saturation=1.22[bg]"
-    else:
-        print("[INFO] Dev-Enhance: Kích hoạt Hiệu Ứng Cinematic Dynamic Motion Panning 4K...")
-        vf_filter = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,eq=brightness=0.02:contrast=1.08:saturation=1.18[bg]"
+    # 6b. ĐỘNG CƠ TỰ ĐỘNG CHUYỂN CẢNH ĐIỆN ẢNH & SẮC NÉT 4K
+    vf_filter = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,eq=brightness=0.04:contrast=1.12:saturation=1.22[bg]"
         
     if not (srt_escaped and os.path.exists(srt_path)):
         fallback_srt = os.path.join(out_dir, "subtitles_fallback.srt")
@@ -238,10 +242,9 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
         
     # 7. Tự động kiểm tra phần cứng GPU Encoder (NVIDIA NVENC -> Intel QSV -> CPU Ultrafast Multi-Core 5x Speed)
     codec = "libx264"
-    encoder_opts = ["-preset", "ultrafast", "-tune", "zerolatency", "-threads", "0", "-crf", "28"]
+    encoder_opts = ["-preset", "ultrafast", "-tune", "zerolatency", "-threads", "0", "-crf", "26"]
     
     try:
-        # Test 1: NVIDIA NVENC GPU
         test_nvenc = subprocess.run(
             ["ffmpeg", "-y", "-f", "lavfi", "-i", "color=s=16x16:d=0.1", "-c:v", "h264_nvenc", "-f", "null", "-"],
             capture_output=True, text=True, timeout=5
@@ -255,12 +258,53 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
     except Exception:
         codec = "libx264"
 
-    # Lệnh FFmpeg Siêu Tốc: FastStart Stream, 20fps, Bitrate 1000k (Render video 30 phút trong 3-4 phút)
-    cmd = [
+    # Lệnh FFmpeg PASS 1: Concat Slideshow Chuẩn Sắc Nét 1080p
+    cmd_pass1 = [
         "ffmpeg", "-y",
         "-f", "concat", "-safe", "0", "-i", concat_list_path,
         "-i", audio_path,
         "-filter_complex", vf_filter,
+        "-map", "[out]", "-map", "1:a",
+        "-r", "20",
+        "-c:v", codec
+    ] + encoder_opts + [
+        "-b:v", "1200k", "-maxrate", "1800k", "-bufsize", "2500k",
+        "-c:a", "aac", "-b:a", "128k", "-pix_fmt", "yuv420p",
+        "-movflags", "+faststart",
+        "-shortest", output_video_path
+    ]
+    
+    from src.video_validator import validate_video_file
+    try:
+        print(f"[INFO] 🚀 FFmpeg rendering PASS 1 {total_audio_duration:.1f}s video ({codec})...")
+        res1 = subprocess.run(cmd_pass1, capture_output=True, text=True, timeout=1800)
+        
+        if res1.returncode == 0 and validate_video_file(output_video_path, min_size_bytes=500000):
+            print(f"[SUCCESS] 🟢 Render Video 16:9 sắc nét {total_audio_duration:.1f}s thành công: {output_video_path}")
+            return output_video_path
+        else:
+            print(f"[WARNING] Pass 1 Concat warning: {res1.stderr[:200]}")
+    except Exception as e:
+        print(f"[WARNING] Exception in Pass 1 rendering: {e}")
+        
+    # Lệnh FFmpeg PASS 2 (Chống Màn Hình Đen 100%): Render 1 ảnh nền AI HD kết hợp Audio & Phụ Đề
+    print("[INFO] 🛡️ Kích hoạt Động cơ PASS 2 Chống Màn Hình Đen (Single HD Image + Audio + SRT)...")
+    first_img = valid_sequences[0]['image'] if valid_sequences else ""
+    if not is_valid_image_file(first_img):
+        first_img = os.path.join(img_dir, "scene_pass2.jpg")
+        generate_scene_image(title, first_img, width=1920, height=1080)
+
+    vf_filter_pass2 = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,eq=brightness=0.04:contrast=1.12:saturation=1.22[bg]"
+    if srt_escaped and os.path.exists(srt_path):
+        vf_filter_pass2 += f";[bg]subtitles=filename='{srt_escaped}':force_style='{subtitle_style}'[out]"
+    else:
+        vf_filter_pass2 += ";[bg]null[out]"
+
+    cmd_pass2 = [
+        "ffmpeg", "-y",
+        "-loop", "1", "-i", os.path.abspath(first_img),
+        "-i", audio_path,
+        "-filter_complex", vf_filter_pass2,
         "-map", "[out]", "-map", "1:a",
         "-r", "20",
         "-c:v", codec
@@ -270,20 +314,16 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
         "-movflags", "+faststart",
         "-shortest", output_video_path
     ]
-    
+
     try:
-        print(f"[INFO] 🚀 FFmpeg UltraFast rendering full {total_audio_duration:.1f}s video ({codec})...")
-        res = subprocess.run(cmd, capture_output=True, text=True, timeout=1800)
-        
-        # Tự động kiểm tra chất lượng video sau khi render
-        from src.video_validator import validate_video_file
-        if res.returncode == 0 and validate_video_file(output_video_path, min_size_bytes=500000):
-            print(f"[SUCCESS] Render video dài {total_audio_duration:.1f}s đầy đủ thành công: {output_video_path}")
+        res2 = subprocess.run(cmd_pass2, capture_output=True, text=True, timeout=1800)
+        if res2.returncode == 0 and validate_video_file(output_video_path, min_size_bytes=300000):
+            print(f"[SUCCESS] 🟢 PASS 2 Render Video HD chống màn hình đen thành công: {output_video_path}")
             return output_video_path
         else:
-            print(f"[WARNING] Concat slideshow warning: {res.stderr[:300]}")
-    except Exception as e:
-        print(f"[ERROR] Exception running FFmpeg slideshow: {e}")
+            print(f"[ERROR] Pass 2 failed: {res2.stderr[:200]}")
+    except Exception as pass2_e:
+        print(f"[ERROR] Exception in Pass 2 rendering: {pass2_e}")
         
     return ""
 
