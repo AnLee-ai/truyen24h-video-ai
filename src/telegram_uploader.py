@@ -143,12 +143,12 @@ def send_document_to_telegram(doc_path: str, caption: str, custom_filename: str 
             files = {
                 'document': (filename, doc_file, 'application/octet-stream')
             }
-            data = {
-                'chat_id': config.TELEGRAM_CHAT_ID,
-                'caption': caption,
-                'parse_mode': 'Markdown'
-            }
             response = requests.post(url, data=data, files=files, timeout=60)
+            if response.status_code != 200 and "can't parse entities" in response.text:
+                data.pop('parse_mode', None)
+                doc_file.seek(0)
+                files = {'document': (filename, doc_file, 'application/octet-stream')}
+                response = requests.post(url, data=data, files=files, timeout=60)
             
         return response.status_code == 200
     except Exception as e:
@@ -177,15 +177,28 @@ def send_video_to_telegram(video_path: str, caption: str, public_url: str = "") 
     print(f"[INFO] Initial Video MP4 Size: {file_size_mb:.2f} MB | Direct CDN URL: {final_cdn_url}")
     
     # 2. THÔNG BÁO LINK STREAMING TRỰC TIẾP KHÔNG GIỚI HẠN DUNG LƯỢNG LÊN TELEGRAM
+    import html
+    safe_caption = html.escape(caption[:850] + "..." if len(caption) > 900 else caption)
+    
     if final_cdn_url:
-        cdn_message = f"{caption}\n\n🍿 *XEM VIDEO FULL HD 16:9 (SUPABASE STORAGE CDN - KHÔNG GIỚI HẠN 50MB):*\n🎬 [Bấm vào đây để xem trực tiếp / Tải Video]({final_cdn_url})"
+        cdn_message = (
+            f"🎬 <b>VIDEO FULL HD 16:9 - CHƯƠNG TỰ ĐỘNG</b>\n\n"
+            f"{safe_caption}\n\n"
+            f"🍿 <b>XEM VIDEO FULL HD 16:9 (SUPABASE STORAGE CDN):</b>\n"
+            f"👉 <a href=\"{final_cdn_url}\">Bấm vào đây để xem trực tiếp / Tải Video</a>\n\n"
+            f"🔗 <b>Link Trực Tiếp:</b>\n<code>{final_cdn_url}</code>"
+        )
     else:
-        cdn_message = f"{caption}\n\n🎬 *Video Full HD 16:9 đã được tạo thành công!*"
+        cdn_message = f"🎬 <b>{safe_caption}</b>\n\n🎬 <b>Video Full HD 16:9 đã được tạo thành công!</b>"
         
-    # Gửi qua Telegram API
+    # Gửi qua Telegram API với parse_mode='HTML' chống lỗi 400 Bad Request
     msg_url = f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}/sendMessage"
     try:
-        requests.post(msg_url, data={'chat_id': config.TELEGRAM_CHAT_ID, 'text': cdn_message, 'parse_mode': 'Markdown'})
+        resp_msg = requests.post(msg_url, data={'chat_id': config.TELEGRAM_CHAT_ID, 'text': cdn_message, 'parse_mode': 'HTML'}, timeout=15)
+        if resp_msg.status_code != 200:
+            # Fallback sang Plain Text thuần túy để link chắc chắn hiện 100%
+            plain_text = f"🎬 VIDEO FULL HD 16:9\n\n{caption}\n\n🍿 Link xem trực tiếp / Tải video (Supabase CDN):\n{final_cdn_url}"
+            requests.post(msg_url, data={'chat_id': config.TELEGRAM_CHAT_ID, 'text': plain_text}, timeout=15)
         print(f"[SUCCESS] 🟢 Đã gửi Link Video CDN Supabase trực tiếp không giới hạn dung lượng lên Telegram Channel!")
     except Exception as e:
         print(f"[WARNING] Gửi CDN message Telegram thất bại: {e}")

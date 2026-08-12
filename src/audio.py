@@ -33,14 +33,9 @@ def mix_bgm_with_voice(voice_path: str, chapter_id: str) -> str:
         bgm_files = [f for f in os.listdir(config.BGM_DIR) if f.endswith(('.mp3', '.wav', '.ogg'))]
         
         if not bgm_files:
-            print("[INFO] 🎵 Chưa có file BGM trong bgm/ folder. Tự động sinh nhạc nền Ambient Tiên Hiệp du dương (-24dB)...")
-            from pydub.generators import Sine
-            # Sinh sóng Sine du dương 440Hz dịu nhẹ làm nhạc nền mượt mà
-            ambient_sound = Sine(440).to_audio_segment(duration=len(voice), volume=-28)
-            ambient_sound = ambient_sound.fade_in(2000).fade_out(3000)
-            final_mix = voice.overlay(ambient_sound)
-            final_mix.export(output_path, format="mp3", bitrate="96k")
-            print(f"[SUCCESS] Exported voice + ambient BGM audio to: {output_path}")
+            print("[INFO] 🎵 Chưa có file BGM trong bgm/ folder. Xuất file voice chuẩn hóa độ rõ nét cao...")
+            voice.export(output_path, format="mp3", bitrate="192k")
+            print(f"[SUCCESS] Exported clean normalized voice audio to: {output_path}")
             return output_path
             
         # 3. Select a random BGM track
@@ -52,26 +47,27 @@ def mix_bgm_with_voice(voice_path: str, chapter_id: str) -> str:
         
         # 4. Process BGM: loop to match voice duration, lower volume, fade out
         # We target BGM volume to be around -20dB below voice DBFS level
-        voice_db = voice.dbfs
+        voice_db = voice.dbfs if not (voice.dbfs == float('-inf') or voice.dbfs == float('inf')) else -15.0
         bgm_target_db = voice_db - 20
         bgm = bgm - (bgm.dbfs - bgm_target_db)
         
         # Loop BGM if it is shorter than the voice audio
         if len(bgm) < len(voice):
-            loops_needed = (len(voice) // len(bgm)) + 1
+            loops_needed = (len(voice) // max(1, len(bgm))) + 1
             bgm = bgm * loops_needed
             
-        # Trim BGM to match voice duration and apply fade-out
+        # Trim BGM to match voice duration and apply fade-out safely
+        fade_ms = min(3000, max(100, len(voice)))
         bgm = bgm[:len(voice)]
-        bgm = bgm.fade_out(3000) # 3-second fade out
+        bgm = bgm.fade_out(fade_ms)
         
         # 5. Overlay BGM and Voice
         print("[INFO] Mixing voice and background music...")
         final_mix = voice.overlay(bgm)
         
-        # 6. Export mixed audio as MP3
-        print(f"[INFO] Exporting mixed audio: {output_path}...")
-        final_mix.export(output_path, format="mp3", bitrate="96k")
+        # 6. Export mixed audio as MP3 (192k HQ)
+        print(f"[INFO] Exporting mixed audio (192k HQ): {output_path}...")
+        final_mix.export(output_path, format="mp3", bitrate="192k")
         return output_path
         
     except Exception as e:

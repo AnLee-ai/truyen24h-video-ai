@@ -5,7 +5,8 @@ import uuid
 from src.main import run_chapter_pipeline, app as fastapi_app
 
 def trigger_writing(novel_id):
-    novel_id = (novel_id or "").strip()
+    import html
+    novel_id = html.escape((novel_id or "").strip())
     if not novel_id:
         yield "Vui lòng điền Novel ID!"
         return
@@ -21,24 +22,29 @@ def trigger_writing(novel_id):
     def log_callback(msg):
         log_queue.put(msg)
         
-    # Start pipeline in a background thread
-    thread = threading.Thread(
-        target=run_chapter_pipeline, 
-        args=(novel_id,), 
-        kwargs={"log_callback": log_callback}
-    )
-    thread.daemon = True
-    thread.start()
-    
+    try:
+        thread = threading.Thread(
+            target=run_chapter_pipeline, 
+            args=(novel_id,), 
+            kwargs={"log_callback": log_callback}
+        )
+        thread.daemon = True
+        thread.start()
+    except Exception as e:
+        yield f"❌ Không thể khởi tạo tiến trình chạy ngầm: {e}"
+        return
+        
     accumulated_logs = ["[INFO] Đang khởi động tiến trình..."]
     yield "\n".join(accumulated_logs)
     
+    import time
     while thread.is_alive() or not log_queue.empty():
         try:
             msg = log_queue.get(timeout=0.2)
             accumulated_logs.append(msg)
             yield "\n".join(accumulated_logs)
         except queue.Empty:
+            time.sleep(0.05)
             continue
             
     # Check if there is an error in logs to show appropriate status

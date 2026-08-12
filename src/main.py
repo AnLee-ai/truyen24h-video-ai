@@ -68,7 +68,7 @@ def audit_chapter_quality(ch: dict) -> tuple:
         return False, f"Kịch bản quá ngắn ({word_count} từ < 1000 từ tiêu chuẩn)"
         
     # 2. Tiêu chuẩn 2: Chứa tên nhân vật rác cũ
-    for old_name in ["Trần Lam", "Linh Vy", "Minh Đức"]:
+    for old_name in ["Trần Lam", "Linh Vy", "Minh Đức", "Thùy Linh", "Cao Bá"]:
         if old_name in ch_content:
             return False, f"Kịch bản chứa tên nhân vật cũ rác '{old_name}'"
             
@@ -303,12 +303,11 @@ def _run_chapter_pipeline_impl(novel_id: str):
         except Exception as clean_err:
             print(f"[WARNING] Auto disk cleaner warning: {clean_err}")
 
-        if success or (video_path and os.path.exists(video_path)):
-            print(f"[INFO] Pipeline execution complete for Chapter {chapter_num}!")
+        if (video_path and os.path.exists(video_path)) or (success and bool(video_public_url)):
+            print(f"[INFO] 🟢 Pipeline execution complete for Chapter {chapter_num}!")
             database.mark_chapter_completed_atomic(chapter_id, audio_url="Completed All Media & Uploads", video_url=video_public_url or "completed", chapter_number=chapter_num)
         else:
-            print("[WARNING] Pipeline finished but Telegram upload failed. Preserving local completion state...")
-            database.record_completed_chapter_local(chapter_id, chapter_num)
+            print(f"[WARNING] ⚠️ Tập {chapter_num} chưa tạo xong Video MP4 đạt chuẩn. KHÔNG đánh dấu hoàn thành để hệ thống tự động làm lại ở lần chạy tới!")
             
     except Exception as e:
         print(f"[ERROR] Critical error in pipeline execution: {e}")

@@ -1,16 +1,21 @@
 import re
+import threading
 from supabase import create_client, Client
 from src import config
 
 _client = None
+_client_lock = threading.Lock()
+_progress_lock = threading.Lock()
 
 def get_client() -> Client:
-    """Initialize and return the Supabase client."""
+    """Initialize and return the Supabase client (Thread-safe)."""
     global _client
     if _client is None:
-        if not config.SUPABASE_URL or not config.SUPABASE_KEY:
-            raise ValueError("SUPABASE_URL and SUPABASE_KEY must be configured in environment variables.")
-        _client = create_client(config.SUPABASE_URL, config.SUPABASE_KEY)
+        with _client_lock:
+            if _client is None:
+                if not config.SUPABASE_URL or not config.SUPABASE_KEY:
+                    raise ValueError("SUPABASE_URL and SUPABASE_KEY must be configured in environment variables.")
+                _client = create_client(config.SUPABASE_URL, config.SUPABASE_KEY)
     return _client
 
 # Novel Operations
@@ -130,7 +135,8 @@ def get_all_chapters(novel_id: str) -> list:
             .order("chapter_number", desc=False)\
             .execute()
         if response.data:
-            return response.data
+            res_data = response.data or []
+            return sorted(res_data, key=lambda x: int(x.get("chapter_number", 0)))
     except Exception as e:
         print(f"[WARNING] Supabase get_all_chapters failed ({e}). Returning empty list fallback.")
     return []
@@ -197,38 +203,39 @@ def update_chapter_video_status(chapter_id: str, status: str, video_url: str = N
         return {}
 
 def record_completed_chapter_local(chapter_id: str, chapter_number: int = 0):
-    """Lưu tiến độ chương đã hoàn thành 100% vào file data/chapters_progress.json (chuẩn hóa cả int & str chống lặp tuyệt đối)."""
-    import os, json, datetime
-    prog_file = "data/chapters_progress.json"
-    data = {"novel_id": "van-co-than-vuong-v1", "completed_chapters": [], "current_chapter": 1}
-    if os.path.exists(prog_file):
-        try:
-            with open(prog_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-        except Exception:
-            pass
-            
-    completed_set = set(data.get("completed_chapters", []))
-    
-    if chapter_number > 0:
-        completed_set.add(int(chapter_number))
-        completed_set.add(str(chapter_number))
-    if chapter_id:
-        completed_set.add(str(chapter_id))
+    """Lưu tiến độ chương đã hoàn thành 100% vào file data/chapters_progress.json (chuẩn hóa cả int & str chống lặp tuyệt đối, Thread-safe)."""
+    with _progress_lock:
+        import os, json, datetime
+        prog_file = "data/chapters_progress.json"
+        data = {"novel_id": "van-co-than-vuong-v1", "completed_chapters": [], "current_chapter": 1}
+        if os.path.exists(prog_file):
+            try:
+                with open(prog_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+            except Exception:
+                pass
+                
+        completed_set = set(data.get("completed_chapters", []))
         
-    int_nums = [int(x) for x in completed_set if str(x).isdigit()]
-    max_num = max(int_nums) if int_nums else 0
-    
-    data["completed_chapters"] = sorted(list(completed_set), key=lambda x: str(x))
-    data["current_chapter"] = max_num + 1
-    data["last_updated"] = datetime.datetime.utcnow().isoformat() + "Z"
-    
-    try:
-        os.makedirs("data", exist_ok=True)
-        with open(prog_file, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-    except Exception as e:
-        pass
+        if chapter_number > 0:
+            completed_set.add(int(chapter_number))
+            completed_set.add(str(chapter_number))
+        if chapter_id:
+            completed_set.add(str(chapter_id))
+            
+        int_nums = [int(x) for x in completed_set if str(x).isdigit()]
+        max_num = max(int_nums) if int_nums else 0
+        
+        data["completed_chapters"] = sorted(list(completed_set), key=lambda x: str(x))
+        data["current_chapter"] = max_num + 1
+        data["last_updated"] = datetime.datetime.utcnow().isoformat() + "Z"
+        
+        try:
+            os.makedirs("data", exist_ok=True)
+            with open(prog_file, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            pass
         
     # Đồng bộ trực tiếp lên Supabase CSDL chống lặp 100%
     try:

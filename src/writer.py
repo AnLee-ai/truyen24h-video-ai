@@ -55,11 +55,19 @@ def safe_loads(text: str, default=None):
     try:
         return json.loads(cleaned)
     except Exception:
-        # Thử trích xuất khối {...} bằng Regex nếu LLM trả về văn bản thừa
-        json_block = re.search(r"\{[\s\S]*\}", cleaned)
+        # Thử làm sạch dấu phẩy thừa ở cuối (trailing commas)
+        cleaned_no_comma = re.sub(r",\s*([\}\]])", r"\1", cleaned)
+        try:
+            return json.loads(cleaned_no_comma)
+        except Exception:
+            pass
+        # Thử trích xuất khối {...} hoặc [...] bằng Regex
+        json_block = re.search(r"(\{[\s\S]*\}|\[[\s\S]*\])", cleaned)
         if json_block:
             try:
-                return json.loads(json_block.group(0))
+                candidate = json_block.group(0)
+                candidate = re.sub(r",\s*([\}\]])", r"\1", candidate)
+                return json.loads(candidate)
             except Exception:
                 pass
     return default if default is not None else {}
@@ -73,7 +81,7 @@ def remove_repetitive_sentences(text: str) -> str:
         if not para.strip():
             cleaned_paragraphs.append("")
             continue
-        sentences = re.split(r'(?<=[.?!])\s+', para)
+        sentences = re.split(r'(?<=[.?!…])\s+(?=[A-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚÝĐ0-9"\'«“])', para)
         cleaned_sentences: list[str] = []
         for sentence in sentences:
             s_strip = sentence.strip()
@@ -196,11 +204,8 @@ def translate_to_vietnamese_with_gemini(text: str) -> str:
     if translated_res and len(translated_res.split()) > 200:
         cleaned_res = clean_chapter_content(translated_res)
         cleaned_res, _ = verify_and_sanitize_chapter_content(cleaned_res)
+        print(f"[SUCCESS] Đã hoàn thành dịch kịch bản sang Tiếng Việt qua Gemini API! Độ dài: {len(cleaned_res.split())} từ.")
         return cleaned_res
-    return text
-    if translated_res and len(translated_res.split()) > 300:
-        print(f"[SUCCESS] Đã hoàn thành dịch kịch bản sang Tiếng Việt qua Gemini API! Độ dài: {len(translated_res.split())} từ.")
-        return clean_chapter_content(translated_res)
     return text
 
 def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
@@ -292,9 +297,6 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
                         return content.strip()
                 if response.status_code == 429:
                     break
-            except Exception:
-                pass
-
             except Exception:
                 pass
 
@@ -530,8 +532,14 @@ def generate_arc_blueprints(novel_id: str, arc: dict) -> list:
                     except Exception:
                         pass
 
-        start_num = int(start_ch) if start_ch else 1
-        end_num = int(end_ch) if end_ch else (start_num + 24)
+        try:
+            start_num = int(str(start_ch).strip()) if start_ch else 1
+        except (ValueError, TypeError):
+            start_num = 1
+        try:
+            end_num = int(str(end_ch).strip()) if end_ch else (start_num + 24)
+        except (ValueError, TypeError):
+            end_num = start_num + 24
         
         EPIC_TITLES = [
             "Trùng Sinh Vạn Cổ, Thôn Phệ Vô Tận",

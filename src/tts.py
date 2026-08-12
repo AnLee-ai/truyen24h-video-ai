@@ -28,7 +28,8 @@ def vtt_to_srt(vtt_content: str) -> str:
             srt_lines.append(f"{start_hms},{start_ms} --> {end_hms},{end_ms}")
             block_idx += 1
         elif line.strip() != "":
-            srt_lines.append(line)
+            clean_text = re.sub(r'<[^>]+>', '', line)
+            srt_lines.append(clean_text)
         else:
             srt_lines.append("") # empty line separator between blocks
             
@@ -42,7 +43,7 @@ def sanitize_voice_name(voice: str) -> str:
         return f"{lang.strip()}-{name.strip()}"
     return voice
 
-def split_text_into_chunks(text: str, max_chars: int = 1800) -> list:
+def split_text_into_chunks(text: str, max_chars: int = 1200) -> list:
     """Split text into smaller chunks by paragraph or sentence to avoid edge-tts timeout/limits."""
     paragraphs = text.split("\n")
     chunks = []
@@ -94,11 +95,12 @@ def shift_srt_time(srt_content: str, offset_seconds: float, start_index: int) ->
     shifted_lines = []
     
     timestamp_pattern = re.compile(
-        r"(\d{2}):(\d{2}):(\d{2}),(\d{3})\s*-->\s*(\d{2}):(\d{2}):(\d{2}),(\d{3})"
+        r"(\d{2}):(\d{2}):(\d{2}),(\d{1,3})\s*-->\s*(\d{2}):(\d{2}):(\d{2}),(\d{1,3})"
     )
     
     def parse_time_to_ms(h, m, s, ms):
-        return (int(h) * 3600 + int(m) * 60 + int(s)) * 1000 + int(ms)
+        ms_str = str(ms).ljust(3, '0')[:3]
+        return (int(h) * 3600 + int(m) * 60 + int(s)) * 1000 + int(ms_str)
         
     def format_ms_to_time(total_ms):
         total_s, ms = divmod(total_ms, 1000)

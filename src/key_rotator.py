@@ -66,23 +66,24 @@ class APIKeyRotator:
                 usable_keys = active_keys
 
             key = usable_keys[self.current_index % len(usable_keys)]
-            self.current_index = (self.current_index + 1) % len(usable_keys)
+            self.current_index = (self.current_index + 1) % max(1, len(usable_keys))
             return key
 
     def mark_key_failed(self, key: str, is_permanent: bool = True):
         """Đánh dấu key bị hỏng (401) hoặc hết quota (429) Thread-safe."""
         if key:
             with self._lock:
-                key_mask = f"...{key[-6:]}" if len(key) >= 6 else key
                 if is_permanent:
                     try:
-                        print(f"[WARNING] API Key [{self.provider}] {key_mask} is invalid (401). Permanently disabled for this run.")
+                        safe_suffix = key[-4:] if len(key) >= 8 else "****"
+                        print(f"[WARNING] API Key [{self.provider}] ...{safe_suffix} is invalid (401). Permanently disabled for this run.")
                     except Exception:
                         pass
                     self.invalid_keys.add(key)
                 else:
                     try:
-                        print(f"[WARNING] API Key [{self.provider}] {key_mask} rate limited (429). Switched key.")
+                        safe_suffix = key[-4:] if len(key) >= 8 else "****"
+                        print(f"[WARNING] API Key [{self.provider}] ...{safe_suffix} rate limited (429). Switched key.")
                     except Exception:
                         pass
                     self.rate_limited_keys.add(key)

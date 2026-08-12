@@ -40,17 +40,20 @@ def generate_shorts_video(audio_path: str, srt_path: str, chapter_id: str, title
     try:
         prob = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", audio_path], capture_output=True, text=True)
         dur = float(prob.stdout.strip())
+        if dur < 5.0:
+            print(f"[WARNING] Shorts generation cancelled: Audio duration too short ({dur:.1f}s < 5s).")
+            return None
         if dur <= 30.0:
             start_ss = "00:00:00"
     except Exception:
         pass
 
-    if os.path.exists(shorts_bg) and os.path.getsize(shorts_bg) > 1000:
+    from src.image_generator import is_valid_image_file
+    if is_valid_image_file(shorts_bg):
         cmd = [
             "ffmpeg", "-y",
             "-loop", "1", "-i", shorts_bg,
-            "-i", audio_path,
-            "-ss", start_ss, "-t", "00:00:45",
+            "-ss", start_ss, "-i", audio_path, "-t", "00:00:45",
             "-filter_complex", vf_filter,
             "-map", "[out]", "-map", "1:a",
             "-c:v", "libx264", "-preset", "fast", "-tune", "stillimage", "-c:a", "aac", "-b:a", "192k", "-pix_fmt", "yuv420p",

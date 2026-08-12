@@ -39,13 +39,15 @@ def generate_youtube_thumbnail(chapter_num: int, chapter_title: str, scene_image
         bg_img = Image.alpha_composite(bg_img.convert('RGBA'), overlay).convert('RGB')
         draw = ImageDraw.Draw(bg_img)
         
-        # 3. Phông chữ (Font System Fallback)
+        # 3. Phông chữ (Font System Fallback - Hỗ trợ cả Windows và Linux/Docker Container)
         def load_font(size):
             font_paths = [
                 "C:/Windows/Fonts/arialbd.ttf",
                 "C:/Windows/Fonts/tahomabd.ttf",
                 "C:/Windows/Fonts/seguiemb.ttf",
-                "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+                "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+                "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",
+                "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf"
             ]
             for p in font_paths:
                 if os.path.exists(p):
@@ -53,7 +55,10 @@ def generate_youtube_thumbnail(chapter_num: int, chapter_title: str, scene_image
                         return ImageFont.truetype(p, size)
                     except Exception:
                         pass
-            return ImageFont.load_default()
+            try:
+                return ImageFont.truetype("arial.ttf", size)
+            except Exception:
+                return ImageFont.load_default()
             
         badge_font = load_font(50)
         tag_font = load_font(36)
@@ -87,7 +92,10 @@ def generate_youtube_thumbnail(chapter_num: int, chapter_title: str, scene_image
         # 5. Vẽ Tiêu Đề Chương (Chapter Title) Chữ Vàng 3D cực kỳ quyến rũ
         clean_title = re.sub(r"[^\w\s\-\:]", "", chapter_title)
         if len(clean_title) > 36:
-            clean_title = clean_title[:34] + "..."
+            short_t = clean_title[:34]
+            if " " in short_t:
+                short_t = short_t.rsplit(" ", 1)[0]
+            clean_title = short_t + "..."
             
         title_text = f"Chương {chapter_num}: {clean_title}"
         tx, ty = 80, height - 220

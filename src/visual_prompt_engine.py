@@ -49,7 +49,7 @@ def _enrich_single_scene(item: tuple, characters_data: list, world_lore_data: li
     
     for c in characters_data:
         c_name = c.get("name", "")
-        if c_name and c_name in scene_text:
+        if c_name and (c_name.lower() in scene_text.lower()):
             detected_chars.append(c_name)
             # Tra cứu từ bảng khóa chuẩn trước
             if c_name in MASTER_CHARACTER_LOCKS:
@@ -95,7 +95,7 @@ def _enrich_single_scene(item: tuple, characters_data: list, world_lore_data: li
     positive_prompt = (
         f"masterpiece, best quality, 2D manhwa webtoon style, {scene_text}, "
         f"CHARACTER_LOCK: [{char_lock_str}], ENVIRONMENT_LOCK: [{env_lock_str}], "
-        f"camera: [{camera}], lighting: [{lighting}], cel shaded, sharp line art, 8k resolution --ar 16:9"
+        f"camera: [{camera}], lighting: [{lighting}], cel shaded, sharp line art, 8k resolution"
     )
 
     manifest_item = {
@@ -141,14 +141,22 @@ def batch_enrich_visual_prompts_parallel(scenes: list, novel_id: str = "", chapt
             except Exception as e:
                 print(f"[WARNING] Worker enrich scene failed: {e}")
 
+    # Fallback thay thế các vị trí None bị lỗi worker
+    for i in range(len(scenes)):
+        if not enhanced_prompts_list[i]:
+            enhanced_prompts_list[i] = f"masterpiece, 2D manhwa webtoon style, {scenes[i]}"
+        if not manifest_list[i]:
+            manifest_list[i] = {"scene_index": i+1, "scene_text": scenes[i]}
+
     # Ghi manifest file
     if chapter_id:
         out_dir = os.path.join("output", chapter_id)
         os.makedirs(out_dir, exist_ok=True)
         manifest_path = os.path.join(out_dir, "visual_director_manifest.json")
         try:
+            safe_manifest_data = json.loads(re.sub(r'[\x00-\x1f]', ' ', json.dumps(manifest_list, ensure_ascii=False)))
             with open(manifest_path, "w", encoding="utf-8") as f:
-                json.dump({"chapter_id": chapter_id, "scenes_count": len(scenes), "detail_locking_enabled": True, "scenes": manifest_list}, f, ensure_ascii=False, indent=2)
+                json.dump({"chapter_id": chapter_id, "scenes_count": len(scenes), "detail_locking_enabled": True, "scenes": safe_manifest_data}, f, ensure_ascii=False, indent=2)
             print(f"[SUCCESS] Da xuat Visual Director Manifest voi Master Detail Locks tai: {manifest_path}")
         except Exception as e:
             print(f"[WARNING] Khong the luu manifest: {e}")

@@ -16,8 +16,11 @@ def is_valid_image_file(file_path: str) -> bool:
     try:
         with open(file_path, "rb") as f:
             header = f.read(12)
-            if header.startswith(b"\xff\xd8\xff") or header.startswith(b"\x89PNG") or b"WEBP" in header:
-                return True
+            if not (header.startswith(b"\xff\xd8\xff") or header.startswith(b"\x89PNG") or b"WEBP" in header):
+                return False
+        with Image.open(file_path) as img:
+            img.verify()
+        return True
     except Exception:
         pass
     return False
@@ -33,9 +36,10 @@ def get_random_user_agent() -> str:
     return random.choice(user_agents)
 
 def generate_random_ip() -> str:
-    """Tự động sinh địa chỉ IP ngẫu nhiên (Dynamic IP Rotator) vượt qua giới hạn Rate Limit theo IP của server AI."""
+    """Tự động sinh địa chỉ IP công cộng ngẫu nhiên (Public IP Rotator) vượt qua giới hạn Rate Limit theo IP."""
     import random
-    return f"{random.randint(1, 223)}.{random.randint(0, 255)}.{random.randint(0, 255)}.{random.randint(1, 254)}"
+    first = random.choice([b for b in range(1, 223) if b not in [10, 127, 169, 172, 192]])
+    return f"{first}.{random.randint(1, 254)}.{random.randint(1, 254)}.{random.randint(1, 254)}"
 
 def get_anti_rate_limit_headers() -> dict:
     """Tạo Header HTTP chuẩn giả lập trình duyệt thực tế chống WAF và lỗi 403 Forbidden."""
@@ -71,7 +75,9 @@ def enhance_image_quality(image_path: str):
 
 def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, height: int = 1080) -> str:
     """Sinh ảnh minh họa phân cảnh 100% MIỄN PHÍ qua Ma Trận 5 Nền Tảng AI Sinh Ảnh."""
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    parent_dir = os.path.dirname(os.path.abspath(output_path))
+    if parent_dir:
+        os.makedirs(parent_dir, exist_ok=True)
     
     if is_valid_image_file(output_path):
         return output_path
@@ -201,7 +207,8 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
                 f"storydiffusion manhwa character consistency panel: {scene_clean_words}, "
                 "masterpiece, best quality, 2D manhwa webtoon style, xianxia martial arts hero, 8k cinematic shot"
             )
-            get_url_sd = f"https://image.pollinations.ai/prompt/{story_prompt}?width={width}&height={height}&model=flux-anime&seed={base_seed}&nologo=true"
+            safe_seed = base_seed % 2147483647
+            get_url_sd = f"https://image.pollinations.ai/prompt/{story_prompt}?width={width}&height={height}&model=flux-anime&seed={safe_seed}&nologo=true"
             req_sd = urllib.request.Request(get_url_sd, headers=get_anti_rate_limit_headers())
             with urllib.request.urlopen(req_sd, timeout=20) as resp_sd:
                 data_sd = resp_sd.read()

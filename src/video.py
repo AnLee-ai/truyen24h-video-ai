@@ -54,12 +54,13 @@ def parse_srt_scenes_with_durations(srt_path: str, target_min_duration: float = 
         return [{'text': 'Mở đầu chương tiểu thuyết', 'duration': 7.0}]
         
     def time_to_sec(t_str):
+        t_str = t_str.replace('.', ',')
         h, m, s_ms = t_str.split(':')
         s, ms = s_ms.split(',')
         return int(h)*3600 + int(m)*60 + int(s) + int(ms)/1000.0
 
     try:
-        with open(srt_path, "r", encoding="utf-8") as f:
+        with open(srt_path, "r", encoding="utf-8-sig") as f:
             content = f.read()
 
         blocks = re.split(r'\n\s*\n', content.strip())
@@ -195,12 +196,12 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
 
     with open(concat_list_path, "w", encoding="utf-8") as f:
         for item in valid_sequences:
-            img_clean = os.path.abspath(item['image']).replace("\\", "/")
+            img_clean = os.path.abspath(item['image']).replace("\\", "/").replace("'", "'\\''")
             f.write(f"file '{img_clean}'\n")
             f.write(f"duration {item['duration']}\n")
         # Dòng cuối lặp ảnh cuối cùng để tránh trôi frame
         if valid_sequences:
-            last_img_clean = os.path.abspath(valid_sequences[-1]['image']).replace("\\", "/")
+            last_img_clean = os.path.abspath(valid_sequences[-1]['image']).replace("\\", "/").replace("'", "'\\''")
             f.write(f"file '{last_img_clean}'\n")
             
     # 6. Định dạng bộ lọc Phụ Đề Kinetic Nổi Bật 4K (Chữ Vàng Chanh Neon & Khung Nền Bo Góc Mờ Mượt Chống Chói 100%)
@@ -336,9 +337,14 @@ def process_existing_audio(audio_path: str, srt_path: str = "", title: str = "Au
         print(f"[ERROR] File audio không tồn tại: {audio_path}")
         return ""
         
-    import uuid
-    chapter_id = str(uuid.uuid4())[:8]
-    print(f"[INFO] Đang xử lý file audio có sẵn: {audio_path}")
+    parent_folder = os.path.basename(os.path.dirname(os.path.abspath(audio_path)))
+    if parent_folder and parent_folder not in ["output", "data", "src"]:
+        chapter_id = parent_folder
+    else:
+        import uuid
+        chapter_id = str(uuid.uuid4())[:8]
+        
+    print(f"[INFO] Đang xử lý file audio có sẵn cho chapter_id ({chapter_id}): {audio_path}")
     return render_novel_video(audio_path, srt_path, title, chapter_id)
 
 if __name__ == "__main__":

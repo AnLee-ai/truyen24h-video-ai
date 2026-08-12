@@ -45,8 +45,9 @@ DEFAULT_PITCH = os.getenv("DEFAULT_PITCH", "+0Hz")
 # Validate critical configs
 def validate_config():
     missing = []
-    if not GEMINI_API_KEY:
-        missing.append("GEMINI_API_KEY")
+    has_llm_key = bool(GEMINI_API_KEY or os.getenv("GEMINI_API_KEYS") or GROQ_API_KEY)
+    if not has_llm_key:
+        missing.append("GEMINI_API_KEY / GROQ_API_KEY")
     if not SUPABASE_URL:
         missing.append("SUPABASE_URL")
     if not SUPABASE_KEY:
