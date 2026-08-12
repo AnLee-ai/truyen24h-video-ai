@@ -334,11 +334,11 @@ def upload_file_to_supabase(file_path: str, bucket_name: str = "media", destinat
             return public_url
         except Exception as e:
             if attempt == max_retries - 1:
-                print(f"[WARNING] Supabase Storage upload error for {file_path}: {e}. Utilizing Guaranteed CDN URL: {guaranteed_cdn_url}")
-                return guaranteed_cdn_url
+                print(f"[ERROR] Thất bại khi upload {file_path} lên Supabase Storage: {e}")
+                return ""
             time.sleep(2 * (attempt + 1))
             
-    return guaranteed_cdn_url
+    return ""
 
 # Episode Summary & Vector Search
 def create_episode_summary(chapter_id: str, event_summary: str, embedding: list) -> dict:
