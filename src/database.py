@@ -1,3 +1,4 @@
+import re
 from supabase import create_client, Client
 from src import config
 
@@ -295,7 +296,7 @@ def upload_file_to_supabase(file_path: str, bucket_name: str = "media", destinat
         except Exception:
             _created_buckets.add(bucket_name)
             
-    rel_path = destination_path or os.path.basename(file_path)
+    rel_path = re.sub(r'/+', '/', (destination_path or os.path.basename(file_path)).lstrip('/'))
     supabase_base = (config.SUPABASE_URL or "").rstrip('/')
     guaranteed_cdn_url = f"{supabase_base}/storage/v1/object/public/{bucket_name}/{rel_path}" if supabase_base else ""
     

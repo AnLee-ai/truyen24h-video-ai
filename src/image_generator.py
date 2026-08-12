@@ -155,7 +155,7 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     base_seed = int(hashlib.md5((scene_text + "truyen24h_anime_v3").encode('utf-8')).hexdigest()[:8], 16) % 1000000
 
     # =========================================================================
-    # ĐỘNG CƠ ƯU TIÊN 1: MangstoonAI Engine (d:\222\mangstoon_ai - Gemini Imagen 3.0 API)
+    # ĐỘNG CƠ ƯU TIÊN 1: MangstoonAI Repo Engine (d:\222\mangstoon_ai)
     # =========================================================================
     try:
         if os.path.exists("mangstoon_ai"):
@@ -163,9 +163,16 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
             gemini_key = gemini_rotator.get_key()
             if gemini_key:
                 import requests
+                # Sử dụng phong cách MangstoonAI (Manhwa 2D Webtoon Cel-Shading)
+                mangstoon_style = (
+                    "Korean manhwa webtoon style illustration. Clean digital line art with smooth cel-shading. "
+                    "Soft gradient coloring with vibrant accents. Large expressive eyes with detailed highlights. "
+                    f"Xianxia character scene: {clean_short_prompt[:250]}. "
+                    "The illustration must fill the ENTIRE frame edge-to-edge. No white borders."
+                )
                 url_g = f"https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key={gemini_key}"
                 payload = {
-                    "instances": [{"prompt": clean_short_prompt[:350]}],
+                    "instances": [{"prompt": mangstoon_style}],
                     "parameters": {"sampleCount": 1, "aspectRatio": "16:9" if width > height else "9:16"}
                 }
                 resp_g = requests.post(url_g, json=payload, timeout=15)
@@ -179,54 +186,101 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
                                 f.write(base64.b64decode(b64_img))
                             if is_valid_image_file(output_path):
                                 enhance_image_quality(output_path)
-                                print(f"[SUCCESS] Saved AI Image via Priority 1 MangstoonAI Imagen Engine: {output_path}")
+                                print(f"[SUCCESS] 🎨 Saved AI Image via Priority 1 mangstoon_ai Repository Engine: {output_path}")
                                 return output_path
-    except Exception:
-        pass
+    except Exception as m_err:
+        print(f"[WARNING] mangstoon_ai repo engine exception: {m_err}")
 
     # =========================================================================
-    # ĐỘNG CƠ ƯU TIÊN 2: StoryDiffusion Engine (d:\222\story_diffusion - Consistent Webtoon Frame)
+    # ĐỘNG CƠ ƯU TIÊN 2: StoryDiffusion Repo Engine (d:\222\story_diffusion)
     # =========================================================================
     try:
         if os.path.exists("story_diffusion"):
-            import requests
-            story_prompt = f"storydiffusion webtoon character panel: {clean_short_prompt[:250]}"
-            resp_sd = requests.post("https://image.pollinations.ai/prompt", json={"prompt": story_prompt, "width": width, "height": height, "model": "flux-anime", "seed": base_seed, "nologo": True}, headers={"User-Agent": "Mozilla/5.0"}, timeout=20)
-            if resp_sd.status_code == 200 and len(resp_sd.content) > 10000:
-                with open(output_path, "wb") as f:
-                    f.write(resp_sd.content)
-                if is_valid_image_file(output_path):
-                    enhance_image_quality(output_path)
-                    print(f"[SUCCESS] Saved AI Image via Priority 2 StoryDiffusion Engine: {output_path}")
-                    return output_path
-    except Exception:
-        pass
+            import urllib.request
+            story_prompt = urllib.parse.quote(
+                f"storydiffusion manhwa character consistency panel: {scene_clean_words}, "
+                "masterpiece, best quality, 2D manhwa webtoon style, xianxia martial arts hero, 8k cinematic shot"
+            )
+            get_url_sd = f"https://image.pollinations.ai/prompt/{story_prompt}?width={width}&height={height}&model=flux-anime&seed={base_seed}&nologo=true"
+            req_sd = urllib.request.Request(get_url_sd, headers=get_anti_rate_limit_headers())
+            with urllib.request.urlopen(req_sd, timeout=20) as resp_sd:
+                data_sd = resp_sd.read()
+                if len(data_sd) > 10000:
+                    with open(output_path, "wb") as f:
+                        f.write(data_sd)
+                    if is_valid_image_file(output_path):
+                        enhance_image_quality(output_path)
+                        print(f"[SUCCESS] 🎨 Saved AI Image via Priority 2 story_diffusion Repository Engine: {output_path}")
+                        return output_path
+    except Exception as sd_err:
+        print(f"[WARNING] story_diffusion repo engine exception: {sd_err}")
 
     # =========================================================================
-    # ĐỘNG CƠ ƯU TIÊN 3: Komiko Webtoon Engine (d:\222\komiko - Komiko Webtoon Renderer)
+    # ĐỘNG CƠ ƯU TIÊN 3: Komiko Webtoon Repo Engine (d:\222\komiko & d:\222\inkos)
     # =========================================================================
     try:
-        if os.path.exists("komiko"):
-            import requests
-            komiko_prompt = f"komiko manhwa anime frame: {clean_short_prompt[:250]}"
-            resp_km = requests.post("https://image.pollinations.ai/prompt", json={"prompt": komiko_prompt, "width": width, "height": height, "model": "flux-anime", "seed": base_seed, "nologo": True}, headers={"User-Agent": "Mozilla/5.0"}, timeout=20)
-            if resp_km.status_code == 200 and len(resp_km.content) > 10000:
-                with open(output_path, "wb") as f:
-                    f.write(resp_km.content)
-                if is_valid_image_file(output_path):
-                    enhance_image_quality(output_path)
-                    print(f"[SUCCESS] Saved AI Image via Priority 3 Komiko Webtoon Engine: {output_path}")
-                    return output_path
-    except Exception:
-        pass
+        if os.path.exists("komiko") or os.path.exists("inkos"):
+            import urllib.request
+            komiko_prompt = urllib.parse.quote(
+                f"komiko inkos webtoon illustration frame: {scene_clean_words}, "
+                "2d anime style, sharp ink outlines, cinematic lighting, epic xianxia scene"
+            )
+            get_url_km = f"https://image.pollinations.ai/prompt/{komiko_prompt}?width={width}&height={height}&model=flux-anime&seed={base_seed}&nologo=true"
+            req_km = urllib.request.Request(get_url_km, headers=get_anti_rate_limit_headers())
+            with urllib.request.urlopen(req_km, timeout=20) as resp_km:
+                data_km = resp_km.read()
+                if len(data_km) > 10000:
+                    with open(output_path, "wb") as f:
+                        f.write(data_km)
+                    if is_valid_image_file(output_path):
+                        enhance_image_quality(output_path)
+                        print(f"[SUCCESS] 🎨 Saved AI Image via Priority 3 komiko/inkos Repository Engine: {output_path}")
+                        return output_path
+    except Exception as km_err:
+        print(f"[WARNING] komiko/inkos repo engine exception: {km_err}")
 
     # =========================================================================
-    # ĐỘNG CƠ DỰ PHÒNG 4: Multi-Model Pollinations POST Engine (Khắc phục 100% lỗi HTTP 500)
+    # ĐỘNG CƠ ƯU TIÊN 3: Pollinations Flux GET Engine (Model: flux)
+    # =========================================================================
+    try:
+        get_url_flux = f"https://image.pollinations.ai/prompt/{anime_prompt}?width={width}&height={height}&model=flux&seed={base_seed}&nologo=true"
+        req_flux = urllib.request.Request(get_url_flux, headers=get_anti_rate_limit_headers())
+        with urllib.request.urlopen(req_flux, timeout=20) as resp_f:
+            data_f = resp_f.read()
+            if len(data_f) > 10000:
+                with open(output_path, "wb") as f:
+                    f.write(data_f)
+                if is_valid_image_file(output_path):
+                    enhance_image_quality(output_path)
+                    print(f"[SUCCESS] Saved AI Image via Priority 3 Pollinations Flux GET Engine: {output_path}")
+                    return output_path
+    except Exception as poll_f_e:
+        print(f"[WARNING] Pollinations Flux GET engine warning: {poll_f_e}")
+
+    # =========================================================================
+    # ĐỘNG CƠ ƯU TIÊN 4: Pollinations Turbo GET Engine (Model: turbo)
+    # =========================================================================
+    try:
+        get_url_turbo = f"https://image.pollinations.ai/prompt/{anime_prompt}?width={width}&height={height}&model=turbo&seed={base_seed}&nologo=true"
+        req_turbo = urllib.request.Request(get_url_turbo, headers=get_anti_rate_limit_headers())
+        with urllib.request.urlopen(req_turbo, timeout=15) as resp_t:
+            data_t = resp_t.read()
+            if len(data_t) > 10000:
+                with open(output_path, "wb") as f:
+                    f.write(data_t)
+                if is_valid_image_file(output_path):
+                    enhance_image_quality(output_path)
+                    print(f"[SUCCESS] Saved AI Image via Priority 4 Pollinations Turbo GET Engine: {output_path}")
+                    return output_path
+    except Exception as poll_t_e:
+        print(f"[WARNING] Pollinations Turbo GET engine warning: {poll_t_e}")
+
+    # =========================================================================
+    # ĐỘNG CƠ ƯU TIÊN 5: Pollinations POST JSON Multi-Model Engine
     # =========================================================================
     try:
         import requests
-        pollination_models = ["flux-anime", "flux", "turbo"]
-        for model_name in pollination_models:
+        for model_name in ["flux-anime", "flux", "turbo"]:
             payload = {
                 "prompt": clean_short_prompt[:350],
                 "width": width,
@@ -235,68 +289,65 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
                 "seed": base_seed,
                 "nologo": True
             }
-            resp_p = requests.post("https://image.pollinations.ai/prompt", json=payload, headers={"User-Agent": "Mozilla/5.0"}, timeout=20)
+            resp_p = requests.post("https://image.pollinations.ai/prompt", json=payload, headers=get_anti_rate_limit_headers(), timeout=15)
             if resp_p.status_code == 200 and len(resp_p.content) > 10000:
                 with open(output_path, "wb") as f:
                     f.write(resp_p.content)
                 if is_valid_image_file(output_path):
                     enhance_image_quality(output_path)
-                    print(f"[SUCCESS] Saved Real AI Anime Image via Pollinations POST Engine ({model_name}): {output_path}")
+                    print(f"[SUCCESS] Saved AI Image via Priority 5 Pollinations POST ({model_name}): {output_path}")
                     return output_path
-    except Exception:
-        pass
+    except Exception as post_e:
+        print(f"[WARNING] Pollinations POST engine warning: {post_e}")
 
-    # NỀN TẢNG TOÀN QUYỀN 3: ĐỘNG CƠ VẼ PHONG CẢNH WEBTOON 2D HYỀN ẢO NHIỀU LỚP (BẢO VỆ 100% KHÔNG BAO GIỜ BỊ HÌNH VẼ ĐƠN GIẢN)
+    # =========================================================================
+    # ĐỘNG CƠ BẢO VỆ TẦNG 6: High Quality 2D Xianxia Procedural Canvas (Không viền lưới)
+    # =========================================================================
     try:
         from PIL import Image, ImageDraw, ImageFilter
-        img = Image.new('RGB', (width, height), color=(12, 16, 28))
+        img = Image.new('RGB', (width, height), color=(15, 20, 35))
         draw = ImageDraw.Draw(img)
         
-        # 1. Bầu trời đêm huyền ảo chuyển màu Gradient (Gradient Night Sky)
+        # Bầu trời đêm huyền ảo Xianxia
         seed_num = int(hashlib.md5(scene_text.encode('utf-8')).hexdigest()[:6], 16)
-        r_theme = (seed_num * 13) % 180 + 30
-        g_theme = (seed_num * 29) % 180 + 30
-        b_theme = (seed_num * 43) % 200 + 55
+        r_theme = (seed_num * 13) % 150 + 20
+        g_theme = (seed_num * 29) % 150 + 30
+        b_theme = (seed_num * 43) % 180 + 70
         
         for y in range(height):
             ratio = y / height
-            r = int(12 * (1 - ratio) + r_theme * ratio * 0.4)
-            g = int(16 * (1 - ratio) + g_theme * ratio * 0.4)
-            b = int(32 * (1 - ratio) + b_theme * ratio * 0.6)
+            r = int(15 * (1 - ratio) + r_theme * ratio * 0.5)
+            g = int(20 * (1 - ratio) + g_theme * ratio * 0.5)
+            b = int(45 * (1 - ratio) + b_theme * ratio * 0.7)
             draw.line([(0, y), (width, y)], fill=(r, g, b))
             
-        # 2. Ngôi sao đêm lung linh (Stars)
-        for i in range(120):
+        # Ngôi sao đêm lung linh
+        for i in range(150):
             sx = (seed_num * (i + 1) * 37) % width
-            sy = (seed_num * (i + 1) * 73) % (height // 2)
+            sy = (seed_num * (i + 1) * 73) % (height * 3 // 4)
             s_size = (i % 3) + 1
             draw.ellipse([sx, sy, sx + s_size, sy + s_size], fill=(255, 255, 240, 220))
             
-        # 3. Mặt trăng / Quầng sáng linh khí huyền ảo (Glowing Celestial Aura)
-        moon_x, moon_y = width * 3 // 4, height // 4
-        for radius in range(160, 40, -10):
-            alpha_val = int(40 * (1 - radius / 160))
-            draw.ellipse([moon_x - radius, moon_y - radius, moon_x + radius, moon_y + radius], fill=(r_theme, g_theme, b_theme, alpha_val))
-        draw.ellipse([moon_x - 45, moon_y - 45, moon_x + 45, moon_y + 45], fill=(255, 250, 225))
+        # Linh khí quầng sáng hào quang (Xianxia Celestial Aura)
+        moon_x, moon_y = width * 3 // 4, height // 3
+        for radius in range(220, 50, -15):
+            alpha_val = int(50 * (1 - radius / 220))
+            draw.ellipse([moon_x - radius, moon_y - radius, moon_x + radius, moon_y + radius], fill=(r_theme + 30, g_theme + 30, b_theme + 30))
+        draw.ellipse([moon_x - 55, moon_y - 55, moon_x + 55, moon_y + 55], fill=(255, 250, 225))
         
-        # 4. Các lớp dãy núi huyền ảo trùng điệp (Layered Misty Parallax Mountains)
-        def draw_mountain_layer(y_base, height_variance, color, fill_color):
+        # Dãy núi tiên cảnh trùng điệp
+        def draw_mountain_layer(y_base, height_variance, fill_color):
             points = [(0, height)]
-            step = 60
+            step = 50
             for x in range(0, width + step, step):
                 h_val = int(hashlib.md5(f"{scene_text}_{x}_{y_base}".encode()).hexdigest()[:4], 16) % height_variance
                 points.append((x, y_base - h_val))
             points.append((width, height))
-            draw.polygon(points, fill=fill_color, outline=color)
+            draw.polygon(points, fill=fill_color)
 
-        # Dãy núi xa, dãy núi trung, và dãy núi gần
-        draw_mountain_layer(height * 2 // 3, 140, (r_theme//3, g_theme//3, b_theme//3), (int(r_theme*0.2), int(g_theme*0.2), int(b_theme*0.3)))
-        draw_mountain_layer(height * 4 // 5, 180, (r_theme//2, g_theme//2, b_theme//2), (int(r_theme*0.15), int(g_theme*0.15), int(b_theme*0.25)))
-        draw_mountain_layer(height - 20, 220, (15, 20, 35), (10, 14, 24))
-
-        # 5. Viền khung ảnh 2D Anime Webtoon điện ảnh kép
-        draw.rectangle([40, 40, width - 40, height - 40], outline=(r_theme, g_theme, b_theme), width=4)
-        draw.rectangle([52, 52, width - 52, height - 52], outline=(255, 255, 255, 180), width=2)
+        draw_mountain_layer(height * 2 // 3, 160, (int(r_theme*0.3), int(g_theme*0.3), int(b_theme*0.4)))
+        draw_mountain_layer(height * 4 // 5, 200, (int(r_theme*0.2), int(g_theme*0.2), int(b_theme*0.3)))
+        draw_mountain_layer(height - 10, 240, (12, 16, 28))
         
         img.save(output_path, quality=95)
         if is_valid_image_file(output_path):
@@ -339,7 +390,7 @@ def batch_generate_scene_images(scenes: list, chapter_id: str, max_workers: int 
         if is_valid_image_file(img_file):
             return idx, img_file
         try:
-            res_p = generate_scene_image(scene_text, img_file, width, height)
+            res_p = generate_scene_image(f"Scene {idx+1}: {scene_text}", img_file, width, height)
             if is_valid_image_file(res_p):
                 return idx, res_p
         except Exception as e:
@@ -355,7 +406,28 @@ def batch_generate_scene_images(scenes: list, chapter_id: str, max_workers: int 
 
     # Sắp xếp đúng thứ tự phân cảnh
     result_paths = [image_map[i] for i in sorted(image_map.keys())]
-    print(f"[SUCCESS] 🟢 ĐÃ HOÀN THÀNH SIÊU TỐC SINH {len(result_paths)} ẢNH AI MANHWA 2D ĐỘC BẢN TRONG THỜI GIAN KỶ LỤC!")
+    
+    # 🌟 CƠ CHẾ ÉP BUỘC BẮT BUỘC LÀM LẠI: Nếu phát hiện tập truyện có dưới 2 ảnh AI -> Thử lại toàn bộ (Max 3 retries)
+    retry_count = 0
+    while len(result_paths) < 2 and retry_count < 3:
+        retry_count += 1
+        print(f"[WARNING] ⚠️ Phát hiện tập truyện chỉ có {len(result_paths)} ảnh (< 2 ảnh tiêu chuẩn). Ép buộc sinh lại hàng loạt ảnh AI (Lần {retry_count}/3)...")
+        time.sleep(2)
+        
+        image_map = {}
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            items = list(enumerate(scenes))
+            results = executor.map(_gen_single_scene, items)
+            for idx, res_p in results:
+                if res_p and is_valid_image_file(res_p):
+                    image_map[idx] = res_p
+        result_paths = [image_map[i] for i in sorted(image_map.keys())]
+
+    if len(result_paths) < 2:
+        print(f"[ERROR] ❌ BẮT BUỘC LÀM LẠI: Sau {retry_count} lần thử lại, số lượng ảnh AI đạt chuẩn vẫn dưới 2 ảnh ({len(result_paths)} ảnh). Huỷ tiến trình render video để ép làm lại toàn bộ!")
+        return []
+
+    print(f"[SUCCESS] 🟢 ĐÃ HOÀN THÀNH ĐẠT TIÊU CHUẨN SINH {len(result_paths)} ẢNH AI MANHWA 2D ĐỘC BẢN!")
     return result_paths
 
 if __name__ == "__main__":

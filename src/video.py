@@ -132,9 +132,9 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
     
     # Nếu danh sách phân cảnh quá ngắn (< 5 cảnh), tự bổ sung 25-30 phân cảnh đa dạng
     if len(scene_data_list) < 5:
-        print("[INFO] Tự động tạo 30 phân cảnh thoại sinh ảnh AI chuyển cảnh liên tục cho video...")
+        print("[INFO] Tự động tạo 30 phân cảnh sinh ảnh AI chuyển cảnh liên tục cho video...")
         scene_data_list = [
-            {'text': f"{title} - Phân cảnh {i+1}: Diễn biến kịch tính tiếp theo", 'duration': max(7.0, round(total_audio_duration / 30, 2))}
+            {'text': f"{title}", 'duration': max(7.0, round(total_audio_duration / 30, 2))}
             for i in range(30)
         ]
         
@@ -150,11 +150,9 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
     _, enriched_prompts = batch_enrich_visual_prompts_parallel(target_scenes, novel_id="", chapter_id=chapter_id, max_workers=10)
     image_files = batch_generate_scene_images(enriched_prompts, chapter_id, max_workers=5, width=1920, height=1080)
                 
-    if not image_files:
-        bg_image = os.path.join(img_dir, "scene_001.jpg")
-        generate_scene_image(title, bg_image, width=1920, height=1080)
-        if is_valid_image_file(bg_image):
-            image_files.append(bg_image)
+    if len(image_files) < 2:
+        print(f"[ERROR] ❌ BẮT BUỘC LÀM LẠI TẬP TRUYỆN: Tập truyện chỉ tạo được {len(image_files)} ảnh AI đạt chuẩn (< 2 ảnh tiêu chuẩn). Huỷ render video để hệ thống làm lại toàn bộ!")
+        return ""
             
     # 4. Ghép ảnh AI tương ứng với từng mốc thời gian thoại thực tế!
     full_scene_sequence = []

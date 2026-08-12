@@ -106,22 +106,22 @@ def find_chapter_needing_video(novel_id: str) -> dict:
             v_url = str(ch.get("video_url", "")).strip()
             audio_url = str(ch.get("audio_url", "")).strip().lower()
             
-            # Rà soát kịch bản của Tập ch_num
+            # 1. BẮT BUỘC: Kiểm tra xem Tập ch_num đã xong Media chưa TRƯỚC TIÊN!
+            is_done_in_db = (v_status in ["completed", "published", "done", "true"]) or bool(v_url) or ("completed" in audio_url)
+            is_done_local = (ch_num in completed_set) or (str(ch_num) in completed_set) or (ch_id in completed_set)
+            
+            if is_done_in_db or is_done_local:
+                print(f"[QUALITY AUDITOR] 🟢 Tập {ch_num} (ID: {ch_id}) ĐÃ HOÀN THÀNH MEDIA. Bỏ qua hoàn toàn để làm tập tiếp theo!")
+                # Đồng bộ ghi nhận local
+                database.record_completed_chapter_local(ch_id, ch_num)
+                continue
+
+            # 2. Rà soát kịch bản của Tập ch_num chưa hoàn thành
             passed, reason = audit_chapter_quality(ch)
             if not passed:
                 print(f"[QUALITY AUDITOR] ⚠️ TẬP {ch_num} (ID: {ch_id}) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN! Lý do: {reason}.")
                 print(f"[QUALITY AUDITOR] 🛠️ ÉP KÍCH HOẠT VIẾT LẠI KỊCH BẢN TẬP {ch_num}...")
                 return ch
-                
-            # Kiểm tra xem Tập ch_num đã xong Media chưa
-            is_done_in_db = (v_status in ["completed", "published", "done", "true"]) or bool(v_url) or ("completed" in audio_url)
-            is_done_local = (ch_num in completed_set) or (str(ch_num) in completed_set) or (ch_id in completed_set)
-            
-            if is_done_in_db or is_done_local:
-                print(f"[QUALITY AUDITOR] 🟢 Tập {ch_num} (ID: {ch_id}) ĐÃ HOÀN THÀNH. Bỏ qua để sang tập tiếp theo!")
-                # Đồng bộ ghi nhận local
-                database.record_completed_chapter_local(ch_id, ch_num)
-                continue
                 
             print(f"[QUALITY AUDITOR] 🎯 PHÁT HIỆN TẬP CHƯA XONG MEDIA: Tập {ch_num} (ID: {ch_id}). Tiến hành sản xuất Video!")
             return ch
