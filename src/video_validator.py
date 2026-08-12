@@ -20,7 +20,12 @@ def validate_video_file(video_path: str, min_size_bytes: int = 100000) -> bool:
             if duration > 1.0:
                 print(f"[VALIDATION PASSED] Video is valid! Duration: {duration:.2f}s ({duration/60:.2f}m), Size: {size/1024/1024:.2f}MB")
                 return True
+            else:
+                print(f"[VALIDATION FAIL] Video duration too short: {duration}s")
+                return False
+        else:
+            print(f"[VALIDATION FAIL] Corrupted MP4 stream or header error detected by ffprobe: {res.stderr}")
+            return False
     except Exception as e:
-        print(f"[VALIDATION WARNING] Could not probe video duration: {e}")
-        
-    return True
+        print(f"[VALIDATION WARNING] Could not run ffprobe ({e}). Falling back to size validation.")
+        return size > 5000000

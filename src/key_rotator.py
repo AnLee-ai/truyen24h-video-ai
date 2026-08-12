@@ -1,5 +1,6 @@
 import os
 import re
+import threading
 from src import config
 
 class APIKeyRotator:
@@ -46,42 +47,45 @@ class APIKeyRotator:
         self.current_index = 0
         self.invalid_keys = set()  # Key bị hỏng hẳn 401/403 (Không thử lại)
         self.rate_limited_keys = set()  # Key tạm hết quota 429
+        self._lock = threading.Lock()
         print(f"[INFO] API Key Rotator [{provider}]: Loaded {len(self.keys)} API Key account(s).")
 
     def get_key(self) -> str:
-        """Lấy API key tiếp theo hợp lệ theo cơ chế Round-Robin."""
-        # Loại bỏ hoàn toàn các key hỏng 401
-        active_keys = [k for k in self.keys if k not in self.invalid_keys]
-        if not active_keys:
-            return ""  # Không còn key hợp lệ nào
-            
-        # Ưu tiên các key chưa bị dính 429
-        usable_keys = [k for k in active_keys if k not in self.rate_limited_keys]
-        if not usable_keys:
-            # Reset danh sách hết quota tạm thời 429 để dùng lại
-            self.rate_limited_keys.clear()
-            usable_keys = active_keys
+        """Lấy API key tiếp theo hợp lệ theo cơ chế Round-Robin (Thread-safe 100%)."""
+        with self._lock:
+            # Loại bỏ hoàn toàn các key hỏng 401
+            active_keys = [k for k in self.keys if k not in self.invalid_keys]
+            if not active_keys:
+                return ""  # Không còn key hợp lệ nào
+                
+            # Ưu tiên các key chưa bị dính 429
+            usable_keys = [k for k in active_keys if k not in self.rate_limited_keys]
+            if not usable_keys:
+                # Reset danh sách hết quota tạm thời 429 để dùng lại
+                self.rate_limited_keys.clear()
+                usable_keys = active_keys
 
-        key = usable_keys[self.current_index % len(usable_keys)]
-        self.current_index = (self.current_index + 1) % len(usable_keys)
-        return key
+            key = usable_keys[self.current_index % len(usable_keys)]
+            self.current_index = (self.current_index + 1) % len(usable_keys)
+            return key
 
     def mark_key_failed(self, key: str, is_permanent: bool = True):
-        """Đánh dấu key bị hỏng (401) hoặc hết quota (429)."""
+        """Đánh dấu key bị hỏng (401) hoặc hết quota (429) Thread-safe."""
         if key:
-            key_mask = f"...{key[-6:]}" if len(key) >= 6 else key
-            if is_permanent:
-                try:
-                    print(f"[WARNING] API Key [{self.provider}] {key_mask} is invalid (401). Permanently disabled for this run.")
-                except Exception:
-                    pass
-                self.invalid_keys.add(key)
-            else:
-                try:
-                    print(f"[WARNING] API Key [{self.provider}] {key_mask} rate limited (429). Switched key.")
-                except Exception:
-                    pass
-                self.rate_limited_keys.add(key)
+            with self._lock:
+                key_mask = f"...{key[-6:]}" if len(key) >= 6 else key
+                if is_permanent:
+                    try:
+                        print(f"[WARNING] API Key [{self.provider}] {key_mask} is invalid (401). Permanently disabled for this run.")
+                    except Exception:
+                        pass
+                    self.invalid_keys.add(key)
+                else:
+                    try:
+                        print(f"[WARNING] API Key [{self.provider}] {key_mask} rate limited (429). Switched key.")
+                    except Exception:
+                        pass
+                    self.rate_limited_keys.add(key)
 
 # Khởi tạo ba bộ xoay vòng API Keys cho Gemini, Groq và OpenRouter
 gemini_rotator = APIKeyRotator(

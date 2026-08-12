@@ -232,6 +232,41 @@ def detect_speaker_role(text_segment: str, default_voice: str) -> tuple[str, str
     # 12. 🎙️ Người Dẫn Chuyện Tiên Hiệp (Narrator Trầm Hùng, Lôi Cuốn)
     return ("vi-VN-NamMinhNeural", "+0Hz", "+8%", "🎙️ Người Dẫn Chuyện (Nam Minh Standard)")
 
+def format_srt_youtube_style(srt_content: str, max_chars_per_line: int = 34) -> str:
+    """Format subtitle text to YouTube CC style (wrap lines at max 34 chars to prevent screen overflow)."""
+    blocks = re.split(r'\n\s*\n', srt_content.strip())
+    formatted_blocks = []
+    
+    for block in blocks:
+        lines = [l.strip() for l in block.split('\n') if l.strip()]
+        if len(lines) >= 3 and lines[0].isdigit() and '-->' in lines[1]:
+            header = lines[:2]
+            text = " ".join(lines[2:])
+            
+            # Wrap text into lines of max ~34 chars
+            words = text.split()
+            wrapped_lines = []
+            curr_line = []
+            curr_len = 0
+            
+            for w in words:
+                if curr_len + len(w) + (1 if curr_line else 0) > max_chars_per_line:
+                    if curr_line:
+                        wrapped_lines.append(" ".join(curr_line))
+                    curr_line = [w]
+                    curr_len = len(w)
+                else:
+                    curr_line.append(w)
+                    curr_len += len(w) + (1 if len(curr_line) > 1 else 0)
+            if curr_line:
+                wrapped_lines.append(" ".join(curr_line))
+                
+            formatted_blocks.append("\n".join(header + wrapped_lines))
+        else:
+            formatted_blocks.append(block)
+            
+    return "\n\n".join(formatted_blocks)
+
 async def _run_tts_async(text: str, voice: str, rate: str, pitch: str, audio_path: str, srt_path: str):
     """Run edge-tts using fine-grained multi-lingual character voice acting and PARALLEL chunk synthesis."""
     chunks = split_text_into_chunks(text)
@@ -275,41 +310,6 @@ async def _run_tts_async(text: str, voice: str, rate: str, pitch: str, audio_pat
             with open(p, "rb") as f:
                 final_audio.write(f.read())
                 
-def format_srt_youtube_style(srt_content: str, max_chars_per_line: int = 34) -> str:
-    """Format subtitle text to YouTube CC style (wrap lines at max 34 chars to prevent screen overflow)."""
-    blocks = re.split(r'\n\s*\n', srt_content.strip())
-    formatted_blocks = []
-    
-    for block in blocks:
-        lines = [l.strip() for l in block.split('\n') if l.strip()]
-        if len(lines) >= 3 and lines[0].isdigit() and '-->' in lines[1]:
-            header = lines[:2]
-            text = " ".join(lines[2:])
-            
-            # Wrap text into lines of max ~34 chars
-            words = text.split()
-            wrapped_lines = []
-            curr_line = []
-            curr_len = 0
-            
-            for w in words:
-                if curr_len + len(w) + (1 if curr_line else 0) > max_chars_per_line:
-                    if curr_line:
-                        wrapped_lines.append(" ".join(curr_line))
-                    curr_line = [w]
-                    curr_len = len(w)
-                else:
-                    curr_line.append(w)
-                    curr_len += len(w) + (1 if len(curr_line) > 1 else 0)
-            if curr_line:
-                wrapped_lines.append(" ".join(curr_line))
-                
-            formatted_blocks.append("\n".join(header + wrapped_lines))
-        else:
-            formatted_blocks.append(block)
-            
-    return "\n\n".join(formatted_blocks)
-
     # Save the merged shifted SRT file (YouTube style wrapped)
     raw_srt_text = "\n\n".join(total_srt_content)
     clean_srt_text = format_srt_youtube_style(raw_srt_text, max_chars_per_line=34)
