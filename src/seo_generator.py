@@ -1,5 +1,5 @@
 import json
-from src.writer import call_gemini
+from src.writer import call_gemini, safe_loads
 
 def generate_seo_metadata(title: str, chapter_number: int, content_snippet: str) -> dict:
     """Tự động tạo SEO Metadata, Tags, Hashtags và Tiêu đề Hook triệu view mang thương hiệu chính thức Truyện 24h."""
@@ -17,14 +17,13 @@ def generate_seo_metadata(title: str, chapter_number: int, content_snippet: str)
     {{
       "youtube_title": "[Câu Hook Giật Gân] - Tập {chapter_number}: {title} | Truyện 24h",
       "summary": "Tóm tắt kịch tính 2-3 câu ngắn gọn cuốn hút",
-      "tags": ["truyen 24h", "truyen 24h audio", "review truyen hay", "truyen manhwa audio", f"tap {chapter_number}"],
+      "tags": ["truyen 24h", "truyen 24h audio", "review truyen hay", "truyen manhwa audio", "tap {chapter_number}"],
       "hashtags": ["#Truyen24h", "#Truyen24hAudio", "#ReviewTruyenHay"],
       "engagement_question": "Anh em nghĩ nhân vật chính nên dùng chiêu gì ở tập tới? Đội nào ủng hộ thì comment bên dưới cùng Truyện 24h nhé!"
     }}
     """
     try:
         res = call_gemini(prompt, json_mode=True)
-        from src.writer import safe_loads
         return safe_loads(res)
     except Exception as e:
         print(f"[WARNING] SEO metadata generation fallback: {e}")

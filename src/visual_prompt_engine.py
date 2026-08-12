@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import concurrent.futures
 from src import database, config
@@ -49,7 +50,7 @@ def _enrich_single_scene(item: tuple, characters_data: list, world_lore_data: li
     
     for c in characters_data:
         c_name = c.get("name", "")
-        if c_name and (c_name.lower() in scene_text.lower()):
+        if c_name and re.search(rf'\b{re.escape(c_name.lower())}\b', scene_text.lower()):
             detected_chars.append(c_name)
             # Tra cứu từ bảng khóa chuẩn trước
             if c_name in MASTER_CHARACTER_LOCKS:
@@ -68,7 +69,7 @@ def _enrich_single_scene(item: tuple, characters_data: list, world_lore_data: li
     
     for l in world_lore_data:
         kw = l.get("keyword", "")
-        if kw and kw in scene_text:
+        if kw and re.search(rf'\b{re.escape(kw)}\b', scene_text):
             detected_lore.append(kw)
             if kw in MASTER_ENVIRONMENT_LOCKS:
                 env_lock_prompts.append(MASTER_ENVIRONMENT_LOCKS[kw])
@@ -78,7 +79,7 @@ def _enrich_single_scene(item: tuple, characters_data: list, world_lore_data: li
 
     # Kiểm tra thêm từ khóa trực tiếp trong scene text
     for env_kw, env_anchor in MASTER_ENVIRONMENT_LOCKS.items():
-        if env_kw in scene_text and env_anchor not in env_lock_prompts:
+        if re.search(rf'\b{re.escape(env_kw)}\b', scene_text) and env_anchor not in env_lock_prompts:
             env_lock_prompts.append(env_anchor)
 
     if not env_lock_prompts:
@@ -154,7 +155,10 @@ def batch_enrich_visual_prompts_parallel(scenes: list, novel_id: str = "", chapt
         os.makedirs(out_dir, exist_ok=True)
         manifest_path = os.path.join(out_dir, "visual_director_manifest.json")
         try:
-            safe_manifest_data = json.loads(re.sub(r'[\x00-\x1f]', ' ', json.dumps(manifest_list, ensure_ascii=False)))
+            # Sanitize control chars before writing manifest
+            raw_json = json.dumps(manifest_list, ensure_ascii=False)
+            sanitized = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', raw_json)
+            safe_manifest_data = json.loads(sanitized)
             with open(manifest_path, "w", encoding="utf-8") as f:
                 json.dump({"chapter_id": chapter_id, "scenes_count": len(scenes), "detail_locking_enabled": True, "scenes": safe_manifest_data}, f, ensure_ascii=False, indent=2)
             print(f"[SUCCESS] Da xuat Visual Director Manifest voi Master Detail Locks tai: {manifest_path}")

@@ -134,8 +134,13 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
     # Nếu danh sách phân cảnh quá ngắn (< 5 cảnh), tự bổ sung 25-30 phân cảnh đa dạng
     if len(scene_data_list) < 5:
         print("[INFO] Tự động tạo 30 phân cảnh sinh ảnh AI chuyển cảnh liên tục cho video...")
+        scene_variations = [
+            f"{title} - opening scene", f"{title} - action sequence", f"{title} - dialogue scene",
+            f"{title} - environment wide shot", f"{title} - character closeup", f"{title} - dramatic moment",
+        ]
+        dur_per_scene = max(7.0, round(total_audio_duration / 30, 2))
         scene_data_list = [
-            {'text': f"{title}", 'duration': max(7.0, round(total_audio_duration / 30, 2))}
+            {'text': scene_variations[i % len(scene_variations)], 'duration': dur_per_scene}
             for i in range(30)
         ]
         
@@ -160,6 +165,8 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
     accumulated_duration = 0.0
     idx = 0
     max_duration = total_audio_duration if total_audio_duration > 0 else 60.0
+    if not scene_data_list:
+        scene_data_list = [{'text': title, 'duration': 7.0}]
     while accumulated_duration < max_duration:
         scene_item = scene_data_list[idx % len(scene_data_list)]
         img_item = image_files[idx % len(image_files)]
@@ -198,7 +205,8 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
         for item in valid_sequences:
             img_clean = os.path.abspath(item['image']).replace("\\", "/").replace("'", "'\\''")
             f.write(f"file '{img_clean}'\n")
-            f.write(f"duration {item['duration']}\n")
+            dur_rounded = round(item['duration'] / 0.05) * 0.05  # Snap to 20fps frame boundary
+            f.write(f"duration {dur_rounded}\n")
         # Dòng cuối lặp ảnh cuối cùng để tránh trôi frame
         if valid_sequences:
             last_img_clean = os.path.abspath(valid_sequences[-1]['image']).replace("\\", "/").replace("'", "'\\''")
@@ -338,10 +346,11 @@ def process_existing_audio(audio_path: str, srt_path: str = "", title: str = "Au
         return ""
         
     parent_folder = os.path.basename(os.path.dirname(os.path.abspath(audio_path)))
-    if parent_folder and parent_folder not in ["output", "data", "src"]:
+    import uuid, re as _re
+    _uuid_pat = _re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', _re.I)
+    if parent_folder and (_uuid_pat.match(parent_folder) or len(parent_folder) > 8):
         chapter_id = parent_folder
     else:
-        import uuid
         chapter_id = str(uuid.uuid4())[:8]
         
     print(f"[INFO] Đang xử lý file audio có sẵn cho chapter_id ({chapter_id}): {audio_path}")

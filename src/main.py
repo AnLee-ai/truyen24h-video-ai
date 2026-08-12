@@ -93,7 +93,10 @@ def find_chapter_needing_video(novel_id: str) -> dict:
                     completed_set.add(item)
                     completed_set.add(str(item))
                     if str(item).isdigit():
-                        completed_set.add(int(item))
+                        try:
+                            completed_set.add(int(item))
+                        except (ValueError, TypeError):
+                            pass
         except Exception:
             pass
 
@@ -103,7 +106,7 @@ def find_chapter_needing_video(novel_id: str) -> dict:
             ch_id = str(ch.get("id", ""))
             ch_num = int(ch.get("chapter_number", 0)) if str(ch.get("chapter_number", "")).isdigit() else 0
             v_status = str(ch.get("video_status", "")).strip().lower()
-            v_url = str(ch.get("video_url", "")).strip()
+            v_url = str(ch.get("video_url") or "").strip()
             audio_url = str(ch.get("audio_url", "")).strip().lower()
             
             # 1. BẮT BUỘC: Kiểm tra xem Tập ch_num đã xong Media chưa TRƯỚC TIÊN!
@@ -112,8 +115,6 @@ def find_chapter_needing_video(novel_id: str) -> dict:
             
             if is_done_in_db or is_done_local:
                 print(f"[QUALITY AUDITOR] 🟢 Tập {ch_num} (ID: {ch_id}) ĐÃ HOÀN THÀNH MEDIA. Bỏ qua hoàn toàn để làm tập tiếp theo!")
-                # Đồng bộ ghi nhận local
-                database.record_completed_chapter_local(ch_id, ch_num)
                 continue
 
             # 2. Rà soát kịch bản của Tập ch_num chưa hoàn thành

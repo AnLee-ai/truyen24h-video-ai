@@ -20,7 +20,7 @@ def overlay_thumbnail_text(image_path: str, chapter_number: int, title: str) -> 
         draw.rectangle(bottom_box, fill=(0, 0, 0, 160))
         
         # Vẽ thẻ Badge góc trên (Top Badge)
-        badge_box = [(40, 40), (520, 110)]
+        badge_box = [(40, 40), (min(520, width - 10), min(110, height // 8))]
         draw.rectangle(badge_box, fill=(220, 38, 38, 230)) # Màu đỏ nổi bật
         
         # Ghép overlay vào ảnh chính
@@ -38,7 +38,7 @@ def overlay_thumbnail_text(image_path: str, chapter_number: int, title: str) -> 
         font_badge = None
         for fpath in font_candidates:
             try:
-                if os.path.exists(fpath) or not fpath.startswith("C:"):
+                if os.path.exists(fpath):
                     font_large = ImageFont.truetype(fpath, 76)
                     font_badge = ImageFont.truetype(fpath, 42)
                     print(f"[INFO] Loaded Ultra-Bold Thumbnail Font: {fpath}")
@@ -84,7 +84,8 @@ def generate_youtube_thumbnail(title: str, chapter_number: int, output_path: str
     Feature 1 Nâng Cấp: Tự động tạo YouTube Thumbnail 4K High-CTR chuẩn ngách Truyện Manhwa Audio.
     Học tập các kênh triệu view: Khung hình 2D Manhwa 8K, thần thái nhân vật quyết đoán, hào quang năng lượng và Banner tiêu đề chữ nổi bật!
     """
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    out_dir = os.path.dirname(os.path.abspath(output_path))
+    os.makedirs(out_dir, exist_ok=True)
     
     # Prompt nghệ thuật đỉnh cao thiết kế riêng cho Thumbnail YouTube
     prompt = (

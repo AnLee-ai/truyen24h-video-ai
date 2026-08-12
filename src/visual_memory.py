@@ -149,7 +149,7 @@ class Ultimate50FeatureMemoryEngine:
 
     def save_memory(self):
         """Feature 43: Persistent Disk Save"""
-        os.makedirs(os.path.dirname(self.memory_file), exist_ok=True)
+        dir_path = os.path.dirname(self.memory_file); dir_path and os.makedirs(dir_path, exist_ok=True)
         try:
             with open(self.memory_file, "w", encoding="utf-8") as f:
                 json.dump({
@@ -179,7 +179,7 @@ class Ultimate50FeatureMemoryEngine:
             search_str = (name + " " + " ".join(aliases) + " " + base_appearance).lower()
             if any(w in search_str for w in ["lão", "ông", "bà", "trưởng lão", "elder", "veteran"]):
                 age_group = "65-75 years old elderly person"
-            elif any(w in search_str for w in ["chú", "bác", "trung niên", "sư phụ", "chủ quán", "trung niên"]):
+            elif any(w in search_str for w in ["chú", "bác", "trung niên", "sư phụ", "chủ quán"]):
                 age_group = "40-50 years old middle-aged adult"
             elif any(w in search_str for w in ["tiểu", "thiếu niên", "em bé", "bé"]):
                 age_group = "14-16 years old young teenager"
@@ -266,7 +266,6 @@ class Ultimate50FeatureMemoryEngine:
 
         # 2. BỘ NHỚ SIÊU CẤP NHÂN VẬT & ĐỐI TƯỢNG (Super Visual Memory Engine)
         # Nạp tự động: Trang phục, Thần thái (Cảm xúc), Vết thương, Bảo khí vũ khí & Màu sắc đặc trưng
-        matched_chars_prompts = []
         # 2. Xử lý Đa Nhân Vật & Bố Cục Đối Thoại Khung Tranh (Multi-Character Composition Engine)
         matched_chars_prompts = []
         matched_char_names = []
@@ -348,7 +347,7 @@ class Ultimate50FeatureMemoryEngine:
         self.camera_step += 1
 
         # 4. Trích xuất & Tự động dịch / Mở rộng từ khóa hình ảnh tiếng Việt sang tiếng Anh (Visual Keyword Expansion Matrix)
-        clean_words = re.sub(r"[^\w\s]", "", scene_text).split()
+        clean_words = re.sub(r'[!"#$%&\'()*+,\-./:;<=>?@[\\\]^_`{|}~]', '', scene_text).split()
         scene_action_clean = " ".join(clean_words[:15]) if clean_words else "dynamic action moment"
 
         # MA TRẬN BƠM HIỆU ỨNG CHIẾN ĐẤU & THỊ GIÁC ĐIỆN ẢNH SIÊU CẤP (Ultra Combat & FX Matrix)
@@ -435,7 +434,7 @@ class Ultimate50FeatureMemoryEngine:
         )
 
         # MD5 Hash Caching
-        prompt_hash = hashlib.md5(positive_prompt.encode("utf-8")).hexdigest()
+        prompt_hash = hashlib.sha256(positive_prompt.encode("utf-8")).hexdigest()[:32]
 
         return {
             "positive_prompt": positive_prompt,

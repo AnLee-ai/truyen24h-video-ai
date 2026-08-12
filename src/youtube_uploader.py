@@ -8,14 +8,17 @@ MAX_DAILY_QUOTA = 9500  # Giới hạn an toàn (Giới hạn thực của YouTu
 
 def check_and_update_quota(cost: int = 1600) -> bool:
     """Kiểm tra hạn ngạch YouTube API v3 (100% Free Quota Tracker)."""
-    os.makedirs(os.path.dirname(QUOTA_TRACKER_FILE), exist_ok=True)
+    _tracker_dir = os.path.dirname(QUOTA_TRACKER_FILE)
+    if _tracker_dir:
+        os.makedirs(_tracker_dir, exist_ok=True)
     today = time.strftime("%Y-%m-%d")
     
     data = {"date": today, "used_quota": 0}
     if os.path.exists(QUOTA_TRACKER_FILE):
         try:
             with open(QUOTA_TRACKER_FILE, "r", encoding="utf-8") as f:
-                data = json.load(f)
+                loaded = json.load(f)
+                data = loaded if isinstance(loaded, dict) else {}
                 if data.get("date") != today:
                     data = {"date": today, "used_quota": 0}
         except Exception:
@@ -100,6 +103,7 @@ def upload_video_to_youtube(video_path: str, title: str, chapter_num: int = 1, c
         elif os.path.exists(client_secrets_file):
             flow = InstalledAppFlow.from_client_secrets_file(client_secrets_file, SCOPES)
             creds = flow.run_local_server(port=0)
+            os.makedirs(os.path.dirname(token_path) or ".", exist_ok=True)
             with open(token_path, "w") as token_file:
                 token_file.write(creds.to_json())
         else:
@@ -113,7 +117,7 @@ def upload_video_to_youtube(video_path: str, title: str, chapter_num: int = 1, c
                 "title": metadata["title"],
                 "description": metadata["description"],
                 "tags": metadata["tags"],
-                "categoryId": metadata["categoryId"]
+                "categoryId": str(metadata.get("categoryId", "24"))
             },
             "status": {
                 "privacyStatus": "public",
@@ -121,7 +125,7 @@ def upload_video_to_youtube(video_path: str, title: str, chapter_num: int = 1, c
             }
         }
         
-        media = MediaFileUpload(video_path, chunksize=-1, resumable=True)
+        media = MediaFileUpload(video_path, chunksize=5 * 1024 * 1024, resumable=True)  # 5MB chunks
         request = youtube.videos().insert(part="snippet,status", body=body, media_body=media)
         
         print("[INFO] Đang tải video lên YouTube...")

@@ -52,9 +52,9 @@ def run_health_check():
     # 5. Pollinations.ai Image API
     poll_ok = False
     try:
-        req = urllib.request.Request("https://image.pollinations.ai/prompt/test", headers={'User-Agent': 'Mozilla/5.0'})
-        with urllib.request.urlopen(req, timeout=10) as response:
-            poll_ok = response.status in (200, 301, 302)
+        req = urllib.request.Request("https://image.pollinations.ai/models", headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=8) as response:
+            poll_ok = response.status == 200
     except Exception:
         pass
     checks.append(("Pollinations.ai Free Image API", "ONLINE" if poll_ok else "UNREACHABLE"))

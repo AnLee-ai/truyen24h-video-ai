@@ -232,7 +232,7 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
                 f"komiko inkos webtoon illustration frame: {scene_clean_words}, "
                 "2d anime style, sharp ink outlines, cinematic lighting, epic xianxia scene"
             )
-            get_url_km = f"https://image.pollinations.ai/prompt/{komiko_prompt}?width={width}&height={height}&model=flux-anime&seed={base_seed}&nologo=true"
+            get_url_km = f"https://image.pollinations.ai/prompt/{komiko_prompt}?width={width}&height={height}&model=flux-anime&seed={base_seed % 2147483647}&nologo=true"
             req_km = urllib.request.Request(get_url_km, headers=get_anti_rate_limit_headers())
             with urllib.request.urlopen(req_km, timeout=20) as resp_km:
                 data_km = resp_km.read()
@@ -250,7 +250,7 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     # ĐỘNG CƠ ƯU TIÊN 3: Pollinations Flux GET Engine (Model: flux)
     # =========================================================================
     try:
-        get_url_flux = f"https://image.pollinations.ai/prompt/{anime_prompt}?width={width}&height={height}&model=flux&seed={base_seed}&nologo=true"
+        get_url_flux = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={width}&height={height}&model=flux&seed={base_seed}&nologo=true"
         req_flux = urllib.request.Request(get_url_flux, headers=get_anti_rate_limit_headers())
         with urllib.request.urlopen(req_flux, timeout=20) as resp_f:
             data_f = resp_f.read()
@@ -268,7 +268,7 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     # ĐỘNG CƠ ƯU TIÊN 4: Pollinations Turbo GET Engine (Model: turbo)
     # =========================================================================
     try:
-        get_url_turbo = f"https://image.pollinations.ai/prompt/{anime_prompt}?width={width}&height={height}&model=turbo&seed={base_seed}&nologo=true"
+        get_url_turbo = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={width}&height={height}&model=turbo&seed={base_seed}&nologo=true"
         req_turbo = urllib.request.Request(get_url_turbo, headers=get_anti_rate_limit_headers())
         with urllib.request.urlopen(req_turbo, timeout=15) as resp_t:
             data_t = resp_t.read()
@@ -356,7 +356,11 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
         draw_mountain_layer(height * 4 // 5, 200, (int(r_theme*0.2), int(g_theme*0.2), int(b_theme*0.3)))
         draw_mountain_layer(height - 10, 240, (12, 16, 28))
         
-        img.save(output_path, quality=95)
+        jpeg_path = output_path if output_path.lower().endswith(('.jpg', '.jpeg')) else output_path + '.jpg'
+        img.save(jpeg_path, 'JPEG', quality=95)
+        if jpeg_path != output_path:
+            import shutil
+            shutil.move(jpeg_path, output_path)
         if is_valid_image_file(output_path):
             print(f"[SUCCESS] Generated 2D Anime Parallax Webtoon Landscape Canvas: {output_path}")
             return output_path
@@ -366,21 +370,7 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     print(f"[ERROR] Could not generate AI image for {output_path}")
     return output_path
 
-def get_anti_rate_limit_headers():
-    """Tạo ngẫu nhiên User-Agent headers giúp vượt qua 100% bộ lọc 429 Rate Limit của Pollinations AI."""
-    import random
-    user_agents = [
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2.1 Safari/605.1.15",
-        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0"
-    ]
-    return {
-        "User-Agent": random.choice(user_agents),
-        "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Cache-Control": "no-cache"
-    }
+
 
 def batch_generate_scene_images(scenes: list, chapter_id: str, max_workers: int = 5, width: int = 1920, height: int = 1080) -> list:
     """Sinh ảnh AI Manhwa 2D hàng loạt song song đa luồng Siêu Tốc (Parallel max_workers=5) bảo đảm 100% sinh ảnh ĐỘC BẢN SẮC NÉT trong 15s."""
@@ -406,10 +396,14 @@ def batch_generate_scene_images(scenes: list, chapter_id: str, max_workers: int 
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         items = list(enumerate(scenes))
-        results = executor.map(_gen_single_scene, items)
-        for idx, res_p in results:
-            if res_p and is_valid_image_file(res_p):
-                image_map[idx] = res_p
+        futures = {executor.submit(_gen_single_scene, item): item[0] for item in items}
+        for future in concurrent.futures.as_completed(futures):
+            try:
+                idx, res_p = future.result()
+                if res_p and is_valid_image_file(res_p):
+                    image_map[idx] = res_p
+            except Exception as fe:
+                print(f"[WARNING] Scene generation task failed: {fe}")
 
     # Sắp xếp đúng thứ tự phân cảnh
     result_paths = [image_map[i] for i in sorted(image_map.keys())]
@@ -424,10 +418,14 @@ def batch_generate_scene_images(scenes: list, chapter_id: str, max_workers: int 
         image_map = {}
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             items = list(enumerate(scenes))
-            results = executor.map(_gen_single_scene, items)
-            for idx, res_p in results:
-                if res_p and is_valid_image_file(res_p):
-                    image_map[idx] = res_p
+            futures = {executor.submit(_gen_single_scene, item): item[0] for item in items}
+            for future in concurrent.futures.as_completed(futures):
+                try:
+                    idx, res_p = future.result()
+                    if res_p and is_valid_image_file(res_p):
+                        image_map[idx] = res_p
+                except Exception as fe:
+                    print(f"[WARNING] Scene generation task failed: {fe}")
         result_paths = [image_map[i] for i in sorted(image_map.keys())]
 
     if len(result_paths) < 2:

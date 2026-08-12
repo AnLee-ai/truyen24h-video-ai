@@ -1,5 +1,6 @@
 import re
 import threading
+from typing import Optional
 from supabase import create_client, Client
 from src import config
 
@@ -33,7 +34,7 @@ def init_novel(title: str, description: str = "") -> dict:
         # 2. Tìm kiếm theo tiêu đề chính xác hoặc tiêu đề tương tự
         existing = client.table("novels").select("*").eq("title", title).execute()
         if not existing.data and len(title) > 10:
-            prefix = title[:15]
+            prefix = title[:20]
             existing = client.table("novels").select("*").ilike("title", f"%{prefix}%").execute()
             
         if existing.data and len(existing.data) > 0:
@@ -76,7 +77,6 @@ def get_novel(novel_id: str) -> dict:
                     data = json.load(f)
                     if data.get("id") == novel_id or not novel_id:
                         return data
-                    return data
             except Exception:
                 pass
     return {}
@@ -136,7 +136,7 @@ def get_all_chapters(novel_id: str) -> list:
             .execute()
         if response.data:
             res_data = response.data or []
-            return sorted(res_data, key=lambda x: int(x.get("chapter_number", 0)))
+            return sorted(res_data, key=lambda x: int(x.get("chapter_number", 0) or 0) if str(x.get("chapter_number", "0")).lstrip('-').isdigit() else 0)
     except Exception as e:
         print(f"[WARNING] Supabase get_all_chapters failed ({e}). Returning empty list fallback.")
     return []
@@ -232,9 +232,13 @@ def record_completed_chapter_local(chapter_id: str, chapter_number: int = 0):
         
         try:
             os.makedirs("data", exist_ok=True)
-            with open(prog_file, "w", encoding="utf-8") as f:
-                json.dump(data, f, ensure_ascii=False, indent=2)
-        except Exception as e:
+            import tempfile
+            with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir="data", suffix=".tmp", delete=False) as tmp_f:
+                json.dump(data, tmp_f, ensure_ascii=False, indent=2)
+                tmp_name = tmp_f.name
+            import shutil
+            shutil.move(tmp_name, prog_file)
+        except Exception:
             pass
         
     # Đồng bộ trực tiếp lên Supabase CSDL chống lặp 100%
@@ -321,7 +325,10 @@ def upload_file_to_supabase(file_path: str, bucket_name: str = "media", destinat
         else:
             content_type = "application/octet-stream"
 
-    # 3. Đọc file
+    # 3. Đọc file (warn if large)
+    file_size = os.path.getsize(file_path)
+    if file_size > 100 * 1024 * 1024:  # 100MB warning
+        print(f"[WARNING] Large file upload ({file_size/(1024*1024):.1f}MB). This may use significant memory.")
     with open(file_path, "rb") as f:
         file_data = f.read()
 
@@ -392,7 +399,7 @@ def get_character_by_name(novel_id: str, name: str) -> dict:
     return response.data[0] if response.data else {}  # type: ignore[return-value]
 
 def upsert_character(novel_id: str, name: str, description: str = "", power_tier: str = "Ordinary", 
-                     combat_stats: dict | None = None, relationships: dict | None = None, 
+                     combat_stats: Optional[dict] = None, relationships: Optional[dict] = None, 
                      failure_flag: bool = False, last_breakthrough_chapter: int = 0,
                      novel_title: str = "Vạn Cổ Thần Vương: Ta Có Hệ Thống Thôn Phệ Vô Tận",
                      world_name: str = "Đấu Khí Đại Lục / Vạn Cổ Thần Vương Universe") -> dict:

@@ -69,7 +69,7 @@ def send_audio_to_telegram(audio_path: str, caption: str, title: str | None = No
                 data['title'] = title
                 
             response = requests.post(url, data=data, files=files, timeout=300)
-            if response.status_code != 200 and "can't parse entities" in response.text:
+            if response.status_code != 200 and "parse entities" in response.text.lower():
                 # Fallback to plain text caption if markdown format fails
                 data.pop('parse_mode', None)
                 audio_file.seek(0)
@@ -118,7 +118,7 @@ def send_photo_to_telegram(photo_path: str, caption: str) -> bool:
                 'parse_mode': 'Markdown'
             }
             response = requests.post(url, data=data, files=files, timeout=60)
-            if response.status_code != 200 and "can't parse entities" in response.text:
+            if response.status_code != 200 and "parse entities" in response.text.lower():
                 data.pop('parse_mode', None)
                 photo_file.seek(0)
                 files = {'photo': (os.path.basename(photo_path), photo_file, 'image/jpeg')}

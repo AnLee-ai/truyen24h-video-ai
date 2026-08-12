@@ -138,13 +138,14 @@ def expand_chapter_content(content: str, target_words: int = 3200) -> str:
         f"Viết thẳng vào câu chuyện 100% bằng Tiếng Việt mượt mà, không lặp lại đoạn cũ."
     )
     
-    part_next = call_gemini(continuation_prompt)
-    if part_next and len(part_next.split()) > 200:
-        cleaned_next = clean_chapter_content(part_next)
-        new_content = content + "\n\n" + cleaned_next
-        print(f"[SUCCESS] Đã nối dài chương truyện thành công! Tổng số từ mới: {len(new_content.split())} từ.")
-        return new_content
-        
+    for _expand_attempt in range(3):
+        part_next = call_gemini(continuation_prompt)
+        if part_next and len(part_next.split()) > 200:
+            cleaned_next = clean_chapter_content(part_next)
+            content = content + "\n\n" + cleaned_next
+            print(f"[SUCCESS] Đã nối dài chương truyện! Tổng số từ mới: {len(content.split())} từ.")
+            if len(content.split()) >= target_words:
+                break
     return content
 
 def verify_and_sanitize_chapter_content(text: str, novel_id: str = "") -> tuple:
@@ -200,6 +201,8 @@ def translate_to_vietnamese_with_gemini(text: str) -> str:
         "4. Chỉ xuất ra duy nhất văn bản truyện đã dịch sang tiếng Việt, không kèm lời dẫn hay giải thích.\n\n"
         f"VĂN BẢN CẦN DỊCH:\n{text[:12000]}"
     )
+    if len(text) > 12000:
+        print(f"[WARNING] Text too long ({len(text)} chars), truncating to 12000 chars for translation. Some content may be lost.")
     translated_res = call_gemini(translate_prompt)
     if translated_res and len(translated_res.split()) > 200:
         cleaned_res = clean_chapter_content(translated_res)
@@ -255,6 +258,9 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
                 print(f"[WARNING] API Key [Gemini] ...{g_key[-6:] if len(g_key)>6 else g_key} rate limited (429). Switched key.")
                 key_rotator.mark_gemini_key_failed(g_key, is_permanent=False)
                 time.sleep(2.5)
+            elif "503" in err_str or "SERVICE_UNAVAILABLE" in err_str:
+                print(f"[WARNING] Gemini [{current_g_model}] Service Unavailable (503). Waiting 5s...")
+                time.sleep(5.0)
             else:
                 time.sleep(1.0)
 
@@ -295,8 +301,9 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
                     if content and len(content.strip().split()) > 10:
                         print(f"[SUCCESS] Groq Fallback Engine [{current_model}]: Đã sinh kịch bản ({len(content.strip().split())} từ).")
                         return content.strip()
-                if response.status_code == 429:
-                    break
+                elif response.status_code == 429:
+                    time.sleep(1.5)
+                    continue
             except Exception:
                 pass
 
@@ -337,7 +344,7 @@ def call_openrouter_free_llm(prompt: str) -> str:
     for m in free_models:
         payload = {
             "model": m,
-            "messages": [{"role": "user", "content": prompt[:3500]}],
+            "messages": [{"role": "user", "content": prompt[:3000] + ("\n...\n" + prompt[-400:] if len(prompt) > 3500 else "")}],
             "temperature": 0.7
         }
         try:
@@ -399,9 +406,10 @@ def call_pollinations_free_llm(prompt: str) -> str:
 
 def get_embedding(text: str) -> list:
     """Generate vector embedding for semantic search using text-embedding-004."""
+    EMBED_DIM = 768  # text-embedding-004 actual output dimension
     g_key = key_rotator.get_gemini_key() or config.GEMINI_API_KEY
     if not g_key:
-        return [0.0] * 1536
+        return [0.0] * EMBED_DIM
     try:
         if USE_NEW_GENAI:
             client = get_genai_client(api_key=g_key)
@@ -422,17 +430,17 @@ def get_embedding(text: str) -> list:
             )
             emb = result['embedding']
 
-        if len(emb) > 1536:
-            return emb[:1536]
-        elif len(emb) < 1536:
-            return emb + [0.0] * (1536 - len(emb))
+        if len(emb) > EMBED_DIM:
+            return emb[:EMBED_DIM]
+        elif len(emb) < EMBED_DIM:
+            return emb + [0.0] * (EMBED_DIM - len(emb))
         return emb
     except Exception as e:
         err_str = str(e)
         if "401" in err_str or "UNAUTHENTICATED" in err_str:
             key_rotator.mark_gemini_key_failed(g_key)
         print(f"[WARNING] Skipping embedding generation due to API key error.")
-        return [0.0] * 1536
+        return [0.0] * EMBED_DIM
 
 # Novel Lifecycle Operations
 def init_novel_pipeline(title: str, description: str) -> dict:

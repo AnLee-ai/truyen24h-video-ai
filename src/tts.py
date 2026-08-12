@@ -17,6 +17,8 @@ def vtt_to_srt(vtt_content: str) -> str:
         if skip_header:
             if line.startswith("WEBVTT") or line.strip() == "":
                 continue
+            if line.startswith("NOTE"):
+                continue
             skip_header = False
             
         # Match time range line: e.g. 00:00:01.000 --> 00:00:03.000
@@ -57,7 +59,7 @@ def split_text_into_chunks(text: str, max_chars: int = 1200) -> list:
                 current_chunk = []
                 current_len = 0
             # Split long paragraph by sentence
-            sentences = re.split(r'(?<=[.?!])\s+', p)
+            sentences = re.split(r'(?<!\.\.)(?<=[.?!])\s+', p)
             current_s_chunk: list[str] = []
             current_s_len = 0
             for s in sentences:
@@ -284,8 +286,12 @@ async def _run_tts_async(text: str, voice: str, rate: str, pitch: str, audio_pat
             raise ValueError(f"Failed to generate audio for chunk {idx}. Empty data.")
         return idx, chunk_audio, chunk_srt
 
-    # Chạy song song 100% tất cả các chunks bằng asyncio.gather (Tăng tốc TTS gấp 4x)
-    tasks = [_process_chunk(idx, c_text) for idx, c_text in enumerate(chunks)]
+    # Chay song song voi semaphore gioi han 5 ket noi dong thoi tranh Connection Reset
+    _tts_semaphore = asyncio.Semaphore(5)
+    async def _throttled_chunk(idx, c_text):
+        async with _tts_semaphore:
+            return await _process_chunk(idx, c_text)
+    tasks = [_throttled_chunk(idx, c_text) for idx, c_text in enumerate(chunks)]
     chunk_results = await asyncio.gather(*tasks)
     chunk_results.sort(key=lambda x: x[0])  # Giữ đúng thứ tự câu chuyện
 
@@ -295,6 +301,10 @@ async def _run_tts_async(text: str, voice: str, rate: str, pitch: str, audio_pat
     global_sub_idx = 1
 
     for idx, chunk_audio, chunk_srt in chunk_results:
+        if not os.path.exists(chunk_srt):
+            print(f"[WARNING] Chunk SRT not found, skipping subtitle for chunk {idx}: {chunk_srt}")
+            chunk_audio_paths.append(chunk_audio)
+            continue
         with open(chunk_srt, "r", encoding="utf-8") as f:
             srt_content = f.read()
             
@@ -309,6 +319,9 @@ async def _run_tts_async(text: str, voice: str, rate: str, pitch: str, audio_pat
     # Concatenate all chunk mp3 files
     with open(audio_path, "wb") as final_audio:
         for p in chunk_audio_paths:
+            if not os.path.exists(p) or os.path.getsize(p) == 0:
+                print(f"[WARNING] Chunk audio missing or empty, skipping: {p}")
+                continue
             with open(p, "rb") as f:
                 final_audio.write(f.read())
                 
@@ -344,20 +357,36 @@ def generate_voice_and_subs(text: str, chapter_id: str) -> tuple:
     Generate MP3 voice file and SRT subtitles for a chapter (with chunking).
     """
     text = clean_tts_text(text)
+    os.makedirs(config.OUTPUT_DIR, exist_ok=True)
     audio_path = os.path.join(config.OUTPUT_DIR, f"{chapter_id}_raw.mp3")
     srt_path = os.path.join(config.OUTPUT_DIR, f"{chapter_id}.srt")
     
     print(f"[INFO] Synthesizing speech for chapter using voice {config.DEFAULT_VOICE}...")
     
-    # Run the async loop inside the sync wrapper to generate audio and srt directly
-    asyncio.run(_run_tts_async(
-        text=text,
-        voice=config.DEFAULT_VOICE,
-        rate=config.DEFAULT_RATE,
-        pitch=config.DEFAULT_PITCH,
-        audio_path=audio_path,
-        srt_path=srt_path
-    ))
+    # Run the async loop; handle case where loop already exists (e.g. FastAPI background task)
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+                future = pool.submit(asyncio.run, _run_tts_async(
+                    text=text, voice=config.DEFAULT_VOICE,
+                    rate=config.DEFAULT_RATE, pitch=config.DEFAULT_PITCH,
+                    audio_path=audio_path, srt_path=srt_path
+                ))
+                future.result()
+        else:
+            loop.run_until_complete(_run_tts_async(
+                text=text, voice=config.DEFAULT_VOICE,
+                rate=config.DEFAULT_RATE, pitch=config.DEFAULT_PITCH,
+                audio_path=audio_path, srt_path=srt_path
+            ))
+    except RuntimeError:
+        asyncio.run(_run_tts_async(
+            text=text, voice=config.DEFAULT_VOICE,
+            rate=config.DEFAULT_RATE, pitch=config.DEFAULT_PITCH,
+            audio_path=audio_path, srt_path=srt_path
+        ))
     
     # Check if final file is valid
     if not os.path.exists(audio_path) or os.path.getsize(audio_path) == 0:
