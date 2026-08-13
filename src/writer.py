@@ -628,29 +628,11 @@ def get_current_arc(novel_id: str, chapter_number: int) -> dict:
     }
 
 def write_next_chapter(novel_id: str) -> dict:
-    import os
-    completed_nums = set()
-    prog_file = "data/chapters_progress.json"
-    if os.path.exists(prog_file):
-        try:
-            with open(prog_file, "r", encoding="utf-8") as f:
-                pdata = json.load(f)
-                completed_nums = {int(x) for x in pdata.get("completed_chapters", []) if str(x).isdigit()}
-        except Exception:
-            pass
+    # Lấy tập hợp 100% tất cả các số chương đã xong từ Supabase + data/ + output/ + RAM
+    completed_set = database.get_completed_chapters_set(novel_id)
+    all_done_nums = {int(x) for x in completed_set if str(x).isdigit()}
 
     all_chapters = database.get_all_chapters(novel_id)
-    
-    # Tập hợp tất cả các số chương đã viết xong nội dung (>1200 từ và không phải BLUEPRINT) trong Supabase CSDL
-    completed_in_db = {
-        int(c["chapter_number"]) for c in all_chapters 
-        if isinstance(c.get("chapter_number"), (int, str)) and str(c.get("chapter_number")).isdigit()
-        and not str(c.get("content", "")).startswith("BLUEPRINT:")
-        and len(str(c.get("content", "")).split()) >= 1200
-    }
-    
-    # Hợp nhất danh sách các chương đã xong
-    all_done_nums = completed_nums.union(completed_in_db)
     
     # Lọc các chương chưa viết xong kịch bản (< 1200 từ hoặc còn là BLUEPRINT)
     unwritten_chapters = [

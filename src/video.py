@@ -331,6 +331,31 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
     except Exception as pass2_e:
         print(f"[ERROR] Exception in Pass 2 rendering: {pass2_e}")
         
+    # Lệnh FFmpeg PASS 3 (Bảo vệ tuyệt đối): Render video không phụ đề nếu filter subtitles gặp sự cố hệ thống
+    print("[INFO] 🛡️ Kích hoạt Động cơ PASS 3 Bảo Vệ Tuyệt Đối (Slideshow Video + Audio)...")
+    vf_filter_pass3 = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080"
+    cmd_pass3 = [
+        "ffmpeg", "-y",
+        "-f", "concat", "-safe", "0", "-i", concat_list_path,
+        "-i", audio_path,
+        "-vf", vf_filter_pass3,
+        "-map", "0:v", "-map", "1:a",
+        "-r", "20",
+        "-c:v", codec
+    ] + encoder_opts + [
+        "-b:v", "1000k", "-maxrate", "1500k", "-bufsize", "2000k",
+        "-c:a", "aac", "-b:a", "128k", "-pix_fmt", "yuv420p",
+        "-movflags", "+faststart",
+        "-shortest", output_video_path
+    ]
+    try:
+        res3 = subprocess.run(cmd_pass3, capture_output=True, text=True, timeout=1800)
+        if res3.returncode == 0 and validate_video_file(output_video_path, min_size_bytes=200000):
+            print(f"[SUCCESS] 🟢 PASS 3 Render Video bảo vệ tuyệt đối thành công: {output_video_path}")
+            return output_video_path
+    except Exception as pass3_e:
+        print(f"[ERROR] Pass 3 exception: {pass3_e}")
+
     return ""
 
 def render_novel_video(audio_path: str, srt_path: str, title: str, chapter_id: str) -> str:

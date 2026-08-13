@@ -1,3 +1,6 @@
+import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src import database
 
 def main():
@@ -85,9 +88,9 @@ def main():
         }, on_conflict="novel_id,chapter_number").execute()
         if c_res.data:
             ch1_id = c_res.data[0]["id"]
-            print(f"   [5/6 CHAPTERS] Da nap Chapter 1 (ID: {ch1_id})")
+            print(f"   [5/12 CHAPTERS] Da nap Chapter 1 (ID: {ch1_id})")
     except Exception as e:
-        print(f"   [5/6 CHAPTERS] Canh bao Chapter 1: {e}")
+        print(f"   [5/12 CHAPTERS] Canh bao Chapter 1: {e}")
 
     # BANG 6: episodes_summary
     if ch1_id:
@@ -100,11 +103,71 @@ def main():
                 "chapter_id": ch1_id,
                 "event_summary": "Tiêu Viêm trùng sinh tại Ô Thán Thành kích hoạt Hệ Thống Thôn Phệ Vô Tận, nén ép kẻ thù và bắt đầu hành trình bá chủ chư thiên."
             }).execute()
-            print("   [6/6 EPISODES_SUMMARY] Da nap Episode 1 Summary thanh cong!")
+            print("   [6/12 EPISODES_SUMMARY] Da nap Episode 1 Summary thanh cong!")
         except Exception as e:
-            print(f"   [6/6 EPISODES_SUMMARY] Canh bao: {e}")
+            print(f"   [6/12 EPISODES_SUMMARY] Canh bao: {e}")
 
-    print("[SUCCESS] DA NAP KHOI TAO 100% DU LIEU CHO TOAN BO 6 BANG CSDL SUPABASE!")
+    # BANG 7: publishing_analytics
+    if ch1_id:
+        try:
+            database.record_publishing_analytics(ch1_id, chapter_number=1, views=1250, likes=320, telegram_reach=4500, retention_rate=88.5)
+            print("   [7/12 PUBLISHING_ANALYTICS] Da nap chi so phat hanh & luot xem!")
+        except Exception as e:
+            print(f"   [7/12 PUBLISHING_ANALYTICS] Canh bao: {e}")
+
+    # BANG 8: character_inventory
+    inventories = [
+        {"novel_id": novel_id, "character_name": "Tiêu Viêm", "item_name": "Hỏa Kiếm Thần Ma", "item_type": "Pháp Bảo", "description": "Thần kiếm tím phát sáng hào quang diệt ma", "power_boost": "+500% Sức Mạnh Thôn Phệ"},
+        {"novel_id": novel_id, "character_name": "Tiêu Viêm", "item_name": "Cốt Chưng U Hỏa", "item_type": "Dị Hỏa", "description": "Ngọn lửa linh hồn trắng bạch do Dược Lão truyền lại", "power_boost": "Luyện Hóa Vạn Vật"},
+        {"novel_id": novel_id, "character_name": "Vân Vận", "item_name": "Phong Linh Trường Kiếm", "item_type": "Vũ Khí", "description": "Trường kiếm phong hệ sắc bén Tông chủ Vân Lam Tông", "power_boost": "Tốc Độ Ánh Sáng"}
+    ]
+    for inv_i, inv in enumerate(inventories):
+        try:
+            database.upsert_character_inventory(inv["novel_id"], inv["character_name"], inv["item_name"], inv["item_type"], inv["description"], inv["power_boost"])
+            print(f"   [8/12 CHARACTER_INVENTORY] Da nap trang bi #{inv_i+1}")
+        except Exception as e:
+            print(f"   [8/12 CHARACTER_INVENTORY] Canh bao #{inv_i+1}: {e}")
+
+    # BANG 9: ai_prompts_log
+    if ch1_id:
+        try:
+            database.log_ai_prompt(ch1_id, "masterpiece 2D anime manhwa male cultivator hero portrait (Tiêu Viêm), glowing cyan eyes, flaming sword", "Pollinations/Gemini", "", 9.8)
+            print("   [9/12 AI_PROMPTS_LOG] Da ghi nhat ky AI prompt sinh anh!")
+        except Exception as e:
+            print(f"   [9/12 AI_PROMPTS_LOG] Canh bao: {e}")
+
+    # BANG 10: tts_voice_configs
+    voices = [
+        {"novel_id": novel_id, "character_name": "Tiêu Viêm", "voice_name": "vi-VN-NamMinhNeural", "pitch": "+0Hz", "rate": "+0%", "emotional_style": "intense_epic"},
+        {"novel_id": novel_id, "character_name": "Vân Vận", "voice_name": "vi-VN-HoaiMyNeural", "pitch": "+2Hz", "rate": "-2%", "emotional_style": "graceful"}
+    ]
+    for v_i, v in enumerate(voices):
+        try:
+            database.upsert_tts_voice_config(v["novel_id"], v["character_name"], v["voice_name"], v["pitch"], v["rate"], v["emotional_style"])
+            print(f"   [10/12 TTS_VOICE_CONFIGS] Da nap giong doc AI #{v_i+1}")
+        except Exception as e:
+            print(f"   [10/12 TTS_VOICE_CONFIGS] Canh bao #{v_i+1}: {e}")
+
+    # BANG 11: system_logs
+    try:
+        database.record_system_log("INFO", "MasterSyncEngine", "Da dong bo thanh cong toan bo 12 bang Supabase CSDL doanh nghiep!")
+        print("   [11/12 SYSTEM_LOGS] Da ghi log van hanh he thong!")
+    except Exception as e:
+        print(f"   [11/12 SYSTEM_LOGS] Canh bao: {e}")
+
+    # BANG 12: channel_subscribers
+    subs = [
+        {"user_id": "tg_user_1001", "platform": "Telegram", "membership_level": "VIP Premium"},
+        {"user_id": "tg_user_1002", "platform": "Telegram", "membership_level": "Standard Fan"}
+    ]
+    for sub_i, sub in enumerate(subs):
+        try:
+            database.upsert_channel_subscriber(sub["user_id"], sub["platform"], sub["membership_level"])
+            print(f"   [12/12 CHANNEL_SUBSCRIBERS] Da nap thanh vien VIP #{sub_i+1}")
+        except Exception as e:
+            print(f"   [12/12 CHANNEL_SUBSCRIBERS] Canh bao #{sub_i+1}: {e}")
+
+    print("[SUCCESS] DA NAP KHOI TAO 100% DU LIEU CHO TOAN BO 12 BANG CSDL SUPABASE DOANH NGHIEP!")
 
 if __name__ == "__main__":
     main()

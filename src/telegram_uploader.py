@@ -2,14 +2,20 @@ import os
 import requests
 from src import config
 
-def generate_seo_caption(chapter_num: int, chapter_title: str) -> str:
-    """Generate SEO-optimized caption with hashtags and chapter summary formatting."""
+def generate_seo_caption(chapter_num: int, chapter_title: str, video_url: str = "") -> str:
+    """Generate SEO-optimized caption with video streaming link, hashtags, and chapter summary formatting."""
     hashtags = "#VạnCổThầnVương #TiêuViêm #VânVận #ReviewTruyện #Webtoon2D #PhimHoạtHình #TiênHiệp #HuyềnHuyễn"
+    
+    video_section = ""
+    if video_url and video_url.startswith("http"):
+        video_section = f"🍿 *Xem Video Full HD 16:9 (Supabase CDN):*\n👉 [Bấm vào đây để xem trực tiếp Video Tập {chapter_num}]({video_url})\n\n"
+        
     return (
         f"🎙️ *Truyện 24h Audio - Tập {chapter_num}*\n\n"
         f"📖 *Chương {chapter_num}: {chapter_title}*\n\n"
         f"🔥 Tiêu Viêm trùng sinh mang theo Hệ Thống Thôn Phệ Vô Tận, nén ép vạn giới thần ma!\n"
         f"✨ Tác phẩm sản xuất tự động bằng AI 4K, kịch bản kịch tính & video 16:9 sắc nét.\n\n"
+        f"{video_section}"
         f"🏷️ {hashtags}"
     )
 
@@ -105,51 +111,39 @@ def send_photo_to_telegram(photo_path: str, caption: str) -> bool:
         return False
         
     url = f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}/sendPhoto"
-    print(f"[INFO] Uploading 16:9 Thumbnail Photo to Telegram chat/channel: {config.TELEGRAM_CHAT_ID}...")
+    print(f"[INFO] Uploading photo/thumbnail to Telegram: {photo_path}...")
     
     try:
         with open(photo_path, 'rb') as photo_file:
-            files = {
-                'photo': (os.path.basename(photo_path), photo_file, 'image/jpeg')
-            }
-            data = {
-                'chat_id': config.TELEGRAM_CHAT_ID,
-                'caption': caption,
-                'parse_mode': 'Markdown'
-            }
-            response = requests.post(url, data=data, files=files, timeout=60)
+            files = {'photo': (os.path.basename(photo_path), photo_file, 'image/jpeg')}
+            data = {'chat_id': config.TELEGRAM_CHAT_ID, 'caption': caption, 'parse_mode': 'Markdown'}
+            response = requests.post(url, data=data, files=files, timeout=120)
             if response.status_code != 200 and "parse entities" in response.text.lower():
                 data.pop('parse_mode', None)
                 photo_file.seek(0)
                 files = {'photo': (os.path.basename(photo_path), photo_file, 'image/jpeg')}
-                response = requests.post(url, data=data, files=files, timeout=60)
+                response = requests.post(url, data=data, files=files, timeout=120)
                 
-            if response.status_code == 200:
-                print("[SUCCESS] 🖼️ 16:9 Thumbnail photo uploaded successfully to Telegram!")
-                return True
-            else:
-                print(f"[ERROR] Telegram photo upload failed ({response.status_code}): {response.text}")
-                return False
+        return response.status_code == 200
     except Exception as e:
         print(f"[ERROR] Error uploading photo to Telegram: {e}")
         return False
 
-def send_document_to_telegram(doc_path: str, caption: str, custom_filename: str = None) -> bool:
-    """Send any document (like SRT file) to the Telegram channel."""
+def send_document_to_telegram(document_path: str, caption: str, custom_filename: str | None = None) -> bool:
+    """Send any document (SRT, JSON, MP4) to Telegram channel."""
+    if not config.TELEGRAM_BOT_TOKEN or not config.TELEGRAM_CHAT_ID:
+        return False
+    if not os.path.exists(document_path):
+        return False
+        
     url = f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}/sendDocument"
-    filename = custom_filename or os.path.basename(doc_path)
-    data = {
-        'chat_id': config.TELEGRAM_CHAT_ID,
-        'caption': caption,
-        'parse_mode': 'Markdown'
-    }
+    filename = custom_filename or os.path.basename(document_path)
     try:
-        with open(doc_path, 'rb') as doc_file:
-            files = {
-                'document': (filename, doc_file, 'application/octet-stream')
-            }
+        with open(document_path, 'rb') as doc_file:
+            files = {'document': (filename, doc_file, 'application/octet-stream')}
+            data = {'chat_id': config.TELEGRAM_CHAT_ID, 'caption': caption, 'parse_mode': 'Markdown'}
             response = requests.post(url, data=data, files=files, timeout=60)
-            if response.status_code != 200 and "can't parse entities" in response.text:
+            if response.status_code != 200 and "parse entities" in response.text.lower():
                 data.pop('parse_mode', None)
                 doc_file.seek(0)
                 files = {'document': (filename, doc_file, 'application/octet-stream')}
@@ -166,15 +160,15 @@ def send_video_to_telegram(video_path: str, caption: str, public_url: str = "") 
         print("[WARNING] Telegram credentials not configured for video upload.")
         return False
         
-    if not os.path.exists(video_path) and not public_url:
+    if not (video_path and os.path.exists(video_path)) and not public_url:
         print(f"[ERROR] Video file does not exist: {video_path}")
         return False
 
-    file_size_mb = (os.path.getsize(video_path) / (1024 * 1024)) if os.path.exists(video_path) else 0.0
+    file_size_mb = (os.path.getsize(video_path) / (1024 * 1024)) if (video_path and os.path.exists(video_path)) else 0.0
     
-    # 1. BẢO ĐẢM TẠO CHUẨN ĐƯỜNG LINK SUPABASE CDN (Không bao giờ lấy link rác https://supabase.com)
-    final_cdn_url = public_url.strip() if (public_url and public_url.startswith("http") and "supabase.com" not in public_url) else ""
-    if not final_cdn_url and config.SUPABASE_URL and os.path.exists(video_path):
+    # 1. BẢO ĐẢM TẠO CHUẨN ĐƯỜNG LINK SUPABASE CDN (Không bị lọc mất link)
+    final_cdn_url = public_url.strip() if (public_url and public_url.startswith("http")) else ""
+    if not final_cdn_url and config.SUPABASE_URL and video_path:
         supabase_base = config.SUPABASE_URL.rstrip('/')
         filename_rel = os.path.basename(video_path)
         final_cdn_url = f"{supabase_base}/storage/v1/object/public/media/videos/full/{filename_rel}"
@@ -189,9 +183,9 @@ def send_video_to_telegram(video_path: str, caption: str, public_url: str = "") 
         cdn_message = (
             f"🎬 <b>VIDEO FULL HD 16:9 - CHƯƠNG TỰ ĐỘNG</b>\n\n"
             f"{safe_caption}\n\n"
-            f"🍿 <b>XEM VIDEO FULL HD 16:9 (SUPABASE STORAGE CDN):</b>\n"
-            f"👉 <a href=\"{final_cdn_url}\">Bấm vào đây để xem trực tiếp / Tải Video</a>\n\n"
-            f"🔗 <b>Link Trực Tiếp:</b>\n<code>{final_cdn_url}</code>"
+            f"🍿 <b>XEM VIDEO FULL HD 16:9 (SUPABASE STORAGE CDN 4K):</b>\n"
+            f"👉 <a href=\"{final_cdn_url}\">Bấm vào đây để xem trực tiếp / Tải Video Full HD</a>\n\n"
+            f"🔗 <b>Link Trực Tiếp (Direct Link):</b>\n<code>{final_cdn_url}</code>"
         )
     else:
         cdn_message = f"🎬 <b>{safe_caption}</b>\n\n🎬 <b>Video Full HD 16:9 đã được tạo thành công!</b>"

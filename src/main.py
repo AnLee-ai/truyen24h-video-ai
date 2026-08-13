@@ -1,7 +1,6 @@
 import argparse
 import sys
 import os
-import json
 import contextlib
 import uvicorn
 from fastapi import FastAPI, BackgroundTasks
@@ -75,47 +74,26 @@ def audit_chapter_quality(ch: dict) -> tuple:
 def find_chapter_needing_video(novel_id: str) -> dict:
     """
     TỰ ĐỘNG PHÁT HIỆN TẬP CHƯA XỬ LÝ (CHỐNG LẶP CHƯƠNG 100%):
-    1. Đọc file data/chapters_progress.json để biết các tập ĐÃ XONG.
-    2. Quét CSDL Supabase: Tập nào đã có kịch bản >1000 từ VÀ nằm trong completed_set thì BỎ QUA.
-    3. Chọn tập đầu tiên chưa xong (Tập N) để sản xuất Media/Video.
+    1. Lấy danh sách 100% tập ĐÃ XONG từ Supabase + data/ + output/ + RAM.
+    2. Nếu Tập ch_num đã nằm trong completed_set -> BỎ QUA HOÀN TOÀN.
+    3. Trả về tập đầu tiên thực sự chưa hoàn thành.
     """
-    import os
-    completed_set = set()
-    prog_file = "data/chapters_progress.json"
-    if os.path.exists(prog_file):
-        try:
-            with open(prog_file, "r", encoding="utf-8") as f:
-                pdata = json.load(f)
-                raw_list = pdata.get("completed_chapters", [])
-                for item in raw_list:
-                    completed_set.add(item)
-                    completed_set.add(str(item))
-                    if str(item).isdigit():
-                        try:
-                            completed_set.add(int(item))
-                        except (ValueError, TypeError):
-                            pass
-        except Exception:
-            pass
+    completed_set = database.get_completed_chapters_set(novel_id)
 
     try:
         all_chapters = database.get_all_chapters(novel_id)
         for ch in all_chapters:
             ch_id = str(ch.get("id", ""))
             ch_num = int(ch.get("chapter_number", 0)) if str(ch.get("chapter_number", "")).isdigit() else 0
-            v_status = str(ch.get("video_status", "")).strip().lower()
-            v_url = str(ch.get("video_url") or "").strip()
-            audio_url = str(ch.get("audio_url", "")).strip().lower()
             
-            # 1. BẮT BUỘC: Kiểm tra xem Tập ch_num đã xong Media chưa TRƯỚC TIÊN!
-            is_done_in_db = (v_status in ["completed", "published", "done", "true"]) or bool(v_url) or ("completed" in audio_url)
-            is_done_local = (ch_num in completed_set) or (str(ch_num) in completed_set) or (ch_id in completed_set)
+            # Kiểm tra xem Tập ch_num đã xong Media chưa
+            is_done = (ch_num in completed_set) or (str(ch_num) in completed_set) or (ch_id in completed_set)
             
-            if is_done_in_db or is_done_local:
+            if is_done:
                 print(f"[QUALITY AUDITOR] 🟢 Tập {ch_num} (ID: {ch_id}) ĐÃ HOÀN THÀNH MEDIA. Bỏ qua hoàn toàn để làm tập tiếp theo!")
                 continue
 
-            # 2. Rà soát kịch bản của Tập ch_num chưa hoàn thành
+            # Rà soát kịch bản của Tập ch_num chưa hoàn thành
             passed, reason = audit_chapter_quality(ch)
             if not passed:
                 print(f"[QUALITY AUDITOR] ⚠️ TẬP {ch_num} (ID: {ch_id}) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN ({reason}). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!")
@@ -263,7 +241,7 @@ def _run_chapter_pipeline_impl(novel_id: str):
         #         database.update_chapter_video_status(chapter_id, status="published", video_url=youtube_url)
         
         # 7. Upload file Audio, Subtitles, Thumbnail 16:9 & Video MP4 16:9 lên kênh Telegram
-        caption_markdown = telegram_uploader.generate_seo_caption(chapter_num, chapter_title)
+        caption_markdown = telegram_uploader.generate_seo_caption(chapter_num, chapter_title, video_url=video_public_url)
         
         # Gửi Ảnh Bìa Thumbnail 16:9 4K lên Telegram
         if thumbnail_path and os.path.exists(thumbnail_path):

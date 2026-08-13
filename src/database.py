@@ -205,46 +205,97 @@ def update_chapter_video_status(chapter_id: str, status: str, video_url: str = N
         print(f"[INFO] Trạng thái video ({status}) đã ghi nhận thành công.")
         return {}
 
-def record_completed_chapter_local(chapter_id: str, chapter_number: int = 0):
-    """Lưu tiến độ chương đã hoàn thành 100% vào file data/chapters_progress.json (chuẩn hóa cả int & str chống lặp tuyệt đối, Thread-safe)."""
-    with _progress_lock:
-        import os
-        import json
-        import datetime
-        prog_file = "data/chapters_progress.json"
-        data = {"novel_id": "van-co-than-vuong-v1", "completed_chapters": [], "current_chapter": 1}
+_GLOBAL_COMPLETED_CHAPTERS_SET = set()
+
+def get_completed_chapters_set(novel_id: str = "") -> set:
+    """
+    TRUY VẾT 100% CÁC TẬP ĐÃ HOÀN THÀNH (CHỐNG LẶP CHAP 100%):
+    Hợp nhất tập số đã xong từ:
+    1. Supabase CSDL (`video_status` in ['completed', 'published', 'done', 'true'] HOẶC `audio_url` / `video_url` đã có).
+    2. File `data/chapters_progress.json`.
+    3. File `output/completed_chapters.json`.
+    4. Bộ nhớ RAM `_GLOBAL_COMPLETED_CHAPTERS_SET`.
+    """
+    completed_set = set(_GLOBAL_COMPLETED_CHAPTERS_SET)
+    
+    # 1. Đọc từ file data/chapters_progress.json & output/completed_chapters.json
+    for prog_file in ["data/chapters_progress.json", "output/completed_chapters.json"]:
         if os.path.exists(prog_file):
             try:
                 with open(prog_file, "r", encoding="utf-8") as f:
-                    data = json.load(f)
+                    pdata = json.load(f)
+                    raw_list = pdata.get("completed_chapters", [])
+                    for item in raw_list:
+                        if str(item).isdigit():
+                            completed_set.add(int(item))
+                        completed_set.add(str(item))
             except Exception:
                 pass
                 
-        completed_set = set(data.get("completed_chapters", []))
+    # 2. Đọc từ CSDL Supabase
+    try:
+        all_chs = get_all_chapters(novel_id) if novel_id else []
+        for ch in all_chs:
+            ch_num = int(ch.get("chapter_number", 0)) if str(ch.get("chapter_number", "")).isdigit() else 0
+            v_status = str(ch.get("video_status", "")).strip().lower()
+            v_url = str(ch.get("video_url") or "").strip()
+            audio_url = str(ch.get("audio_url", "")).strip().lower()
+            
+            if (v_status in ["completed", "published", "done", "true"]) or bool(v_url) or ("completed" in audio_url):
+                if ch_num > 0:
+                    completed_set.add(ch_num)
+                    completed_set.add(str(ch_num))
+                if ch.get("id"):
+                    completed_set.add(str(ch.get("id")))
+    except Exception:
+        pass
+        
+    return completed_set
+
+def record_completed_chapter_local(chapter_id: str, chapter_number: int = 0):
+    """Lưu tiến độ chương đã hoàn thành 100% vào data/ & output/ & RAM (chuẩn hóa cả int & str chống lặp tuyệt đối)."""
+    with _progress_lock:
+        import datetime
         
         if chapter_number > 0:
-            completed_set.add(int(chapter_number))
-            completed_set.add(str(chapter_number))
+            _GLOBAL_COMPLETED_CHAPTERS_SET.add(int(chapter_number))
+            _GLOBAL_COMPLETED_CHAPTERS_SET.add(str(chapter_number))
         if chapter_id:
-            completed_set.add(str(chapter_id))
-            
-        int_nums = [int(x) for x in completed_set if str(x).isdigit()]
-        max_num = max(int_nums) if int_nums else 0
-        
-        data["completed_chapters"] = sorted(list(completed_set), key=lambda x: str(x))
-        data["current_chapter"] = max_num + 1
-        data["last_updated"] = datetime.datetime.utcnow().isoformat() + "Z"
-        
-        try:
-            os.makedirs("data", exist_ok=True)
-            import tempfile
-            with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir="data", suffix=".tmp", delete=False) as tmp_f:
-                json.dump(data, tmp_f, ensure_ascii=False, indent=2)
-                tmp_name = tmp_f.name
-            import shutil
-            shutil.move(tmp_name, prog_file)
-        except Exception:
-            pass
+            _GLOBAL_COMPLETED_CHAPTERS_SET.add(str(chapter_id))
+
+        for prog_file in ["data/chapters_progress.json", "output/completed_chapters.json"]:
+            try:
+                os.makedirs(os.path.dirname(prog_file), exist_ok=True)
+                data = {"novel_id": "van-co-than-vuong-v1", "completed_chapters": [], "current_chapter": 1}
+                if os.path.exists(prog_file):
+                    try:
+                        with open(prog_file, "r", encoding="utf-8") as f:
+                            data = json.load(f)
+                    except Exception:
+                        pass
+                        
+                completed_set = set(data.get("completed_chapters", []))
+                if chapter_number > 0:
+                    completed_set.add(int(chapter_number))
+                    completed_set.add(str(chapter_number))
+                if chapter_id:
+                    completed_set.add(str(chapter_id))
+                    
+                int_nums = [int(x) for x in completed_set if str(x).isdigit()]
+                max_num = max(int_nums) if int_nums else 0
+                
+                data["completed_chapters"] = sorted(list(completed_set), key=lambda x: str(x))
+                data["current_chapter"] = max_num + 1
+                data["last_updated"] = datetime.datetime.utcnow().isoformat() + "Z"
+                
+                import tempfile
+                with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=os.path.dirname(prog_file), suffix=".tmp", delete=False) as tmp_f:
+                    json.dump(data, tmp_f, ensure_ascii=False, indent=2)
+                    tmp_name = tmp_f.name
+                import shutil
+                shutil.move(tmp_name, prog_file)
+            except Exception as pe:
+                print(f"[WARNING] Ghi nhận tiến độ local {prog_file} warning: {pe}")
         
     # Đồng bộ trực tiếp lên Supabase CSDL chống lặp 100%
     try:
@@ -252,7 +303,7 @@ def record_completed_chapter_local(chapter_id: str, chapter_number: int = 0):
         db_data = {"audio_url": "completed", "video_status": "completed"}
         if chapter_id:
             client.table("chapters").update(db_data).eq("id", chapter_id).execute()
-        elif chapter_number > 0:
+        if chapter_number > 0:
             client.table("chapters").update(db_data).eq("chapter_number", chapter_number).execute()
     except Exception:
         pass
@@ -576,3 +627,106 @@ def update_novel_description(novel_id: str, description: str) -> dict:
         "description": description
     }).eq("id", novel_id).execute()
     return response.data[0] if response.data else {}  # type: ignore[return-value]
+
+# Extended Enterprise Supabase Tables (6 Bảng Mới Siêu Hữu Ích)
+
+def record_publishing_analytics(chapter_id: str, chapter_number: int, views: int = 0, likes: int = 0, telegram_reach: int = 0, retention_rate: float = 0.0) -> dict:
+    """Bảng 7: publishing_analytics - Thống kê tương tác & chỉ số tăng trưởng kênh."""
+    try:
+        client = get_client()
+        payload = {
+            "chapter_id": chapter_id,
+            "chapter_number": chapter_number,
+            "views": views,
+            "likes": likes,
+            "telegram_reach": telegram_reach,
+            "retention_rate": retention_rate
+        }
+        res = client.table("publishing_analytics").upsert(payload, on_conflict="chapter_id").execute()
+        return res.data[0] if res.data else {}
+    except Exception as e:
+        print(f"[INFO] Supabase publishing_analytics record notice: {e}")
+        return {}
+
+def upsert_character_inventory(novel_id: str, character_name: str, item_name: str, item_type: str, description: str, power_boost: str = "") -> dict:
+    """Bảng 8: character_inventory - Túi đồ, Trang phục, Pháp bảo & Dị Hỏa nhân vật."""
+    try:
+        client = get_client()
+        payload = {
+            "novel_id": novel_id,
+            "character_name": character_name,
+            "item_name": item_name,
+            "item_type": item_type,
+            "description": description,
+            "power_boost": power_boost
+        }
+        res = client.table("character_inventory").upsert(payload, on_conflict="novel_id,character_name,item_name").execute()
+        return res.data[0] if res.data else {}
+    except Exception as e:
+        print(f"[INFO] Supabase character_inventory notice: {e}")
+        return {}
+
+def log_ai_prompt(chapter_id: str, prompt_text: str, engine_name: str = "Pollinations/Gemini", image_url: str = "", aesthetic_score: float = 9.5) -> dict:
+    """Bảng 9: ai_prompts_log - Lịch sử nhật ký sinh ảnh AI & thẩm mỹ."""
+    try:
+        client = get_client()
+        payload = {
+            "chapter_id": chapter_id,
+            "prompt_text": prompt_text,
+            "engine_name": engine_name,
+            "image_url": image_url,
+            "aesthetic_score": aesthetic_score
+        }
+        res = client.table("ai_prompts_log").insert(payload).execute()
+        return res.data[0] if res.data else {}
+    except Exception as e:
+        print(f"[INFO] Supabase ai_prompts_log notice: {e}")
+        return {}
+
+def upsert_tts_voice_config(novel_id: str, character_name: str, voice_name: str, pitch: str = "+0Hz", rate: str = "+0%", emotional_style: str = "epic") -> dict:
+    """Bảng 10: tts_voice_configs - Cấu hình giọng đọc AI & diễn cảm nhân vật."""
+    try:
+        client = get_client()
+        payload = {
+            "novel_id": novel_id,
+            "character_name": character_name,
+            "voice_name": voice_name,
+            "pitch": pitch,
+            "rate": rate,
+            "emotional_style": emotional_style
+        }
+        res = client.table("tts_voice_configs").upsert(payload, on_conflict="novel_id,character_name").execute()
+        return res.data[0] if res.data else {}
+    except Exception as e:
+        print(f"[INFO] Supabase tts_voice_configs notice: {e}")
+        return {}
+
+def record_system_log(level: str, module_name: str, message: str) -> dict:
+    """Bảng 11: system_logs - Nhật ký hoạt động & cảnh báo vận hành tự động."""
+    try:
+        client = get_client()
+        payload = {
+            "level": level,
+            "module_name": module_name,
+            "message": message
+        }
+        res = client.table("system_logs").insert(payload).execute()
+        return res.data[0] if res.data else {}
+    except Exception as e:
+        print(f"[INFO] Supabase system_logs notice: {e}")
+        return {}
+
+def upsert_channel_subscriber(user_id: str, platform: str = "Telegram", membership_level: str = "VIP Subscriber") -> dict:
+    """Bảng 12: channel_subscribers - Quản lý thành viên & VIP của kênh."""
+    try:
+        client = get_client()
+        payload = {
+            "user_id": user_id,
+            "platform": platform,
+            "membership_level": membership_level
+        }
+        res = client.table("channel_subscribers").upsert(payload, on_conflict="user_id,platform").execute()
+        return res.data[0] if res.data else {}
+    except Exception as e:
+        print(f"[INFO] Supabase channel_subscribers notice: {e}")
+        return {}

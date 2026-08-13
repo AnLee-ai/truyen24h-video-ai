@@ -52,67 +52,89 @@ def generate_youtube_thumbnail(chapter_num: int, chapter_title: str, scene_image
                 if bg_loaded:
                     break
 
-        # C. Tự động sinh ảnh AI 16:9 HD mới cho Thumbnail nếu chưa có
+        # C. Tự động sinh ảnh AI 16:9 HD mới dành riêng cho Thumbnail Nhân Vật Chính Siêu Ngầu
         if not bg_loaded:
             try:
                 from src.image_generator import generate_scene_image
                 prompt_tb = (
                     f"masterpiece epic 2D anime manhwa webtoon illustration, {chapter_title}, "
-                    f"intense hero portrait of 18yo male cultivator, glowing eyes, cyan energy aura, "
-                    f"dramatic lighting, 8k resolution, 16:9 aspect ratio"
+                    f"ultra cool badass 18yo male cultivator hero portrait (Tiêu Viêm / Xiao Yan), "
+                    f"intense fierce posture, glowing cyan eyes, spiky black hair blown by storm wind, "
+                    f"holding glowing violet flaming sword, swirling cyan energy aura, floating particles, "
+                    f"dramatic rim lighting, dark misty bamboo mountain background, trending on ArtStation, 8k resolution, 16:9"
                 )
                 gen_p = generate_scene_image(prompt_tb, scene_image_path, width, height)
                 if gen_p and os.path.exists(gen_p) and os.path.getsize(gen_p) > 1000:
                     bg_img = Image.open(gen_p).convert('RGB')
                     bg_loaded = True
-                    print(f"[INFO] 🎨 Tự động sinh ảnh AI nền HD mới cho Thumbnail: {gen_p}")
+                    print(f"[INFO] 🎨 Tự động sinh ảnh AI Nhân Vật Chính Siêu Ngầu cho Thumbnail: {gen_p}")
             except Exception as gen_err:
                 print(f"[WARNING] Không thể tự động sinh ảnh nền thumbnail: {gen_err}")
 
-        # D. Fallback tuyệt đối: Vẽ bức canvas nghệ thuật 2D Xianxia Anime hoàn chỉnh (Không để ô vuông xám/xanh trơn)
+        # D. Fallback tuyệt đối: Vẽ bức canvas nghệ thuật 2D Xianxia Anime HD khắc họa Nhân Vật Chính Siêu Ngầu
         if not bg_loaded:
-            print("[INFO] 🎨 Tạo bức Canvas nghệ thuật 2D Xianxia Anime HD cho Thumbnail...")
+            print("[INFO] 🎨 Tạo bức Canvas nghệ thuật 2D Xianxia Anime HD với Nhân Vật Chính Siêu Ngầu...")
             import hashlib
-            bg_img = Image.new('RGB', (width, height), color=(15, 20, 38))
+            bg_img = Image.new('RGB', (width, height), color=(20, 25, 45))
             canvas_draw = ImageDraw.Draw(bg_img)
             
-            # Gradient bầu trời đêm Xianxia
+            # Gradient bầu trời đêm Xianxia rực rỡ (Deep Royal Purple -> Cyan Celestial -> Sunset Magenta)
             for y in range(height):
                 ratio = y / height
-                r = int(18 * (1 - ratio) + 40 * ratio)
-                g = int(25 * (1 - ratio) + 80 * ratio)
-                b = int(60 * (1 - ratio) + 140 * ratio)
+                r = int(60 * (1 - ratio) + 20 * ratio)
+                g = int(25 * (1 - ratio) + 120 * ratio)
+                b = int(110 * (1 - ratio) + 210 * ratio)
                 canvas_draw.line([(0, y), (width, y)], fill=(r, g, b))
                 
-            # Ngôi sao đêm huyền ảo
-            seed_val = int(hashlib.md5(chapter_title.encode('utf-8')).hexdigest()[:6], 16)
-            for i in range(120):
-                sx = (seed_val * (i + 1) * 37) % width
-                sy = (seed_val * (i + 1) * 73) % (height * 3 // 4)
-                s_size = (i % 3) + 1
-                canvas_draw.ellipse([sx, sy, sx + s_size, sy + s_size], fill=(255, 255, 220))
+            # Tia sáng hào quang năng lượng tỏa ra từ tâm (Celestial God Rays)
+            cx, cy = width * 3 // 4, height // 3
+            for angle in range(0, 360, 15):
+                import math
+                rad = math.radians(angle)
+                end_x = cx + int(800 * math.cos(rad))
+                end_y = cy + int(800 * math.sin(rad))
+                canvas_draw.line([(cx, cy), (end_x, end_y)], fill=(80, 180, 240), width=3)
                 
-            # Mặt trăng / Quầng sáng linh khí (Xianxia Celestial Moon)
-            moon_x, moon_y = width * 3 // 4, height // 3
-            for radius in range(250, 40, -15):
-                alpha_c = int(40 * (1 - radius / 250))
-                canvas_draw.ellipse([moon_x - radius, moon_y - radius, moon_x + radius, moon_y + radius], fill=(30 + alpha_c, 100 + alpha_c, 160 + alpha_c))
-            canvas_draw.ellipse([moon_x - 60, moon_y - 60, moon_x + 60, moon_y + 60], fill=(255, 245, 210))
+            # Ngôi sao & hạt linh khí lơ lửng lung linh
+            seed_val = int(hashlib.md5(chapter_title.encode('utf-8')).hexdigest()[:6], 16)
+            for i in range(150):
+                sx = (seed_val * (i + 1) * 37) % width
+                sy = (seed_val * (i + 1) * 73) % (height * 4 // 5)
+                s_size = (i % 4) + 1
+                canvas_draw.ellipse([sx, sy, sx + s_size, sy + s_size], fill=(255, 255, 230))
+                
+            # Mặt trăng / Quầng sáng linh khí (Xianxia Celestial Energy Core)
+            for radius in range(280, 40, -20):
+                alpha_c = int(50 * (1 - radius / 280))
+                canvas_draw.ellipse([cx - radius, cy - radius, cx + radius, cy + radius], fill=(40 + alpha_c, 160 + alpha_c, 230 + alpha_c))
+            canvas_draw.ellipse([cx - 70, cy - 70, cx + 70, cy + 70], fill=(255, 248, 220))
             
             # Dãy núi tiên cảnh trùng điệp phía dưới
             points1 = [(0, height)]
             for x in range(0, width + 60, 60):
-                hy = height * 2 // 3 - (int(hashlib.md5(f"m1_{x}".encode()).hexdigest()[:4], 16) % 180)
+                hy = height * 3 // 5 - (int(hashlib.md5(f"m1_{x}".encode()).hexdigest()[:4], 16) % 180)
                 points1.append((x, hy))
             points1.append((width, height))
-            canvas_draw.polygon(points1, fill=(20, 35, 60))
+            canvas_draw.polygon(points1, fill=(25, 45, 85))
             
             points2 = [(0, height)]
             for x in range(0, width + 50, 50):
-                hy = height * 4 // 5 - (int(hashlib.md5(f"m2_{x}".encode()).hexdigest()[:4], 16) % 120)
+                hy = height * 3 // 4 - (int(hashlib.md5(f"m2_{x}".encode()).hexdigest()[:4], 16) % 140)
                 points2.append((x, hy))
             points2.append((width, height))
-            canvas_draw.polygon(points2, fill=(10, 18, 32))
+            canvas_draw.polygon(points2, fill=(15, 25, 50))
+
+            # Bổ sung: Nhân vật chính (Hero Cultivator Silhouette) đứng trên đỉnh núi giơ cao Hỏa Kiếm Siêu Ngầu
+            hx, hy = width // 3, height * 2 // 3
+            # Hào quang thần thái bao quanh nhân vật chính
+            for r_aura in range(120, 20, -15):
+                canvas_draw.ellipse([hx - r_aura, hy - r_aura - 80, hx + r_aura, hy + r_aura - 80], fill=(255, 215, 0, 40))
+            # Hỏa kiếm hoàng kim giơ cao
+            canvas_draw.line([(hx, hy - 40), (hx + 60, hy - 220)], fill=(255, 223, 0), width=8)
+            canvas_draw.line([(hx, hy - 40), (hx + 60, hy - 220)], fill=(255, 255, 255), width=3)
+            # Bóng nhân vật nam chính vai rộng tóc nhọn ngầu
+            canvas_draw.ellipse([hx - 25, hy - 140, hx + 25, hy - 90], fill=(12, 16, 28))  # Đầu & tóc
+            canvas_draw.polygon([(hx - 50, hy), (hx + 50, hy), (hx + 30, hy - 90), (hx - 30, hy - 90)], fill=(12, 16, 28))  # Thân áo trường bào
 
         bg_img = bg_img.resize((width, height), Image.Resampling.LANCZOS)
             
@@ -120,15 +142,14 @@ def generate_youtube_thumbnail(chapter_num: int, chapter_title: str, scene_image
         overlay = Image.new('RGBA', (width, height), (0, 0, 0, 0))
         overlay_draw = ImageDraw.Draw(overlay)
         
-        # Gradient tối nhẹ ở nửa dưới (max alpha 110) và dải trái (max alpha 90) giúp chữ nổi bật mà không che đen ảnh
-        for y in range(int(height * 0.45), height):
-            ratio = (y - height * 0.45) / (height * 0.55)
-            alpha = int(110 * (ratio ** 1.2))
+        for y in range(int(height * 0.55), height):
+            ratio = (y - height * 0.55) / (height * 0.45)
+            alpha = int(90 * (ratio ** 1.2))
             overlay_draw.line([(0, y), (width, y)], fill=(8, 10, 20, alpha))
             
-        for x in range(0, int(width * 0.45)):
-            ratio = (width * 0.45 - x) / (width * 0.45)
-            alpha = int(90 * (ratio ** 1.2))
+        for x in range(0, int(width * 0.35)):
+            ratio = (width * 0.35 - x) / (width * 0.35)
+            alpha = int(70 * (ratio ** 1.2))
             overlay_draw.line([(x, 0), (x, height)], fill=(8, 10, 20, alpha))
             
         bg_img = Image.alpha_composite(bg_img.convert('RGBA'), overlay).convert('RGB')
@@ -155,6 +176,17 @@ def generate_youtube_thumbnail(chapter_num: int, chapter_title: str, scene_image
             except Exception:
                 return ImageFont.load_default()
             
+        def get_safe_text_size(font_obj, text_str, char_w=22, char_h=40):
+            try:
+                bbox = font_obj.getbbox(text_str)
+                w = bbox[2] - bbox[0]
+                h = bbox[3] - bbox[1]
+                if 10 <= w <= 1800 and 10 <= h <= 300:
+                    return w, h
+            except Exception:
+                pass
+            return len(text_str) * char_w, char_h
+
         badge_font = load_font(50)
         tag_font = load_font(36)
         title_font = load_font(64)
@@ -162,9 +194,9 @@ def generate_youtube_thumbnail(chapter_num: int, chapter_title: str, scene_image
         
         # 4. Vẽ Huy hiệu 1: '🔥 TẬP X - BÁ CHỦ TRÙNG SINH' ở góc trái trên
         badge_text = f" 🔥 TẬP {chapter_num} - BÁ CHỦ TRÙNG SINH "
-        badge_box = badge_font.getbbox(badge_text)
-        bw = badge_box[2] - badge_box[0] + 36
-        bh = badge_box[3] - badge_box[1] + 24
+        bw_text, bh_text = get_safe_text_size(badge_font, badge_text, 22, 45)
+        bw = min(max(bw_text + 36, 250), 700)
+        bh = min(max(bh_text + 24, 50), 100)
         
         bx, by = 70, 70
         # Viền mạ vàng 4px
@@ -174,12 +206,13 @@ def generate_youtube_thumbnail(chapter_num: int, chapter_title: str, scene_image
         # Chữ trắng nổi bật
         draw.text((bx + 18, by + 10), badge_text, fill=(255, 255, 255), font=badge_font)
 
-        # 4b. Vẽ Huy hiệu 2: '4K ULTRA HD' ở góc phải trên
+        # 4b. Vẽ Huy hiệu 2: '4K ULTRA HD' ở góc phải trên (Giới hạn kích thước thẻ an toàn chống lỗi viền xanh)
         tag_text = " 4K ULTRA HD "
-        tag_box = tag_font.getbbox(tag_text)
-        tw = tag_box[2] - tag_box[0] + 24
-        th = tag_box[3] - tag_box[1] + 16
-        tx_tag, ty_tag = width - tw - 70, 70
+        tw_text, th_text = get_safe_text_size(tag_font, tag_text, 18, 35)
+        tw = min(max(tw_text + 24, 160), 280)
+        th = min(max(th_text + 16, 40), 70)
+        tx_tag = width - tw - 70
+        ty_tag = 70
         draw.rectangle([tx_tag-3, ty_tag-3, tx_tag + tw + 3, ty_tag + th + 3], fill=(0, 230, 118))
         draw.rectangle([tx_tag, ty_tag, tx_tag + tw, ty_tag + th], fill=(12, 28, 20))
         draw.text((tx_tag + 12, ty_tag + 6), tag_text, fill=(0, 230, 118), font=tag_font)
@@ -204,8 +237,9 @@ def generate_youtube_thumbnail(chapter_num: int, chapter_title: str, scene_image
         
         # 6. Vẽ Brand Watermark 'TRUYỆN 24H AUDIO STUDIO' góc dưới phải
         brand_text = "TRUYỆN 24H AUDIO STUDIO"
-        bbox = brand_font.getbbox(brand_text)
-        rx = width - (bbox[2] - bbox[0]) - 80
+        br_w, _ = get_safe_text_size(brand_font, brand_text, 20, 40)
+        br_w = min(max(br_w, 300), 700)
+        rx = width - br_w - 80
         ry = height - 100
         
         for ox, oy in [(-3,-3), (3,-3), (-3,3), (3,3)]:
