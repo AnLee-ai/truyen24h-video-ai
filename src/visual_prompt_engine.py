@@ -2,7 +2,7 @@ import os
 import re
 import json
 import concurrent.futures
-from src import database, config
+from src import database
 
 CAMERA_ANGLES = [
     "Low-angle dynamic medium shot, 35mm anamorphic lens",
@@ -67,14 +67,14 @@ def _enrich_single_scene(item: tuple, characters_data: list, world_lore_data: li
     detected_lore = []
     env_lock_prompts = []
     
-    for l in world_lore_data:
-        kw = l.get("keyword", "")
+    for lore_item in world_lore_data:
+        kw = lore_item.get("keyword", "")
         if kw and re.search(rf'\b{re.escape(kw)}\b', scene_text):
             detected_lore.append(kw)
             if kw in MASTER_ENVIRONMENT_LOCKS:
                 env_lock_prompts.append(MASTER_ENVIRONMENT_LOCKS[kw])
             else:
-                desc = l.get("description", "")
+                desc = lore_item.get("description", "")
                 env_lock_prompts.append(f"{kw} ({desc[:60]})")
 
     # Kiểm tra thêm từ khóa trực tiếp trong scene text

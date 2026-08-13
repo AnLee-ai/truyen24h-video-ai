@@ -138,6 +138,11 @@ def send_document_to_telegram(doc_path: str, caption: str, custom_filename: str 
     """Send any document (like SRT file) to the Telegram channel."""
     url = f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}/sendDocument"
     filename = custom_filename or os.path.basename(doc_path)
+    data = {
+        'chat_id': config.TELEGRAM_CHAT_ID,
+        'caption': caption,
+        'parse_mode': 'Markdown'
+    }
     try:
         with open(doc_path, 'rb') as doc_file:
             files = {
@@ -199,7 +204,7 @@ def send_video_to_telegram(video_path: str, caption: str, public_url: str = "") 
             # Fallback sang Plain Text thuần túy để link chắc chắn hiện 100%
             plain_text = f"🎬 VIDEO FULL HD 16:9\n\n{caption}\n\n🍿 Link xem trực tiếp / Tải video (Supabase CDN):\n{final_cdn_url}"
             requests.post(msg_url, data={'chat_id': config.TELEGRAM_CHAT_ID, 'text': plain_text}, timeout=15)
-        print(f"[SUCCESS] 🟢 Đã gửi Link Video CDN Supabase trực tiếp không giới hạn dung lượng lên Telegram Channel!")
+        print("[SUCCESS] 🟢 Đã gửi Link Video CDN Supabase trực tiếp không giới hạn dung lượng lên Telegram Channel!")
     except Exception as e:
         print(f"[WARNING] Gửi CDN message Telegram thất bại: {e}")
 
@@ -211,7 +216,7 @@ def send_video_to_telegram(video_path: str, caption: str, public_url: str = "") 
                 "content": f"🎬 **NEW VIDEO RELEASED**\n{caption}\n\n🍿 **Xem Video Full HD 16:9 (Supabase CDN):** {public_url}"
             }
             requests.post(discord_webhook, json=discord_payload, timeout=10)
-            print(f"[SUCCESS] 🟢 Đã phát Video lên Discord Webhook thành công!")
+            print("[SUCCESS] 🟢 Đã phát Video lên Discord Webhook thành công!")
         except Exception as e:
             print(f"[WARNING] Discord Webhook notify error: {e}")
 

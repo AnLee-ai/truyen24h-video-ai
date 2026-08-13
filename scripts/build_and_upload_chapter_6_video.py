@@ -18,7 +18,7 @@ def build_chapter_6():
     all_chapters = database.get_all_chapters(NOVEL_ID)
     ch6 = next((c for c in all_chapters if c.get("id") == CHAPTER_ID), None)
     if not ch6:
-        print(f"[ERROR] Không tìm thấy Tập 6 trên Supabase CSDL!")
+        print("[ERROR] Không tìm thấy Tập 6 trên Supabase CSDL!")
         return
 
     title = ch6.get("title", "Tập 6")
@@ -33,13 +33,13 @@ def build_chapter_6():
     srt_path = os.path.join(config.OUTPUT_DIR, f"{CHAPTER_ID}.srt")
     
     if not os.path.exists(audio_path) or os.path.getsize(audio_path) < 10000:
-        print(f"[INFO] Đang tổng hợp audio TTS Tiếng Việt cho Tập 6...", flush=True)
+        print("[INFO] Đang tổng hợp audio TTS Tiếng Việt cho Tập 6...", flush=True)
         # Sử dụng 3000 từ đầu tiên để tạo video 10-15 phút siêu nhanh
         audio_path, srt_path = tts.generate_voice_and_subs(text=content[:3500], chapter_id=CHAPTER_ID)
 
     # 3. Render Video 16:9 sắc nét (2-Pass Engine)
     out_video = os.path.join(out_dir, "video.mp4")
-    print(f"[INFO] Đang render Video 16:9 sắc nét cho Tập 6...", flush=True)
+    print("[INFO] Đang render Video 16:9 sắc nét cho Tập 6...", flush=True)
     rendered_video = video.create_multi_image_slideshow_video(
         audio_path=audio_path,
         srt_path=srt_path,
@@ -55,7 +55,7 @@ def build_chapter_6():
         pub_url = database.upload_file_to_supabase(rendered_video, bucket_name="media", destination_path=cdn_dest)
         
         if pub_url:
-            print(f"[SUCCESS] 🟢 ĐÃ UPLOAD THÀNH CÔNG VIDEO TẬP 6 LÊN SUPABASE CDN!", flush=True)
+            print("[SUCCESS] 🟢 ĐÃ UPLOAD THÀNH CÔNG VIDEO TẬP 6 LÊN SUPABASE CDN!", flush=True)
             print(f"🔗 LINK XEM VIDEO TRỰC TIẾP: {pub_url}", flush=True)
             
             # Khóa trạng thái hoàn thành Tập 6
@@ -66,7 +66,7 @@ def build_chapter_6():
             excerpt = content[:500].strip() + "..."
             full_msg = f"{caption}\n\n📜 *Trích Đoạn Nội Dung:*\n\"{excerpt}\"\n\n🎬 *Link Phát Video HD (Supabase Direct CDN):*\n🔗 {pub_url}"
             telegram_uploader.send_progress_status_to_telegram(full_msg)
-            print(f"[SUCCESS] 🟢 ĐÃ GỬI BÀI ĐĂNG TẬP 6 LÊN TELEGRAM CHANNEL!", flush=True)
+            print("[SUCCESS] 🟢 ĐÃ GỬI BÀI ĐĂNG TẬP 6 LÊN TELEGRAM CHANNEL!", flush=True)
 
 if __name__ == "__main__":
     build_chapter_6()

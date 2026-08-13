@@ -14,8 +14,6 @@ from src import tts
 from src import audio
 from src import telegram_uploader
 from src import video
-from src import shorts_generator
-from src import youtube_uploader
 from src import thumbnail_generator
 
 def safe_print(*args, **kwargs):
@@ -65,7 +63,7 @@ def audit_chapter_quality(ch: dict) -> tuple:
     
     # 1. Tiêu chuẩn 1: Kịch bản text ngắn (<1000 từ) hoặc còn là BLUEPRINT
     if not ch_content or ch_content.startswith("BLUEPRINT:") or word_count < 1000:
-        return False, f"Kịch bản quá ngắn ({word_count} từ < 1000 từ tiêu chuẩn)"
+        return False, f"Chương {ch_num}: Kịch bản quá ngắn ({word_count} từ < 1000 từ tiêu chuẩn)"
         
     # 2. Tiêu chuẩn 2: Chứa tên nhân vật rác cũ
     for old_name in ["Trần Lam", "Linh Vy", "Minh Đức", "Thùy Linh", "Cao Bá"]:
@@ -81,7 +79,7 @@ def find_chapter_needing_video(novel_id: str) -> dict:
     2. Quét CSDL Supabase: Tập nào đã có kịch bản >1000 từ VÀ nằm trong completed_set thì BỎ QUA.
     3. Chọn tập đầu tiên chưa xong (Tập N) để sản xuất Media/Video.
     """
-    import os, json
+    import os
     completed_set = set()
     prog_file = "data/chapters_progress.json"
     if os.path.exists(prog_file):

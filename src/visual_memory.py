@@ -2,8 +2,7 @@ import json
 import os
 import re
 import hashlib
-import time
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any
 
 class Ultimate50FeatureMemoryEngine:
     """Hệ Thống Bộ Nhớ Tối Thượng 50 Tính Năng Tối Ưu Nhất Cho AI Video Novel (100% Free).
@@ -149,7 +148,9 @@ class Ultimate50FeatureMemoryEngine:
 
     def save_memory(self):
         """Feature 43: Persistent Disk Save"""
-        dir_path = os.path.dirname(self.memory_file); dir_path and os.makedirs(dir_path, exist_ok=True)
+        dir_path = os.path.dirname(self.memory_file)
+        if dir_path:
+            os.makedirs(dir_path, exist_ok=True)
         try:
             with open(self.memory_file, "w", encoding="utf-8") as f:
                 json.dump({
@@ -202,15 +203,26 @@ class Ultimate50FeatureMemoryEngine:
         }
         self.save_memory()
 
-    def update_character_status(self, name: str, injury: str = "", emotion: str = "", outfit_state: str = "", transformation: str = ""):
+    def update_character_state(
+        self,
+        name: str,
+        injury: str = "",
+        emotion: str = "",
+        outfit_state: str = "",
+        transformation: str = ""
+    ):
         """Features 2, 3, 4, 7: Update dynamic character status"""
         key = name.lower()
         if key in self.characters:
             char = self.characters[key]
-            if injury: char["injuries"].append(injury)
-            if emotion: char["emotion"] = emotion
-            if outfit_state: char["outfit_state"] = outfit_state
-            if transformation: char["transformation"] = transformation
+            if injury:
+                char["injuries"].append(injury)
+            if emotion:
+                char["emotion"] = emotion
+            if outfit_state:
+                char["outfit_state"] = outfit_state
+            if transformation:
+                char["transformation"] = transformation
             self.save_memory()
 
     # --- CATEGORY 2: ENVIRONMENT & SPATIOTEMPORAL MEMORY (Features 11-20) ---
@@ -225,12 +237,18 @@ class Ultimate50FeatureMemoryEngine:
     ):
         """Features 11-17: Environmental, Weather & Lighting Continuity"""
         env = self.environment_context
-        if architecture: env["architecture"] = architecture
-        if location: env["location"] = location
-        if time_of_day: env["time_of_day"] = time_of_day
-        if weather: env["weather"] = weather
-        if lighting: env["lighting"] = lighting
-        if environmental_damage: env["environmental_damage"] = environmental_damage
+        if architecture:
+            env["architecture"] = architecture
+        if location:
+            env["location"] = location
+        if time_of_day:
+            env["time_of_day"] = time_of_day
+        if weather:
+            env["weather"] = weather
+        if lighting:
+            env["lighting"] = lighting
+        if environmental_damage:
+            env["environmental_damage"] = environmental_damage
         self.save_memory()
 
     # UNIVERSAL MULTI-GENRE MASTER ART SYSTEM

@@ -13,6 +13,7 @@ except ImportError:
 
 from src import config
 from src import database
+from src import key_rotator
 from templates import prompts
 
 def safe_print(*args, **kwargs):
@@ -31,8 +32,6 @@ def safe_print(*args, **kwargs):
             sys.stdout.flush()
 
 print = safe_print
-
-from src import key_rotator
 
 def get_genai_client(api_key: str = None):
     current_key = api_key or key_rotator.get_gemini_key() or config.GEMINI_API_KEY
@@ -362,7 +361,6 @@ def call_openrouter_free_llm(prompt: str) -> str:
 
 def call_pollinations_free_llm(prompt: str) -> str:
     """100% Free Emergency LLM Fallback via Pollinations.ai POST API with Multi-Model Rotation (Zero API Key needed)."""
-    import json
     import requests
     print("[INFO] Fallback to Pollinations Multi-Model Free LLM Engine...")
     
@@ -439,7 +437,7 @@ def get_embedding(text: str) -> list:
         err_str = str(e)
         if "401" in err_str or "UNAUTHENTICATED" in err_str:
             key_rotator.mark_gemini_key_failed(g_key)
-        print(f"[WARNING] Skipping embedding generation due to API key error.")
+        print("[WARNING] Skipping embedding generation due to API key error.")
         return [0.0] * EMBED_DIM
 
 # Novel Lifecycle Operations

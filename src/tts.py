@@ -242,7 +242,7 @@ def format_srt_youtube_style(srt_content: str, max_chars_per_line: int = 34) -> 
     formatted_blocks = []
     
     for block in blocks:
-        lines = [l.strip() for l in block.split('\n') if l.strip()]
+        lines = [line.strip() for line in block.split('\n') if line.strip()]
         if len(lines) >= 3 and lines[0].isdigit() and '-->' in lines[1]:
             header = lines[:2]
             text = " ".join(lines[2:])

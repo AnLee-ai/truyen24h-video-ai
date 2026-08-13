@@ -1,7 +1,6 @@
 import os
-import sys
 import json
-from src import database, config
+from src import database
 
 def main():
     print("[INFO] Bat dau dung va sap xep lai toan bo CSDL Supabase...")

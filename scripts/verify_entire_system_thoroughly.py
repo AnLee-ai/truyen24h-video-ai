@@ -6,7 +6,7 @@ if sys.platform == "win32":
     import io
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
-from src import database, tts, video, telegram_uploader, main, config
+from src import database, tts, telegram_uploader, main, config
 
 NOVEL_ID = "d1c402ea-4882-4ffa-81e5-639e93fed463"
 

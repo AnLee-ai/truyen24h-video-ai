@@ -89,11 +89,11 @@ def generate_youtube_thumbnail(title: str, chapter_number: int, output_path: str
     
     # Prompt nghệ thuật đỉnh cao thiết kế riêng cho Thumbnail YouTube
     prompt = (
-        f"masterpiece epic YouTube video thumbnail wallpaper, 2D manhwa webtoon style, "
-        f"intense close-up hero portrait of handsome 18 years old young male cultivator, "
-        f"glowing eyes, swirling cyan energy aura, floating glowing particles, "
-        f"dramatic rim lighting, dark misty bamboo forest ruins background, "
-        f"vivid color grading, high contrast, trending on ArtStation, 8k resolution, 16:9 aspect ratio"
+        "masterpiece epic YouTube video thumbnail wallpaper, 2D manhwa webtoon style, "
+        "intense close-up hero portrait of handsome 18 years old young male cultivator, "
+        "glowing eyes, swirling cyan energy aura, floating glowing particles, "
+        "dramatic rim lighting, dark misty bamboo forest ruins background, "
+        "vivid color grading, high contrast, trending on ArtStation, 8k resolution, 16:9 aspect ratio"
     )
     
     # 1. Sinh ảnh AI 4K Manhwa

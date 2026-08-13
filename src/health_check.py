@@ -1,4 +1,3 @@
-import os
 import sys
 import shutil
 import urllib.request
@@ -28,7 +27,7 @@ def run_health_check():
     try:
         if config.SUPABASE_URL and config.SUPABASE_KEY:
             client = database.get_client()
-            res = client.table("novels").select("id").limit(1).execute()
+            client.table("novels").select("id").limit(1).execute()
             db_ok = True
     except Exception as e:
         print(f"[WARNING] Supabase Check Error: {e}")

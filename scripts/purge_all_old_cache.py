@@ -1,7 +1,7 @@
 import os
 import shutil
 import json
-from src import database, config
+from src import database
 
 def main():
     print("[INFO] Bat dau don dep toan bo Cache & CSDL truyen cu...")
@@ -30,8 +30,8 @@ def main():
     # 3. Xoa cac tap cu khoi Supabase CSDL
     try:
         client = database.get_client()
-        res = client.table("chapters").delete().neq("id", "00000000-0000-0000-0000-000000000000").execute()
-        print(f"[SUCCESS] Da xoa sach toan bo tap cu khoi CSDL Supabase!")
+        client.table("chapters").delete().neq("id", "00000000-0000-0000-0000-000000000000").execute()
+        print("[SUCCESS] Da xoa sach toan bo tap cu khoi CSDL Supabase!")
     except Exception as err:
         print(f"[WARNING] Xoa CSDL Supabase canh bao: {err}")
 

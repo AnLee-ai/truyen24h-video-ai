@@ -1,5 +1,4 @@
 import os
-import json
 import re
 import subprocess
 import shutil
@@ -71,7 +70,7 @@ def parse_srt_scenes_with_durations(srt_path: str, target_min_duration: float = 
         current_end = None
         
         for idx, block in enumerate(blocks):
-            lines = [l.strip() for l in block.split('\n') if l.strip()]
+            lines = [line.strip() for line in block.split('\n') if line.strip()]
             if len(lines) >= 3:
                 t_match = re.match(r'(\d{2}:\d{2}:\d{2},\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2},\d{3})', lines[1])
                 if t_match:
@@ -149,7 +148,7 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
     
     # 3. GIAI ĐOẠN 3.5: AI VISUAL DIRECTOR - XỬ LÝ SONG SONG ĐA LUỒNG PROMPTS (PARALLEL WORKERS=10)
     from src.visual_prompt_engine import batch_enrich_visual_prompts_parallel
-    from src.image_generator import batch_generate_scene_images, generate_scene_image, is_valid_image_file
+    from src.image_generator import batch_generate_scene_images, is_valid_image_file
     chapter_id = os.path.basename(out_dir)
     target_scenes = scene_texts[:30]
     
@@ -346,7 +345,8 @@ def process_existing_audio(audio_path: str, srt_path: str = "", title: str = "Au
         return ""
         
     parent_folder = os.path.basename(os.path.dirname(os.path.abspath(audio_path)))
-    import uuid, re as _re
+    import uuid
+    import re as _re
     _uuid_pat = _re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', _re.I)
     if parent_folder and (_uuid_pat.match(parent_folder) or len(parent_folder) > 8):
         chapter_id = parent_folder

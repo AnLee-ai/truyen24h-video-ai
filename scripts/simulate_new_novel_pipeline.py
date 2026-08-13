@@ -1,13 +1,12 @@
 import os
 import sys
-import json
 
 sys.path.insert(0, os.path.abspath("."))
 if sys.platform == "win32":
     import io
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
     
-from src import database, writer, visual_prompt_engine
+from src import writer, visual_prompt_engine
 
 SIMULATED_NOVEL = {
     "id": "novel-simulated-tieudaotiendo-888",
@@ -63,7 +62,7 @@ def run_simulation():
     # 1. Kiểm tra rà soát Sanitizer chống rò rỉ tên cũ
     sample_raw_text = "Lâm Phong đứng trên đỉnh tòa nhà Thần Châu Thị, Tô Nghiên bước tới bên cạnh."
     sanitized_text, modified = writer.verify_and_sanitize_chapter_content(sample_raw_text, SIMULATED_NOVEL["id"])
-    print(f"[TEST 1] Chapter Content Sanitizer Check:")
+    print("[TEST 1] Chapter Content Sanitizer Check:")
     print(f"  - Modified: {modified}")
     assert not modified, "Text should not be modified because it contains valid novel characters!"
     assert "Tiêu Viêm" not in sanitized_text, "Should not leak Tiêu Viêm into new novel!"

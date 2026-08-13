@@ -1,5 +1,4 @@
 import requests
-import json
 import sys
 
 # Đảm bảo in UTF-8 không bị lỗi cp1252 trên Windows PowerShell
@@ -21,9 +20,9 @@ def get_latest_action_status():
         print("[INFO] No workflow runs found.")
         return
         
-    print(f"\n=======================================================")
-    print(f" GITHUB ACTIONS LIVE MONITORING TOOL")
-    print(f"=======================================================\n")
+    print("\n=======================================================")
+    print(" GITHUB ACTIONS LIVE MONITORING TOOL")
+    print("=======================================================\n")
     
     for run in runs:
         run_id = run["id"]

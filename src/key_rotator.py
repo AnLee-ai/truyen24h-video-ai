@@ -1,7 +1,6 @@
 import os
 import re
 import threading
-from src import config
 
 class APIKeyRotator:
     """Quản lý xoay vòng đa tài khoản API Keys (Gemini, Groq) giúp nhân gấp N lần số Token & Quota miễn phí."""

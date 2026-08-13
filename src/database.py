@@ -1,3 +1,5 @@
+import os
+import json
 import re
 import threading
 from typing import Optional
@@ -61,7 +63,8 @@ def init_novel(title: str, description: str = "") -> dict:
 
 def get_novel(novel_id: str) -> dict:
     """Fetch novel details by ID with local active novel fallback."""
-    import os, json
+    import os
+    import json
     try:
         client = get_client()
         response = client.table("novels").select("*").eq("id", novel_id).execute()
@@ -198,14 +201,16 @@ def update_chapter_video_status(chapter_id: str, status: str, video_url: str = N
             data["video_url"] = video_url
         res = client.table("chapters").update(data).eq("id", chapter_id).execute()
         return res.data[0] if res.data else {}
-    except Exception as e:
+    except Exception:
         print(f"[INFO] Trạng thái video ({status}) đã ghi nhận thành công.")
         return {}
 
 def record_completed_chapter_local(chapter_id: str, chapter_number: int = 0):
     """Lưu tiến độ chương đã hoàn thành 100% vào file data/chapters_progress.json (chuẩn hóa cả int & str chống lặp tuyệt đối, Thread-safe)."""
     with _progress_lock:
-        import os, json, datetime
+        import os
+        import json
+        import datetime
         prog_file = "data/chapters_progress.json"
         data = {"novel_id": "van-co-than-vuong-v1", "completed_chapters": [], "current_chapter": 1}
         if os.path.exists(prog_file):

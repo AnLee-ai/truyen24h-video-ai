@@ -11,7 +11,7 @@ from src import database
 MASTER_NOVEL_ID = "d1c402ea-4882-4ffa-81e5-639e93fed463"
 
 def cleanup_duplicates():
-    print(f"[INFO] Scanning Supabase 'novels' table to delete duplicate rows...")
+    print("[INFO] Scanning Supabase 'novels' table to delete duplicate rows...")
     client = database.get_client()
     
     res = client.table("novels").select("*").execute()

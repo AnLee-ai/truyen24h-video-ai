@@ -5,7 +5,7 @@ import unittest
 # Ensure sys.path includes project root
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src import config, key_rotator, writer, tts, audio, video, shorts_generator, database, telegram_uploader, main
+from src import key_rotator
 
 class TestFullSystemIntegrity(unittest.TestCase):
     

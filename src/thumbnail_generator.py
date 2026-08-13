@@ -14,8 +14,10 @@ def generate_youtube_thumbnail(chapter_num: int, chapter_title: str, scene_image
     try:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         
-        # 1. Khởi tạo ảnh nền (Load ảnh phân cảnh AI, tìm ảnh thay thế hoặc tự động sinh ảnh AI 16:9 HD)
+        # 1. Khởi tạo ảnh nền (Load ảnh phân cảnh AI, tìm ảnh thay thế rộng hơn hoặc sinh ảnh AI/Canvas 16:9 HD)
         bg_loaded = False
+        
+        # A. Thử nạp trực tiếp scene_image_path
         if os.path.exists(scene_image_path) and os.path.getsize(scene_image_path) > 1000:
             try:
                 bg_img = Image.open(scene_image_path).convert('RGB')
@@ -23,24 +25,35 @@ def generate_youtube_thumbnail(chapter_num: int, chapter_title: str, scene_image
             except Exception:
                 pass
 
+        # B. Tìm ảnh thay thế trong cùng thư mục images/ hoặc các thư mục con trong output/
         if not bg_loaded:
-            # Tìm ảnh thay thế trong cùng thư mục images/
-            img_dir = os.path.dirname(scene_image_path)
-            if os.path.exists(img_dir):
-                candidates = [
-                    os.path.join(img_dir, f) for f in os.listdir(img_dir) 
-                    if f.endswith(('.jpg', '.png', '.jpeg')) and os.path.getsize(os.path.join(img_dir, f)) > 1000
-                ]
-                if candidates:
+            search_dirs = [
+                os.path.dirname(scene_image_path),
+                "output",
+                "."
+            ]
+            for s_dir in search_dirs:
+                if os.path.exists(s_dir):
                     try:
-                        bg_img = Image.open(candidates[0]).convert('RGB')
-                        bg_loaded = True
-                        print(f"[INFO] 🖼️ Thumbnail dùng ảnh thay thế trong folder: {candidates[0]}")
+                        for root, _, files in os.walk(s_dir):
+                            candidates = [
+                                os.path.join(root, f) for f in files 
+                                if f.lower().endswith(('.jpg', '.png', '.jpeg')) 
+                                and os.path.getsize(os.path.join(root, f)) > 5000
+                                and "thumbnail" not in f.lower()
+                            ]
+                            if candidates:
+                                bg_img = Image.open(candidates[0]).convert('RGB')
+                                bg_loaded = True
+                                print(f"[INFO] 🖼️ Thumbnail dùng ảnh thay thế đạt chuẩn: {candidates[0]}")
+                                break
                     except Exception:
                         pass
+                if bg_loaded:
+                    break
 
+        # C. Tự động sinh ảnh AI 16:9 HD mới cho Thumbnail nếu chưa có
         if not bg_loaded:
-            # Tự động sinh 1 ảnh AI nền HD 16:9 rực rỡ cho Thumbnail
             try:
                 from src.image_generator import generate_scene_image
                 prompt_tb = (
@@ -49,15 +62,57 @@ def generate_youtube_thumbnail(chapter_num: int, chapter_title: str, scene_image
                     f"dramatic lighting, 8k resolution, 16:9 aspect ratio"
                 )
                 gen_p = generate_scene_image(prompt_tb, scene_image_path, width, height)
-                if os.path.exists(gen_p) and os.path.getsize(gen_p) > 1000:
+                if gen_p and os.path.exists(gen_p) and os.path.getsize(gen_p) > 1000:
                     bg_img = Image.open(gen_p).convert('RGB')
                     bg_loaded = True
                     print(f"[INFO] 🎨 Tự động sinh ảnh AI nền HD mới cho Thumbnail: {gen_p}")
             except Exception as gen_err:
                 print(f"[WARNING] Không thể tự động sinh ảnh nền thumbnail: {gen_err}")
 
+        # D. Fallback tuyệt đối: Vẽ bức canvas nghệ thuật 2D Xianxia Anime hoàn chỉnh (Không để ô vuông xám/xanh trơn)
         if not bg_loaded:
-            bg_img = Image.new('RGB', (width, height), color=(25, 32, 58))
+            print("[INFO] 🎨 Tạo bức Canvas nghệ thuật 2D Xianxia Anime HD cho Thumbnail...")
+            import hashlib
+            bg_img = Image.new('RGB', (width, height), color=(15, 20, 38))
+            canvas_draw = ImageDraw.Draw(bg_img)
+            
+            # Gradient bầu trời đêm Xianxia
+            for y in range(height):
+                ratio = y / height
+                r = int(18 * (1 - ratio) + 40 * ratio)
+                g = int(25 * (1 - ratio) + 80 * ratio)
+                b = int(60 * (1 - ratio) + 140 * ratio)
+                canvas_draw.line([(0, y), (width, y)], fill=(r, g, b))
+                
+            # Ngôi sao đêm huyền ảo
+            seed_val = int(hashlib.md5(chapter_title.encode('utf-8')).hexdigest()[:6], 16)
+            for i in range(120):
+                sx = (seed_val * (i + 1) * 37) % width
+                sy = (seed_val * (i + 1) * 73) % (height * 3 // 4)
+                s_size = (i % 3) + 1
+                canvas_draw.ellipse([sx, sy, sx + s_size, sy + s_size], fill=(255, 255, 220))
+                
+            # Mặt trăng / Quầng sáng linh khí (Xianxia Celestial Moon)
+            moon_x, moon_y = width * 3 // 4, height // 3
+            for radius in range(250, 40, -15):
+                alpha_c = int(40 * (1 - radius / 250))
+                canvas_draw.ellipse([moon_x - radius, moon_y - radius, moon_x + radius, moon_y + radius], fill=(30 + alpha_c, 100 + alpha_c, 160 + alpha_c))
+            canvas_draw.ellipse([moon_x - 60, moon_y - 60, moon_x + 60, moon_y + 60], fill=(255, 245, 210))
+            
+            # Dãy núi tiên cảnh trùng điệp phía dưới
+            points1 = [(0, height)]
+            for x in range(0, width + 60, 60):
+                hy = height * 2 // 3 - (int(hashlib.md5(f"m1_{x}".encode()).hexdigest()[:4], 16) % 180)
+                points1.append((x, hy))
+            points1.append((width, height))
+            canvas_draw.polygon(points1, fill=(20, 35, 60))
+            
+            points2 = [(0, height)]
+            for x in range(0, width + 50, 50):
+                hy = height * 4 // 5 - (int(hashlib.md5(f"m2_{x}".encode()).hexdigest()[:4], 16) % 120)
+                points2.append((x, hy))
+            points2.append((width, height))
+            canvas_draw.polygon(points2, fill=(10, 18, 32))
 
         bg_img = bg_img.resize((width, height), Image.Resampling.LANCZOS)
             

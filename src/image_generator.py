@@ -1,13 +1,10 @@
 import os
 import re
-import json
 import hashlib
 import urllib.parse
 import urllib.request
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from PIL import Image, ImageDraw, ImageFont, ImageEnhance
-from src.visual_memory import ultimate_memory_50
+from PIL import Image, ImageEnhance
 
 def is_valid_image_file(file_path: str) -> bool:
     """Kiểm tra Header Magic Bytes (\xff\xd8\xff, \x89PNG, WEBP) đảm bảo file tải về không bị lỗi 0-byte hay hỏng cấu trúc."""
@@ -82,31 +79,6 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     if is_valid_image_file(output_path):
         return output_path
     
-    # 1. BIÊN DỊCH MA TRẬN PHONG CẢNH ĐIỆN ẢNH & ĐA NHÂN VẬT CHUẨN CÁC KÊNH TOP NGACH
-    aspect = "9:16" if height > width else "16:9"
-    
-    # BỘ KHÓA BỐ CỤC KHUNG CẢNH & ĐA NHÂN VẬT (HOLLYWOOD BLOCKBUSTER 16K & AAA GAME CONCEPT ART ENGINE)
-    HOLLYWOOD_BLOCKBUSTER_STYLE = (
-        "masterpiece, best quality, absolute cinema, hollywood blockbuster concept art, award-winning digital painting, "
-        "ultra detailed, hyper detailed, cinematic storytelling, emotional visual narrative, visually stunning, breathtaking composition, "
-        "professional movie concept art, AAA game concept art, semi-realistic anime, high-end illustration, pixiv masterpiece, "
-        "artstation trending, unreal engine 5 render quality, octane render quality, redshift render, physically based rendering (PBR), "
-        "global illumination, ambient occlusion, ray tracing, HDR, HDRI lighting, volumetric lighting, subsurface scattering, "
-        "filmic color grading, kodak vision3 film look, sony venice cinema camera, arri alexa 65 look, imax visual style, extremely high resolution 16k"
-    )
-    
-    CHARACTER_IDENTITY_LOCK = (
-        "maintain exactly the same character identity across every scene, same face, same hairstyle, same clothing, "
-        "same accessories, same body proportions, same age, same facial structure, same eye color, same skin tone, "
-        "skin with realistic pores, natural hair strands, detailed fingers, professional human anatomy"
-    )
-    
-    CINEMATIC_LIGHTING_CAMERA = (
-        "hollywood cinematic lighting, golden hour, volumetric light, god rays, soft rim light, bounce light, "
-        "global illumination, ray traced reflection, arri alexa 65, 35mm lens, depth of field, foreground blur, background blur, "
-        "kodak vision3 color grading, teal orange, film grain, soft bloom"
-    )
-
     # Nhận diện bối cảnh không gian & nhân vật từ văn bản phân cảnh
     lower_s = scene_text.lower()
     
@@ -151,11 +123,6 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     )
     # Mã hóa URL vừa đủ 220 ký tự chuẩn HTTP GET
     encoded_prompt = urllib.parse.quote(clean_short_prompt[:220])
-    
-    # Negative Prompt gọn nhẹ dưới 140 ký tự (Chống chia ô lưới 6-22 ô truyện tranh & chống lỗi HTTP 414)
-    negative_prompt_clean = "blurry,bad_anatomy,bad_hands,watermark,text,close-up,monochrome,flat_lighting,grid,collage,split_screen,panels"
-    negative_param = f"&negative={urllib.parse.quote(negative_prompt_clean)}"
-    
     safe_log_prompt = clean_short_prompt[:180].encode('ascii', 'replace').decode('ascii')
     print(f"[INFO] 100% MASTER ANIME PROMPT:\n > {safe_log_prompt}...")
     base_seed = int(hashlib.md5((scene_text + "truyen24h_anime_v3").encode('utf-8')).hexdigest()[:8], 16) % 1000000
@@ -311,7 +278,7 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     # ĐỘNG CƠ BẢO VỆ TẦNG 6: High Quality 2D Xianxia Procedural Canvas (Không viền lưới)
     # =========================================================================
     try:
-        from PIL import Image, ImageDraw, ImageFilter
+        from PIL import Image, ImageDraw
         img = Image.new('RGB', (width, height), color=(15, 20, 35))
         draw = ImageDraw.Draw(img)
         
@@ -338,7 +305,6 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
         # Linh khí quầng sáng hào quang (Xianxia Celestial Aura)
         moon_x, moon_y = width * 3 // 4, height // 3
         for radius in range(220, 50, -15):
-            alpha_val = int(50 * (1 - radius / 220))
             draw.ellipse([moon_x - radius, moon_y - radius, moon_x + radius, moon_y + radius], fill=(r_theme + 30, g_theme + 30, b_theme + 30))
         draw.ellipse([moon_x - 55, moon_y - 55, moon_x + 55, moon_y + 55], fill=(255, 250, 225))
         

@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.abspath("."))
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
 
-from src import database, writer, key_rotator, config
+from src import database, writer
 
 def create_brand_new_novel(genre: str = "Tuyên Hiệp / Huyền Huyễn"):
     """Tự động sáng tác 1 bộ truyện mới 100% bằng InkOS Multi-Agent Engine."""
@@ -47,7 +47,7 @@ def create_brand_new_novel(genre: str = "Tuyên Hiệp / Huyền Huyễn"):
         if n_rec and n_rec.get("id"):
             novel_id = n_rec["id"]
             print(f"[SUCCESS] Đã khởi tạo bộ truyện mới thành công trong Supabase DB (ID: {novel_id})!")
-    except Exception as e:
+    except Exception:
         print(f"[INFO] Supabase RLS active. Khởi tạo bộ truyện mới cục bộ (ID: {novel_id}).")
         
     local_info = {

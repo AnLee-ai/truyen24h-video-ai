@@ -11,7 +11,7 @@ from src import database, telegram_uploader, config
 NOVEL_ID = "d1c402ea-4882-4ffa-81e5-639e93fed463"
 
 def dispatch_all_short_chapters_to_telegram():
-    print(f"[INFO] 🚀 Bắt đầu gửi toàn bộ kịch bản & Link CDN của Tập 1 đến Tập 5 lên kênh Telegram...", flush=True)
+    print("[INFO] 🚀 Bắt đầu gửi toàn bộ kịch bản & Link CDN của Tập 1 đến Tập 5 lên kênh Telegram...", flush=True)
     all_chapters = database.get_all_chapters(NOVEL_ID)
     target_chapters = [c for c in all_chapters if c.get("chapter_number") in [1, 2, 3, 4, 5]]
     target_chapters.sort(key=lambda x: x.get("chapter_number"))

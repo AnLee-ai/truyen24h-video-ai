@@ -1,5 +1,3 @@
-import os
-import json
 from src import database
 
 def main():

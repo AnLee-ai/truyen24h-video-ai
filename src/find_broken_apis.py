@@ -1,4 +1,3 @@
-import os
 import sys
 import requests
 from src import config, key_rotator
@@ -73,7 +72,7 @@ def run_api_audit():
             print(f"  - Key #{idx+1} [{mask:15s}]: {icon} | Status: {msg}")
 
     # 3. Audit Supabase
-    print(f"\n📌 [3] KIỂM TRA KẾT NỐI SUPABASE DATABASE:")
+    print("\n📌 [3] KIỂM TRA KẾT NỐI SUPABASE DATABASE:")
     if config.SUPABASE_URL and config.SUPABASE_KEY:
         try:
             r = requests.get(f"{config.SUPABASE_URL}/rest/v1/", headers={"apikey": config.SUPABASE_KEY}, timeout=10)
@@ -87,7 +86,7 @@ def run_api_audit():
         print("  ❌ Thiếu SUPABASE_URL hoặc SUPABASE_KEY!")
 
     # 4. Audit Telegram Bot API
-    print(f"\n📌 [4] KIỂM TRA TELEGRAM BOT API & CHANNEL:")
+    print("\n📌 [4] KIỂM TRA TELEGRAM BOT API & CHANNEL:")
     if config.TELEGRAM_BOT_TOKEN and config.TELEGRAM_CHAT_ID:
         try:
             url = f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}/getMe"
@@ -103,7 +102,7 @@ def run_api_audit():
         print("  ❌ Thiếu TELEGRAM_BOT_TOKEN hoặc TELEGRAM_CHAT_ID!")
 
     # 5. Audit Pollinations Free Image API
-    print(f"\n📌 [5] KIỂM TRA POLLINATIONS FREE IMAGE API:")
+    print("\n📌 [5] KIỂM TRA POLLINATIONS FREE IMAGE API:")
     try:
         r = requests.get("https://image.pollinations.ai/prompt/test", timeout=10)
         if r.status_code == 200:

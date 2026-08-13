@@ -1,6 +1,3 @@
-import os
-import sys
-import json
 from src import database
 
 def main():
@@ -8,7 +5,6 @@ def main():
     client = database.get_client()
     
     active_novel_title = "Vạn Cổ Thần Vương: Ta Có Hệ Thống Thôn Phệ Vô Tận"
-    active_world_name = "Đấu Khí Đại Lục / Vạn Cổ Thần Vương Universe"
     active_novel_desc = "Truyện tiên hiệp huyền huyễn cực kỳ kịch tính. Nam chính Tiêu Viêm trùng sinh mang theo Hệ Thống Thôn Phệ Vô Tận, từng bước luyện hóa vạn giới chư thiên, nén ép vạn giới thần ma, xây dựng lại trật tự vĩnh hằng."
 
     # BANG 1: novels
@@ -52,9 +48,9 @@ def main():
         {"novel_id": novel_id, "keyword": "Dị Hỏa Vẫn Lạc", "description": "Ngọn lửa cuồng nổ dung hợp cùng Cốt Chưng U Hỏa của Dược Lão."},
         {"novel_id": novel_id, "keyword": "Hồn Điện", "description": "Thế lực tà ác sát thủ săn lùng linh hồn cường giả, kẻ thù truyền kiếp của Tiêu Viêm."}
     ]
-    for l_i, l in enumerate(lores):
+    for l_i, lore_item in enumerate(lores):
         try:
-            client.table("world_lore").upsert(l, on_conflict="novel_id,keyword").execute()
+            client.table("world_lore").upsert(lore_item, on_conflict="novel_id,keyword").execute()
             print(f"   [3/6 WORLD_LORE] Da nap lore #{l_i+1}")
         except Exception as e:
             print(f"   [3/6 WORLD_LORE] Canh bao #{l_i+1}: {e}")

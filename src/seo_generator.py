@@ -1,4 +1,3 @@
-import json
 from src.writer import call_gemini, safe_loads
 
 def generate_seo_metadata(title: str, chapter_number: int, content_snippet: str) -> dict:
