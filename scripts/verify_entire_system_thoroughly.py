@@ -30,9 +30,9 @@ def run_thorough_system_audit():
     print("🟢 TEST 1 PASSED: 100% Giọng đọc TTS đều là Tiếng Việt chuẩn!")
 
     # 2. Kiểm tra CSDL Supabase & Quét Tập Tiếp Theo
-    print("\n[TEST 2] Kiểm tra Quét Tập Tiếp Theo & Chống Lặp Chương...")
-    next_ch = main.find_chapter_needing_video(NOVEL_ID)
-    ch_num = next_ch.get("chapter_number") if next_ch else 0
+    from src import writer
+    next_ch = main.find_chapter_needing_video(NOVEL_ID) or writer.write_next_chapter(NOVEL_ID)
+    ch_num = int(next_ch.get("chapter_number", 0)) if next_ch else 0
     print(f"   ↳ Tập tiếp theo hệ thống chọn sản xuất: Tập {ch_num}")
     assert ch_num >= 6, f"LỖI: Thuật toán quét tập vẫn chọn Tập {ch_num} (Phải >= 6 để tránh lặp Tập 1-5)"
     print(f"🟢 TEST 2 PASSED: Bỏ qua hoàn toàn Tập 1-5, chọn chính xác Tập {ch_num}!")

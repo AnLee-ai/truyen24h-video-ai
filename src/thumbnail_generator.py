@@ -14,26 +14,66 @@ def generate_youtube_thumbnail(chapter_num: int, chapter_title: str, scene_image
     try:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         
-        # 1. Khởi tạo ảnh nền (Dùng ảnh phân cảnh AI nếu có, nếu không thì dùng gradient)
+        # 1. Khởi tạo ảnh nền (Load ảnh phân cảnh AI, tìm ảnh thay thế hoặc tự động sinh ảnh AI 16:9 HD)
+        bg_loaded = False
         if os.path.exists(scene_image_path) and os.path.getsize(scene_image_path) > 1000:
-            bg_img = Image.open(scene_image_path).convert('RGB')
-            bg_img = bg_img.resize((width, height), Image.Resampling.LANCZOS)
-        else:
-            bg_img = Image.new('RGB', (width, height), color=(16, 20, 36))
+            try:
+                bg_img = Image.open(scene_image_path).convert('RGB')
+                bg_loaded = True
+            except Exception:
+                pass
+
+        if not bg_loaded:
+            # Tìm ảnh thay thế trong cùng thư mục images/
+            img_dir = os.path.dirname(scene_image_path)
+            if os.path.exists(img_dir):
+                candidates = [
+                    os.path.join(img_dir, f) for f in os.listdir(img_dir) 
+                    if f.endswith(('.jpg', '.png', '.jpeg')) and os.path.getsize(os.path.join(img_dir, f)) > 1000
+                ]
+                if candidates:
+                    try:
+                        bg_img = Image.open(candidates[0]).convert('RGB')
+                        bg_loaded = True
+                        print(f"[INFO] 🖼️ Thumbnail dùng ảnh thay thế trong folder: {candidates[0]}")
+                    except Exception:
+                        pass
+
+        if not bg_loaded:
+            # Tự động sinh 1 ảnh AI nền HD 16:9 rực rỡ cho Thumbnail
+            try:
+                from src.image_generator import generate_scene_image
+                prompt_tb = (
+                    f"masterpiece epic 2D anime manhwa webtoon illustration, {chapter_title}, "
+                    f"intense hero portrait of 18yo male cultivator, glowing eyes, cyan energy aura, "
+                    f"dramatic lighting, 8k resolution, 16:9 aspect ratio"
+                )
+                gen_p = generate_scene_image(prompt_tb, scene_image_path, width, height)
+                if os.path.exists(gen_p) and os.path.getsize(gen_p) > 1000:
+                    bg_img = Image.open(gen_p).convert('RGB')
+                    bg_loaded = True
+                    print(f"[INFO] 🎨 Tự động sinh ảnh AI nền HD mới cho Thumbnail: {gen_p}")
+            except Exception as gen_err:
+                print(f"[WARNING] Không thể tự động sinh ảnh nền thumbnail: {gen_err}")
+
+        if not bg_loaded:
+            bg_img = Image.new('RGB', (width, height), color=(25, 32, 58))
+
+        bg_img = bg_img.resize((width, height), Image.Resampling.LANCZOS)
             
-        # 2. Phủ lớp Radial Vignette & Dark Gradient Manhwa
+        # 2. Phủ lớp Radial Vignette & Dark Gradient Manhwa (Cân bằng độ trong suốt để ảnh nền rực rỡ)
         overlay = Image.new('RGBA', (width, height), (0, 0, 0, 0))
         overlay_draw = ImageDraw.Draw(overlay)
         
-        # Gradient tối ở nửa dưới (bottom 55%) và dải trái để làm nổi chữ
+        # Gradient tối nhẹ ở nửa dưới (max alpha 110) và dải trái (max alpha 90) giúp chữ nổi bật mà không che đen ảnh
         for y in range(int(height * 0.45), height):
             ratio = (y - height * 0.45) / (height * 0.55)
-            alpha = int(240 * (ratio ** 1.2))
+            alpha = int(110 * (ratio ** 1.2))
             overlay_draw.line([(0, y), (width, y)], fill=(8, 10, 20, alpha))
             
         for x in range(0, int(width * 0.45)):
             ratio = (width * 0.45 - x) / (width * 0.45)
-            alpha = int(190 * (ratio ** 1.2))
+            alpha = int(90 * (ratio ** 1.2))
             overlay_draw.line([(x, 0), (x, height)], fill=(8, 10, 20, alpha))
             
         bg_img = Image.alpha_composite(bg_img.convert('RGBA'), overlay).convert('RGB')

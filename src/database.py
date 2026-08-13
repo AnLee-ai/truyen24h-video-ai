@@ -248,7 +248,7 @@ def record_completed_chapter_local(chapter_id: str, chapter_number: int = 0):
         if chapter_id:
             client.table("chapters").update(db_data).eq("id", chapter_id).execute()
         elif chapter_number > 0:
-            client.table("chapters").update(db_data).eq("novel_id", "d1c402ea-4882-4ffa-81e5-639e93fed463").eq("chapter_number", chapter_number).execute()
+            client.table("chapters").update(db_data).eq("chapter_number", chapter_number).execute()
     except Exception:
         pass
 
@@ -263,9 +263,21 @@ def mark_chapter_completed_atomic(chapter_id: str, audio_url: str = "", video_ur
         }
         if video_url:
             data["video_url"] = video_url
-        res = client.table("chapters").update(data).eq("id", chapter_id).execute()
-        print(f"[SUCCESS] Supabase Atomic Completion: Chapter {chapter_id} marked 100% completed!")
-        return res.data[0] if res.data else {}
+            
+        res_data = {}
+        if chapter_id:
+            res = client.table("chapters").update(data).eq("id", chapter_id).execute()
+            if res.data:
+                res_data = res.data[0]
+                
+        if chapter_number > 0:
+            query = client.table("chapters").update(data).eq("chapter_number", chapter_number)
+            if chapter_id:
+                query = query.eq("id", chapter_id)
+            query.execute()
+            
+        print(f"[SUCCESS] Supabase Atomic Completion: Chapter {chapter_number} (ID: {chapter_id}) marked 100% completed!")
+        return res_data
     except Exception as e:
         print(f"[INFO] Trạng thái hoàn thành Chapter {chapter_id} đã lưu thành công: {e}")
         return {}

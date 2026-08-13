@@ -81,7 +81,7 @@ def remove_repetitive_sentences(text: str) -> str:
         if not para.strip():
             cleaned_paragraphs.append("")
             continue
-        sentences = re.split(r'(?<=[.?!…])\s+(?=[A-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚÝĐ0-9"\'«“])', para)
+        sentences = re.split(r'(?<=[.?!…])\s+(?=[a-zA-ZàáâãèéêìíòóôõùúýđÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚÝĐ0-9"\'«“])', para)
         cleaned_sentences: list[str] = []
         for sentence in sentences:
             s_strip = sentence.strip()
@@ -405,8 +405,8 @@ def call_pollinations_free_llm(prompt: str) -> str:
     return ""
 
 def get_embedding(text: str) -> list:
-    """Generate vector embedding for semantic search using text-embedding-004."""
-    EMBED_DIM = 768  # text-embedding-004 actual output dimension
+    """Generate vector embedding for semantic search using text-embedding-004 (padded to 1536 for Supabase pgvector)."""
+    EMBED_DIM = 1536  # Supabase pgvector vector(1536) column dimension
     g_key = key_rotator.get_gemini_key() or config.GEMINI_API_KEY
     if not g_key:
         return [0.0] * EMBED_DIM
@@ -654,15 +654,17 @@ def write_next_chapter(novel_id: str) -> dict:
     # Hợp nhất danh sách các chương đã xong
     all_done_nums = completed_nums.union(completed_in_db)
     
-    # Lọc các blueprint chưa viết
-    uncompleted_blueprints = [
+    # Lọc các chương chưa viết xong kịch bản (< 1200 từ hoặc còn là BLUEPRINT)
+    unwritten_chapters = [
         c for c in all_chapters 
-        if str(c.get("content", "")).startswith("BLUEPRINT:") 
+        if isinstance(c.get("chapter_number"), (int, str)) and str(c.get("chapter_number")).isdigit()
         and int(c["chapter_number"]) not in all_done_nums
+        and (str(c.get("content", "")).startswith("BLUEPRINT:") or len(str(c.get("content", "")).split()) < 1200)
     ]
     
-    if uncompleted_blueprints:
-        next_ch_number = int(uncompleted_blueprints[0]["chapter_number"])
+    if unwritten_chapters:
+        unwritten_chapters.sort(key=lambda x: int(x["chapter_number"]))
+        next_ch_number = int(unwritten_chapters[0]["chapter_number"])
     else:
         existing_nums = [int(c["chapter_number"]) for c in all_chapters if str(c.get("chapter_number", "")).isdigit()] + list(all_done_nums)
         next_ch_number = (max(existing_nums) + 1) if existing_nums else 1

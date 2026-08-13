@@ -26,17 +26,21 @@ def generate_shorts_video(audio_path: str, srt_path: str, chapter_id: str, title
         generate_scene_image(title, shorts_bg, width=1080, height=1920)
         
     # 2. Chuẩn hóa phụ đề: Chữ trắng (&H00FFFFFF&), Viền đen mỏng (Outline=1), Cỡ chữ vừa (FontSize=20), 1 hàng (WrapStyle=2)
-    srt_escaped = srt_path.replace("\\", "/").replace(":", "\\:") if srt_path and os.path.exists(srt_path) else ""
+    srt_escaped = ""
+    if srt_path and os.path.exists(srt_path):
+        srt_abs = os.path.abspath(srt_path).replace("\\", "/")
+        srt_escaped = srt_abs.replace(":", "\\:").replace("'", "'\\\\''").replace("[", "\\[").replace("]", "\\]")
+        
     subtitle_style = "FontSize=20,PrimaryColour=&H00FFFFFF&,OutlineColour=&H00000000&,Outline=1,Shadow=0,Alignment=2,MarginV=180,WrapStyle=2"
     
     vf_filter = "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,eq=brightness=-0.15:contrast=1.1[bg]"
     if srt_escaped:
-        vf_filter += f";[bg]subtitles='{srt_escaped}':force_style='{subtitle_style}'[out]"
+        vf_filter += f";[bg]subtitles=filename='{srt_escaped}':force_style='{subtitle_style}'[out]"
     else:
         vf_filter += ";[bg]null[out]"
         
-    # 3. Tính toán thời gian bắt đầu an toàn (tránh seek vượt quá độ dài audio gây treo FFmpeg)
-    start_ss = "00:00:10"
+    # 3. Mặc định thời gian bắt đầu từ 00:00:00 để audio và phụ đề luôn khớp 100%
+    start_ss = "00:00:00"
     try:
         prob = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", audio_path], capture_output=True, text=True)
         dur = float(prob.stdout.strip())

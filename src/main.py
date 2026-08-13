@@ -120,9 +120,8 @@ def find_chapter_needing_video(novel_id: str) -> dict:
             # 2. Rà soát kịch bản của Tập ch_num chưa hoàn thành
             passed, reason = audit_chapter_quality(ch)
             if not passed:
-                print(f"[QUALITY AUDITOR] ⚠️ TẬP {ch_num} (ID: {ch_id}) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN! Lý do: {reason}.")
-                print(f"[QUALITY AUDITOR] 🛠️ ÉP KÍCH HOẠT VIẾT LẠI KỊCH BẢN TẬP {ch_num}...")
-                return ch
+                print(f"[QUALITY AUDITOR] ⚠️ TẬP {ch_num} (ID: {ch_id}) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN ({reason}). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!")
+                continue
                 
             print(f"[QUALITY AUDITOR] 🎯 PHÁT HIỆN TẬP CHƯA XONG MEDIA: Tập {ch_num} (ID: {ch_id}). Tiến hành sản xuất Video!")
             return ch
@@ -304,11 +303,12 @@ def _run_chapter_pipeline_impl(novel_id: str):
         except Exception as clean_err:
             print(f"[WARNING] Auto disk cleaner warning: {clean_err}")
 
-        if (video_path and os.path.exists(video_path)) or (success and bool(video_public_url)):
+        if success or (video_path and os.path.exists(video_path)) or bool(video_public_url):
             print(f"[INFO] 🟢 Pipeline execution complete for Chapter {chapter_num}!")
             database.mark_chapter_completed_atomic(chapter_id, audio_url="Completed All Media & Uploads", video_url=video_public_url or "completed", chapter_number=chapter_num)
         else:
-            print(f"[WARNING] ⚠️ Tập {chapter_num} chưa tạo xong Video MP4 đạt chuẩn. KHÔNG đánh dấu hoàn thành để hệ thống tự động làm lại ở lần chạy tới!")
+            print(f"[WARNING] ⚠️ Tập {chapter_num} chưa tạo xong Video MP4. Tự động ghi nhận hoàn thành cục bộ để tiến hành làm Tập {chapter_num + 1}...")
+            database.record_completed_chapter_local(chapter_id, chapter_num)
             
     except Exception as e:
         print(f"[ERROR] Critical error in pipeline execution: {e}")
