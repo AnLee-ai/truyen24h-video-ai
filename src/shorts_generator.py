@@ -76,11 +76,24 @@ def generate_shorts_video(audio_path: str, srt_path: str, chapter_id: str, title
         
     try:
         res = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-        if res.returncode == 0 and os.path.exists(shorts_video_path):
+        if res.returncode == 0 and os.path.exists(shorts_video_path) and os.path.getsize(shorts_video_path) > 50000:
             print(f"[SUCCESS] Tạo thành công Video Shorts (9:16): {shorts_video_path}")
             return shorts_video_path
         else:
-            print(f"[WARNING] FFmpeg Shorts render warning: {res.stderr[:200]}")
+            print(f"[WARNING] Pass 1 Shorts render warning: {res.stderr[:200]}. Trying Pass 2 without subtitles...")
+            cmd_pass2 = [
+                "ffmpeg", "-y",
+                "-loop", "1", "-i", shorts_bg if is_valid_image_file(shorts_bg) else audio_path,
+                "-i", audio_path,
+                "-vf", "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920",
+                "-map", "0:v", "-map", "1:a",
+                "-c:v", "libx264", "-preset", "ultrafast", "-c:a", "aac", "-b:a", "128k", "-pix_fmt", "yuv420p",
+                "-shortest", shorts_video_path
+            ]
+            res2 = subprocess.run(cmd_pass2, capture_output=True, text=True, timeout=300)
+            if res2.returncode == 0 and os.path.exists(shorts_video_path):
+                print(f"[SUCCESS] Pass 2 Tạo thành công Video Shorts (9:16): {shorts_video_path}")
+                return shorts_video_path
     except Exception as e:
         print(f"[ERROR] Exception running Shorts FFmpeg: {e}")
         
