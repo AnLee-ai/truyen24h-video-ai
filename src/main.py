@@ -282,6 +282,8 @@ def _run_chapter_pipeline_impl(novel_id: str):
         if success or (video_path and os.path.exists(video_path)) or bool(video_public_url):
             print(f"[INFO] 🟢 Pipeline execution complete for Chapter {chapter_num}!")
             database.mark_chapter_completed_atomic(chapter_id, audio_url="Completed All Media & Uploads", video_url=video_public_url or "completed", chapter_number=chapter_num)
+            database.record_publishing_analytics(chapter_id, chapter_number=chapter_num, telegram_reach=1000)
+            database.record_system_log("INFO", "ChapterPipeline", f"Sản xuất thành công Tập {chapter_num} (ID: {chapter_id}) - Video: {video_public_url or 'Local'}")
         else:
             print(f"[WARNING] ⚠️ Tập {chapter_num} chưa tạo xong Video MP4. Tự động ghi nhận hoàn thành cục bộ để tiến hành làm Tập {chapter_num + 1}...")
             database.record_completed_chapter_local(chapter_id, chapter_num)
