@@ -255,7 +255,7 @@ def _run_chapter_pipeline_impl(novel_id: str):
         # Gửi Ảnh Bìa Thumbnail 16:9 4K lên Telegram
         if thumbnail_path and os.path.exists(thumbnail_path):
             print(f"[INFO] Uploading 16:9 Thumbnail 4K to Telegram ({os.path.getsize(thumbnail_path)} bytes)...")
-            thumb_caption = f"🖼️ *Ảnh Bìa Thumbnail 16:9 4K - Tập {chapter_num}: {chapter_title}*\n🔥 Thiết kế tự động phong cách MoneyPrinter/ComfyUI 16:9"
+            thumb_caption = f"🖼️ <b>Ảnh Bìa Thumbnail 16:9 4K - Tập {chapter_num}: {chapter_title}</b>\n🔥 Thiết kế tự động phong cách MoneyPrinter/ComfyUI 16:9"
             telegram_uploader.send_photo_to_telegram(thumbnail_path, thumb_caption)
 
         success = telegram_uploader.send_audio_to_telegram(
@@ -268,7 +268,7 @@ def _run_chapter_pipeline_impl(novel_id: str):
         # Gửi video MP4 dài (16:9) lên Telegram
         if video_path and os.path.exists(video_path):
             print(f"[INFO] Uploading Full 16:9 Video to Telegram ({os.path.getsize(video_path)} bytes)...")
-            v_ok = telegram_uploader.send_video_to_telegram(video_path, f"🎬 *Video Full 16:9 - Chương {chapter_num}: {chapter_title}*", public_url=video_public_url)
+            v_ok = telegram_uploader.send_video_to_telegram(video_path, f"🎬 <b>Video Full 16:9 - Chương {chapter_num}: {chapter_title}</b>", public_url=video_public_url)
             print(f"[INFO] Full Video Telegram upload result: {v_ok}")
         else:
             print(f"[WARNING] Video 16:9 path invalid or not found: {video_path}")

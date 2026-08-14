@@ -3,16 +3,19 @@ import requests
 from src import config
 
 def generate_seo_caption(chapter_num: int, chapter_title: str, video_url: str = "") -> str:
-    """Generate SEO-optimized caption with video streaming link, hashtags, and chapter summary formatting."""
+    """Generate SEO-optimized HTML caption with clickable direct CDN video link and hashtags."""
     hashtags = "#VạnCổThầnVương #TiêuViêm #VânVận #ReviewTruyện #Webtoon2D #PhimHoạtHình #TiênHiệp #HuyềnHuyễn"
     
     video_section = ""
     if video_url and video_url.startswith("http"):
-        video_section = f"🍿 *Xem Video Full HD 16:9 (Supabase CDN):*\n👉 [Bấm vào đây để xem trực tiếp Video Tập {chapter_num}]({video_url})\n\n"
+        video_section = (
+            f"🍿 <b>Xem Video Full HD 16:9 (Supabase CDN):</b>\n"
+            f"👉 <a href=\"{video_url}\">Bấm vào đây để xem trực tiếp Video Tập {chapter_num}</a>\n\n"
+        )
         
     return (
-        f"🎙️ *Truyện 24h Audio - Tập {chapter_num}*\n\n"
-        f"📖 *Chương {chapter_num}: {chapter_title}*\n\n"
+        f"🎙️ <b>Truyện 24h Audio - Tập {chapter_num}</b>\n\n"
+        f"📖 <b>Chương {chapter_num}: {chapter_title}</b>\n\n"
         f"🔥 Tiêu Viêm trùng sinh mang theo Hệ Thống Thôn Phệ Vô Tận, nén ép vạn giới thần ma!\n"
         f"✨ Tác phẩm sản xuất tự động bằng AI 4K, kịch bản kịch tính & video 16:9 sắc nét.\n\n"
         f"{video_section}"
@@ -28,9 +31,12 @@ def send_progress_status_to_telegram(status_text: str) -> bool:
         data = {
             'chat_id': config.TELEGRAM_CHAT_ID,
             'text': status_text,
-            'parse_mode': 'Markdown'
+            'parse_mode': 'HTML'
         }
         response = requests.post(url, data=data, timeout=15)
+        if response.status_code != 200:
+            data.pop('parse_mode', None)
+            response = requests.post(url, data=data, timeout=15)
         return response.status_code == 200
     except Exception:
         return False
@@ -38,15 +44,6 @@ def send_progress_status_to_telegram(status_text: str) -> bool:
 def send_audio_to_telegram(audio_path: str, caption: str, title: str | None = None, srt_path: str | None = None) -> bool:
     """
     Sends an audio file (and optional subtitle file) to a Telegram channel/chat.
-    
-    Args:
-        audio_path (str): Local path to the MP3/WAV file.
-        caption (str): Caption text to accompany the audio.
-        title (str): Title tag for the audio file.
-        srt_path (str): Optional path to the subtitle SRT file.
-        
-    Returns:
-        bool: True if successful, False otherwise.
     """
     if not config.TELEGRAM_BOT_TOKEN or not config.TELEGRAM_CHAT_ID:
         print("[WARNING] Telegram credentials are not configured. Skipping upload.")
@@ -57,7 +54,6 @@ def send_audio_to_telegram(audio_path: str, caption: str, title: str | None = No
         return False
         
     url = f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}/sendAudio"
-    
     print(f"[INFO] Uploading audio to Telegram chat/channel: {config.TELEGRAM_CHAT_ID}...")
     
     try:
@@ -68,15 +64,15 @@ def send_audio_to_telegram(audio_path: str, caption: str, title: str | None = No
             data = {
                 'chat_id': config.TELEGRAM_CHAT_ID,
                 'caption': caption,
-                'parse_mode': 'Markdown',
+                'parse_mode': 'HTML',
                 'performer': 'Truyện 24h Audio'
             }
             if title:
                 data['title'] = title
                 
             response = requests.post(url, data=data, files=files, timeout=300)
-            if response.status_code != 200 and "parse entities" in response.text.lower():
-                # Fallback to plain text caption if markdown format fails
+            if response.status_code != 200:
+                # Fallback to plain text caption if HTML format fails
                 data.pop('parse_mode', None)
                 audio_file.seek(0)
                 files = {'audio': (os.path.basename(audio_path), audio_file, 'audio/mpeg')}
@@ -84,13 +80,10 @@ def send_audio_to_telegram(audio_path: str, caption: str, title: str | None = No
             
         if response.status_code == 200:
             print("[INFO] Audio uploaded successfully to Telegram.")
-            
-            # If SRT subtitle is provided, send it as a document next with human-readable filename
             if srt_path and os.path.exists(srt_path):
                 print(f"[INFO] Uploading subtitle SRT: {srt_path}...")
                 srt_name = f"{title or 'Subtitle'}.srt"
                 send_document_to_telegram(srt_path, f"Phụ đề chương: {title or 'SRT'}", custom_filename=srt_name)
-            
             return True
         else:
             print(f"[ERROR] Telegram upload failed: {response.status_code} - {response.text}")
@@ -116,9 +109,9 @@ def send_photo_to_telegram(photo_path: str, caption: str) -> bool:
     try:
         with open(photo_path, 'rb') as photo_file:
             files = {'photo': (os.path.basename(photo_path), photo_file, 'image/jpeg')}
-            data = {'chat_id': config.TELEGRAM_CHAT_ID, 'caption': caption, 'parse_mode': 'Markdown'}
+            data = {'chat_id': config.TELEGRAM_CHAT_ID, 'caption': caption, 'parse_mode': 'HTML'}
             response = requests.post(url, data=data, files=files, timeout=120)
-            if response.status_code != 200 and "parse entities" in response.text.lower():
+            if response.status_code != 200:
                 data.pop('parse_mode', None)
                 photo_file.seek(0)
                 files = {'photo': (os.path.basename(photo_path), photo_file, 'image/jpeg')}
