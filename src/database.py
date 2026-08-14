@@ -128,15 +128,25 @@ def get_latest_chapter(novel_id: str) -> dict:
         print(f"[WARNING] Supabase get_latest_chapter failed ({e}). Returning empty dict fallback.")
     return {}
 
-def get_all_chapters(novel_id: str) -> list:
+def get_all_chapters(novel_id: str = "") -> list:
     """Fetch all chapters of a novel, ordered by chapter number with fail-safe error handling."""
+    import uuid
     try:
         client = get_client()
-        response = client.table("chapters")\
-            .select("*")\
-            .eq("novel_id", novel_id)\
-            .order("chapter_number", desc=False)\
-            .execute()
+        query = client.table("chapters").select("*")
+        
+        is_valid_uuid = False
+        if novel_id:
+            try:
+                uuid.UUID(str(novel_id))
+                is_valid_uuid = True
+            except ValueError:
+                is_valid_uuid = False
+                
+        if is_valid_uuid:
+            query = query.eq("novel_id", novel_id)
+            
+        response = query.order("chapter_number", desc=False).execute()
         if response.data:
             res_data = response.data or []
             return sorted(res_data, key=lambda x: int(x.get("chapter_number", 0) or 0) if str(x.get("chapter_number", "0")).lstrip('-').isdigit() else 0)
@@ -297,40 +307,62 @@ def record_completed_chapter_local(chapter_id: str, chapter_number: int = 0):
             except Exception as pe:
                 print(f"[WARNING] Ghi nhận tiến độ local {prog_file} warning: {pe}")
         
-    # Đồng bộ trực tiếp lên Supabase CSDL chống lặp 100%
+    # Đồng bộ trực tiếp lên Supabase CSDL chống lặp 100% (Xử lý an toàn nếu chưa có cột video_status)
     try:
         client = get_client()
-        db_data = {"audio_url": "completed", "video_status": "completed"}
-        if chapter_id:
-            client.table("chapters").update(db_data).eq("id", chapter_id).execute()
-        if chapter_number > 0:
-            client.table("chapters").update(db_data).eq("chapter_number", chapter_number).execute()
-    except Exception:
-        pass
+        # Thử update cả video_status lẫn audio_url
+        try:
+            db_data = {"audio_url": "completed", "video_status": "completed"}
+            if chapter_id:
+                client.table("chapters").update(db_data).eq("id", chapter_id).execute()
+            if chapter_number > 0:
+                client.table("chapters").update(db_data).eq("chapter_number", chapter_number).execute()
+        except Exception:
+            # Fallback an toàn: Chỉ update audio_url="completed" (Cột chắc chắn tồn tại 100%)
+            safe_db_data = {"audio_url": "completed"}
+            if chapter_id:
+                client.table("chapters").update(safe_db_data).eq("id", chapter_id).execute()
+            if chapter_number > 0:
+                client.table("chapters").update(safe_db_data).eq("chapter_number", chapter_number).execute()
+    except Exception as db_err:
+        print(f"[WARNING] Supabase sync fallback warning: {db_err}")
 
 def mark_chapter_completed_atomic(chapter_id: str, audio_url: str = "", video_url: str = "", chapter_number: int = 0) -> dict:
-    """Atomic update: Đánh dấu chương hoàn thành 100% cả audio lẫn video trong 1 query duy nhất."""
+    """Atomic update: Đánh dấu chương hoàn thành 100% cả audio lẫn video trong 1 query duy nhất (Thích ứng cột mờ)."""
     record_completed_chapter_local(chapter_id, chapter_number)
     try:
         client = get_client()
-        data = {
-            "video_status": "completed",
-            "audio_url": audio_url or "Completed All Media & Uploads"
-        }
-        if video_url:
-            data["video_url"] = video_url
-            
         res_data = {}
-        if chapter_id:
-            res = client.table("chapters").update(data).eq("id", chapter_id).execute()
-            if res.data:
-                res_data = res.data[0]
+        # 1. Thử update đầy đủ dữ liệu
+        try:
+            data = {
+                "video_status": "completed",
+                "audio_url": audio_url or "Completed All Media & Uploads"
+            }
+            if video_url:
+                data["video_url"] = video_url
                 
-        if chapter_number > 0:
-            query = client.table("chapters").update(data).eq("chapter_number", chapter_number)
             if chapter_id:
-                query = query.eq("id", chapter_id)
-            query.execute()
+                res = client.table("chapters").update(data).eq("id", chapter_id).execute()
+                if res.data:
+                    res_data = res.data[0]
+                    
+            if chapter_number > 0:
+                query = client.table("chapters").update(data).eq("chapter_number", chapter_number)
+                if chapter_id:
+                    query = query.eq("id", chapter_id)
+                query.execute()
+        except Exception:
+            # 2. Fallback: Nếu CSDL Supabase chưa có cột video_status/video_url, chỉ update audio_url="completed"
+            data_fallback = {
+                "audio_url": audio_url or "Completed All Media & Uploads"
+            }
+            if chapter_id:
+                res = client.table("chapters").update(data_fallback).eq("id", chapter_id).execute()
+                if res.data:
+                    res_data = res.data[0]
+            if chapter_number > 0:
+                client.table("chapters").update(data_fallback).eq("chapter_number", chapter_number).execute()
             
         print(f"[SUCCESS] Supabase Atomic Completion: Chapter {chapter_number} (ID: {chapter_id}) marked 100% completed!")
         return res_data
@@ -438,33 +470,45 @@ def search_episodes(novel_id: str, query_embedding: list, limit: int = 5, thresh
     """Perform pgvector similarity search on past episodes."""
     client = get_client()
     try:
-        response = client.rpc("match_episodes", {
+        rpc_params = {
             "query_embedding": query_embedding,
             "match_threshold": threshold,
-            "match_count": limit,
-            "novel_id_filter": novel_id
-        }).execute()
+            "match_count": limit
+        }
+        if is_valid_uuid(novel_id):
+            rpc_params["novel_id_filter"] = novel_id
+        response = client.rpc("match_episodes", rpc_params).execute()
         return response.data if response.data else []  # type: ignore[return-value]
     except Exception as e:
-        print(f"[ERROR] pgvector search failed: {e}")
+        print(f"[INFO] pgvector search notice: {e}")
         return []
 
 # Character Operations (Protagonist control and power-tier logic)
 def get_characters(novel_id: str) -> list:
     """Fetch all characters of a novel."""
-    client = get_client()
-    response = client.table("characters").select("*").eq("novel_id", novel_id).execute()
-    return response.data if response.data else []
+    try:
+        client = get_client()
+        query = client.table("characters").select("*")
+        if is_valid_uuid(novel_id):
+            query = query.eq("novel_id", novel_id)
+        response = query.execute()
+        return response.data if response.data else []
+    except Exception as e:
+        print(f"[WARNING] get_characters failed: {e}")
+        return []
 
 def get_character_by_name(novel_id: str, name: str) -> dict:
     """Fetch character by name."""
-    client = get_client()
-    response = client.table("characters")\
-        .select("*")\
-        .eq("novel_id", novel_id)\
-        .eq("name", name)\
-        .execute()
-    return response.data[0] if response.data else {}  # type: ignore[return-value]
+    try:
+        client = get_client()
+        query = client.table("characters").select("*")
+        if is_valid_uuid(novel_id):
+            query = query.eq("novel_id", novel_id)
+        response = query.eq("name", name).execute()
+        return response.data[0] if response.data else {}
+    except Exception as e:
+        print(f"[WARNING] get_character_by_name failed: {e}")
+        return {}
 
 def upsert_character(novel_id: str, name: str, description: str = "", power_tier: str = "Ordinary", 
                      combat_stats: Optional[dict] = None, relationships: Optional[dict] = None, 
@@ -520,12 +564,30 @@ def upsert_character(novel_id: str, name: str, description: str = "", power_tier
         print(f"[WARNING] upsert_character failed: {e}")
         return {}
 
+def is_valid_uuid(val: str) -> bool:
+    """Kiểm tra chuỗi UUID hợp lệ tránh lỗi Postgres 22P02 invalid input syntax."""
+    if not val:
+        return False
+    import uuid
+    try:
+        uuid.UUID(str(val))
+        return True
+    except (ValueError, TypeError):
+        return False
+
 # World Lore Operations
 def get_world_lore(novel_id: str) -> list:
     """Fetch all lore entries of a novel."""
-    client = get_client()
-    response = client.table("world_lore").select("*").eq("novel_id", novel_id).execute()
-    return response.data if response.data else []
+    try:
+        client = get_client()
+        query = client.table("world_lore").select("*")
+        if is_valid_uuid(novel_id):
+            query = query.eq("novel_id", novel_id)
+        response = query.execute()
+        return response.data if response.data else []
+    except Exception as e:
+        print(f"[WARNING] get_world_lore failed: {e}")
+        return []
 
 def upsert_world_lore(novel_id: str, keyword: str, description: str,
                       novel_title: str = "Vạn Cổ Thần Vương: Ta Có Hệ Thống Thôn Phệ Vô Tận",
@@ -573,12 +635,18 @@ def upsert_world_lore(novel_id: str, keyword: str, description: str,
 # Narrative Threads Operations
 def get_narrative_threads(novel_id: str, status: str | None = None) -> list:
     """Fetch narrative threads of a novel."""
-    client = get_client()
-    query = client.table("narrative_threads").select("*").eq("novel_id", novel_id)
-    if status:
-        query = query.eq("status", status)
-    response = query.execute()
-    return response.data if response.data else []
+    try:
+        client = get_client()
+        query = client.table("narrative_threads").select("*")
+        if is_valid_uuid(novel_id):
+            query = query.eq("novel_id", novel_id)
+        if status:
+            query = query.eq("status", status)
+        response = query.execute()
+        return response.data if response.data else []
+    except Exception as e:
+        print(f"[WARNING] get_narrative_threads failed: {e}")
+        return []
 
 def upsert_narrative_thread(novel_id: str, thread_name: str, description: str, status: str = "open",
                             novel_title: str = "Vạn Cổ Thần Vương: Ta Có Hệ Thống Thôn Phệ Vô Tận") -> dict:

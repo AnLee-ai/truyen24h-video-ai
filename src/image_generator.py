@@ -169,7 +169,6 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     # =========================================================================
     try:
         if os.path.exists("story_diffusion"):
-            import urllib.request
             story_prompt = urllib.parse.quote(
                 f"storydiffusion manhwa character consistency panel: {scene_clean_words}, "
                 "masterpiece, best quality, 2D manhwa webtoon style, xianxia martial arts hero, 8k cinematic shot"
@@ -184,7 +183,7 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
                         f.write(data_sd)
                     if is_valid_image_file(output_path):
                         enhance_image_quality(output_path)
-                        print(f"[SUCCESS] 🎨 Saved AI Image via Priority 2 story_diffusion Repository Engine: {output_path}")
+                        print(f"[SUCCESS] Saved AI Image via Priority 2 story_diffusion Repository Engine: {output_path}")
                         return output_path
     except Exception as sd_err:
         print(f"[WARNING] story_diffusion repo engine exception: {sd_err}")
@@ -194,7 +193,6 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     # =========================================================================
     try:
         if os.path.exists("komiko") or os.path.exists("inkos"):
-            import urllib.request
             komiko_prompt = urllib.parse.quote(
                 f"komiko inkos webtoon illustration frame: {scene_clean_words}, "
                 "2d anime style, sharp ink outlines, cinematic lighting, epic xianxia scene"
@@ -208,7 +206,7 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
                         f.write(data_km)
                     if is_valid_image_file(output_path):
                         enhance_image_quality(output_path)
-                        print(f"[SUCCESS] 🎨 Saved AI Image via Priority 3 komiko/inkos Repository Engine: {output_path}")
+                        print(f"[SUCCESS] Saved AI Image via Priority 3 komiko/inkos Repository Engine: {output_path}")
                         return output_path
     except Exception as km_err:
         print(f"[WARNING] komiko/inkos repo engine exception: {km_err}")

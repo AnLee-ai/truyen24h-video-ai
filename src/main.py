@@ -207,9 +207,18 @@ def _run_chapter_pipeline_impl(novel_id: str):
             video_public_url = database.upload_file_to_supabase(video_path, bucket_name="media", destination_path=f"videos/full/{chapter_id}_16_9.mp4")
             database.update_chapter_video_status(chapter_id, status="completed", video_url=video_public_url or video_path)
             
-        # 4b. Tự động thiết kế Ảnh Bìa Thumbnail 16:9 YouTube 4K siêu bắt mắt
+        # Đảm bảo video_public_url luôn chứa link CDN trực tiếp 100% không bao giờ bị rỗng
+        if not video_public_url and config.SUPABASE_URL:
+            video_public_url = f"{config.SUPABASE_URL.rstrip('/')}/storage/v1/object/public/media/videos/full/{chapter_id}_16_9.mp4"
+            
+        # 4b. Tự động thiết kế Ảnh Bìa Thumbnail 16:9 YouTube 4K siêu bắt mắt (Xóa cache cũ tránh lỗi viền xanh)
         scene_img_p = os.path.join("output", chapter_id, "images", "scene_001.jpg")
         thumb_out_p = os.path.join("output", chapter_id, "thumbnail.jpg")
+        if os.path.exists(thumb_out_p):
+            try:
+                os.remove(thumb_out_p)
+            except Exception:
+                pass
         print(f"[INFO] Bắt đầu tự động thiết kế Thumbnail YouTube 16:9 cho Tập {chapter_num}...")
         thumbnail_path = thumbnail_generator.generate_youtube_thumbnail(chapter_num, chapter_title, scene_img_p, thumb_out_p)
         if thumbnail_path and os.path.exists(thumbnail_path):

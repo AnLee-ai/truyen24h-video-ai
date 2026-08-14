@@ -25,32 +25,23 @@ def generate_youtube_thumbnail(chapter_num: int, chapter_title: str, scene_image
             except Exception:
                 pass
 
-        # B. Tìm ảnh thay thế trong cùng thư mục images/ hoặc các thư mục con trong output/
+        # B. Tìm ảnh thay thế trong cùng thư mục images phân cảnh thực tế
         if not bg_loaded:
-            search_dirs = [
-                os.path.dirname(scene_image_path),
-                "output",
-                "."
-            ]
-            for s_dir in search_dirs:
-                if os.path.exists(s_dir):
-                    try:
-                        for root, _, files in os.walk(s_dir):
-                            candidates = [
-                                os.path.join(root, f) for f in files 
-                                if f.lower().endswith(('.jpg', '.png', '.jpeg')) 
-                                and os.path.getsize(os.path.join(root, f)) > 5000
-                                and "thumbnail" not in f.lower()
-                            ]
-                            if candidates:
-                                bg_img = Image.open(candidates[0]).convert('RGB')
-                                bg_loaded = True
-                                print(f"[INFO] 🖼️ Thumbnail dùng ảnh thay thế đạt chuẩn: {candidates[0]}")
-                                break
-                    except Exception:
-                        pass
-                if bg_loaded:
-                    break
+            scene_dir = os.path.dirname(scene_image_path)
+            if os.path.exists(scene_dir):
+                try:
+                    candidates = [
+                        os.path.join(scene_dir, f) for f in os.listdir(scene_dir) 
+                        if f.lower().endswith(('.jpg', '.png', '.jpeg')) 
+                        and os.path.getsize(os.path.join(scene_dir, f)) > 5000
+                        and not any(bad_k in f.lower() for bad_k in ["thumbnail", "test", "synth", "sample", "fallback"])
+                    ]
+                    if candidates:
+                        bg_img = Image.open(candidates[0]).convert('RGB')
+                        bg_loaded = True
+                        print(f"[INFO] 🖼️ Thumbnail dùng ảnh phân cảnh thực tế: {candidates[0]}")
+                except Exception:
+                    pass
 
         # C. Tự động sinh ảnh AI 16:9 HD mới dành riêng cho Thumbnail Nhân Vật Chính Siêu Ngầu
         if not bg_loaded:
@@ -67,13 +58,13 @@ def generate_youtube_thumbnail(chapter_num: int, chapter_title: str, scene_image
                 if gen_p and os.path.exists(gen_p) and os.path.getsize(gen_p) > 1000:
                     bg_img = Image.open(gen_p).convert('RGB')
                     bg_loaded = True
-                    print(f"[INFO] 🎨 Tự động sinh ảnh AI Nhân Vật Chính Siêu Ngầu cho Thumbnail: {gen_p}")
+                    print(f"[INFO] Generated AI Hero Portrait for Thumbnail: {gen_p}")
             except Exception as gen_err:
-                print(f"[WARNING] Không thể tự động sinh ảnh nền thumbnail: {gen_err}")
+                print(f"[WARNING] Could not auto-generate AI thumbnail bg: {gen_err}")
 
         # D. Fallback tuyệt đối: Vẽ bức canvas nghệ thuật 2D Xianxia Anime HD khắc họa Nhân Vật Chính Siêu Ngầu
         if not bg_loaded:
-            print("[INFO] 🎨 Tạo bức Canvas nghệ thuật 2D Xianxia Anime HD với Nhân Vật Chính Siêu Ngầu...")
+            print("[INFO] Generating 2D Xianxia Anime Hero Canvas for Thumbnail...")
             import hashlib
             bg_img = Image.new('RGB', (width, height), color=(20, 25, 45))
             canvas_draw = ImageDraw.Draw(bg_img)
