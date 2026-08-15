@@ -95,12 +95,6 @@ document.addEventListener('DOMContentLoaded', () => {
         connectSSE('run_thumbnail');
     });
 
-    // Data Fetching Logic
-    async function fetchNovels() {
-        const tbody = document.getElementById('novels-tbody');
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Đang tải dữ liệu...</td></tr>';
-        try {
-            const res = await fetch('/api/novels');
             const data = await res.json();
             if (data.status === 'success') {
                 if (data.data.length === 0) {
@@ -175,35 +169,30 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = await fetch('/api/settings/get');
             const data = await res.json();
             if (data.status === 'success') {
-                const keys = ['DEFAULT_VOICE', 'DEFAULT_RATE', 'DEFAULT_PITCH', 'GEMINI_API_KEY', 'GROQ_API_KEY', 'SUPABASE_URL', 'SUPABASE_KEY', 'TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID'];
-                keys.forEach(k => {
-                    const el = document.getElementById('env_' + k);
-                    if (el && data.data[k]) {
-                        el.value = data.data[k];
+                const map = {
+                    'DEFAULT_VOICE': 'tts-voice-select',
+                    'GEMINI_API_KEY': 'api-gemini',
+                    'SUPABASE_URL': 'api-supabase-url',
+                    'SUPABASE_KEY': 'api-supabase-key',
+                    'TELEGRAM_BOT_TOKEN': 'api-telegram-token'
+                };
+                for (const [key, id] of Object.entries(map)) {
+                    const el = document.getElementById(id);
+                    if (el && data.data[key]) {
+                        el.value = data.data[key];
                     }
-                });
+                }
             }
         } catch (e) {
             console.error("Lỗi lấy cấu hình:", e);
         }
     }
 
-    // Export save function to global scope
-    window.saveSettings = async function(formId) {
-        const form = document.getElementById(formId);
-        const formData = new FormData(form);
-        const payload = {};
-        formData.forEach((value, key) => {
-            if (value.trim() !== '') {
-                payload[key] = value.trim();
-            }
-        });
-        
-        const btn = form.querySelector('button[type="submit"]');
+    // Custom Save logic
+    async function postSettings(payload, btn) {
         const oldText = btn.textContent;
         btn.textContent = 'Đang lưu...';
         btn.disabled = true;
-
         try {
             const res = await fetch('/api/settings/update', {
                 method: 'POST',
@@ -211,18 +200,64 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(payload)
             });
             const data = await res.json();
-            if (data.status === 'success') {
-                alert('Lưu cấu hình thành công! Khởi động lại ứng dụng để áp dụng.');
-            } else {
-                alert('Lỗi: ' + data.message);
-            }
+            if (data.status === 'success') alert('Lưu cấu hình thành công!');
+            else alert('Lỗi: ' + data.message);
         } catch (e) {
             alert('Không thể kết nối đến server.');
         } finally {
             btn.textContent = oldText;
             btn.disabled = false;
         }
-    };
+    }
+
+    document.getElementById('btn-api-save')?.addEventListener('click', (e) => {
+        postSettings({
+            'GEMINI_API_KEY': document.getElementById('api-gemini').value,
+            'SUPABASE_URL': document.getElementById('api-supabase-url').value,
+            'SUPABASE_KEY': document.getElementById('api-supabase-key').value,
+            'TELEGRAM_BOT_TOKEN': document.getElementById('api-telegram-token').value
+        }, e.target);
+    });
+
+    document.getElementById('btn-tts-save')?.addEventListener('click', (e) => {
+        postSettings({
+            'DEFAULT_VOICE': document.getElementById('tts-voice-select').value
+        }, e.target);
+    });
+
+    // TTS Preview
+    const btnPreview = document.getElementById('btn-tts-preview');
+    const audioPlayer = document.getElementById('tts-audio-player');
+    const audioContainer = document.getElementById('tts-audio-container');
+    
+    btnPreview?.addEventListener('click', async () => {
+        const voice = document.getElementById('tts-voice-select').value;
+        const text = document.getElementById('tts-preview-text').value;
+        if(!text) return alert("Vui lòng nhập chữ để nghe thử!");
+        
+        const oldText = btnPreview.innerText;
+        btnPreview.innerText = "Đang tạo audio...";
+        btnPreview.disabled = true;
+        
+        try {
+            const url = `/api/tts/preview?voice=${encodeURIComponent(voice)}&text=${encodeURIComponent(text)}`;
+            const res = await fetch(url);
+            if (res.ok) {
+                const blob = await res.blob();
+                const blobUrl = URL.createObjectURL(blob);
+                audioPlayer.src = blobUrl;
+                audioContainer.style.display = 'block';
+                audioPlayer.play();
+            } else {
+                alert("Lỗi tạo audio!");
+            }
+        } catch(err) {
+            alert("Lỗi mạng!");
+        } finally {
+            btnPreview.innerText = oldText;
+            btnPreview.disabled = false;
+        }
+    });
 
     // Load initial settings
     fetchSettings();

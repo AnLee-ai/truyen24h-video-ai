@@ -6,7 +6,9 @@ import json
 import asyncio
 from fastapi import Request, Body
 from pydantic import BaseModel
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, StreamingResponse, FileResponse
+import tempfile
+import edge_tts
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from src.main import run_chapter_pipeline, app as fastapi_app
@@ -96,6 +98,21 @@ async def api_update_settings(request: Request):
             f.writelines(new_lines)
             
         return {"status": "success", "message": "Đã cập nhật cấu hình thành công!"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@fastapi_app.get("/api/tts/preview")
+async def api_tts_preview(voice: str = "vi-VN-HoaiMyNeural", text: str = "Xin chào, đây là giọng đọc thử nghiệm."):
+    """Tạo audio preview nhanh chóng bằng edge-tts."""
+    try:
+        communicate = edge_tts.Communicate(text=text, voice=voice, rate="+0%", pitch="+0Hz")
+        tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
+        tmp_file.close()
+        
+        await communicate.save(tmp_file.name)
+        
+        from starlette.background import BackgroundTask
+        return FileResponse(tmp_file.name, media_type="audio/mpeg", background=BackgroundTask(os.remove, tmp_file.name))
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
