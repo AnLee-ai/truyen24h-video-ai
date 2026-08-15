@@ -95,6 +95,12 @@ document.addEventListener('DOMContentLoaded', () => {
         connectSSE('run_thumbnail');
     });
 
+    // Data Fetching Logic
+    async function fetchNovels() {
+        const tbody = document.getElementById('novels-tbody');
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Đang tải dữ liệu...</td></tr>';
+        try {
+            const res = await fetch('/api/novels');
             const data = await res.json();
             if (data.status === 'success') {
                 if (data.data.length === 0) {
