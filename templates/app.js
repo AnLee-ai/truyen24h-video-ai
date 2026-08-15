@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Navigation
     const navItems = document.querySelectorAll('.nav-item');
-    const tabs = document.querySelectorAll('.content-body');
+    const tabs = document.querySelectorAll('.tab-content');
     const pageTitle = document.getElementById('page-title');
 
     navItems.forEach(item => {
@@ -10,15 +10,15 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Remove active class
             navItems.forEach(nav => nav.classList.remove('active'));
-            tabs.forEach(tab => tab.classList.add('hidden'));
+            tabs.forEach(tab => tab.classList.remove('active'));
             
             // Add active class
             item.classList.add('active');
             const tabId = item.getAttribute('data-tab');
-            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            document.getElementById(`tab-${tabId}`).classList.add('active');
             
             // Update title
-            pageTitle.textContent = item.querySelector('span').textContent;
+            pageTitle.textContent = item.textContent.trim();
         });
     });
 
@@ -94,4 +94,137 @@ document.addEventListener('DOMContentLoaded', () => {
     btnThumb.addEventListener('click', () => {
         connectSSE('run_thumbnail');
     });
+
+    // Data Fetching Logic
+    async function fetchNovels() {
+        const tbody = document.getElementById('novels-tbody');
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Đang tải dữ liệu...</td></tr>';
+        try {
+            const res = await fetch('/api/novels');
+            const data = await res.json();
+            if (data.status === 'success') {
+                if (data.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Chưa có truyện nào đang chạy</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = data.data.map(n => `
+                    <tr>
+                        <td style="font-family: monospace; font-size: 0.8rem">${n.id}</td>
+                        <td style="font-weight: 500">${n.title || 'N/A'}</td>
+                        <td><span class="badge-status badge-success">${n.status}</span></td>
+                        <td>
+                            <button class="btn btn-outline" style="padding: 4px 8px; font-size: 12px;" onclick="document.getElementById('novel-id').value='${n.id}'; document.querySelector('.nav-item[data-tab=\\'pipeline\\']').click();">Chọn</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted" style="color:red">Lỗi: ${data.message}</td></tr>`;
+            }
+        } catch (e) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted" style="color:red">Không thể kết nối đến server</td></tr>';
+        }
+    }
+
+    async function fetchHistory() {
+        const tbody = document.getElementById('history-tbody');
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Đang tải dữ liệu...</td></tr>';
+        try {
+            const res = await fetch('/api/history');
+            const data = await res.json();
+            if (data.status === 'success') {
+                if (data.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Chưa có lịch sử video nào</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = data.data.map(c => {
+                    const audioStatus = (c.audio_url || '').toLowerCase() === 'completed' || c.audio_url ? 'badge-success' : 'badge-warning';
+                    const videoStatus = (c.video_status || '').toLowerCase() === 'completed' || c.video_url ? 'badge-success' : 'badge-secondary';
+                    const audioText = c.audio_url ? 'Done' : 'Pending';
+                    const videoText = (c.video_status || 'Pending').toUpperCase();
+                    
+                    return `
+                    <tr>
+                        <td style="font-weight: 600">Chương ${c.chapter_number}</td>
+                        <td>${c.title || `Chương ${c.chapter_number}`}</td>
+                        <td><span class="badge-status ${audioStatus}">${audioText}</span></td>
+                        <td><span class="badge-status ${videoStatus}">${videoText}</span></td>
+                    </tr>
+                `}).join('');
+            } else {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted" style="color:red">Lỗi: ${data.message}</td></tr>`;
+            }
+        } catch (e) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted" style="color:red">Không thể kết nối đến server</td></tr>';
+        }
+    }
+
+    // Bind refresh buttons
+    const btnRefNovels = document.getElementById('btn-refresh-novels');
+    if (btnRefNovels) btnRefNovels.addEventListener('click', fetchNovels);
+    
+    const btnRefHistory = document.getElementById('btn-refresh-history');
+    if (btnRefHistory) btnRefHistory.addEventListener('click', fetchHistory);
+
+    // Initial fetch when clicking tabs
+    document.querySelector('.nav-item[data-tab="novels"]').addEventListener('click', fetchNovels);
+    document.querySelector('.nav-item[data-tab="history"]').addEventListener('click', fetchHistory);
+
+    // Settings API logic
+    async function fetchSettings() {
+        try {
+            const res = await fetch('/api/settings/get');
+            const data = await res.json();
+            if (data.status === 'success') {
+                const keys = ['DEFAULT_VOICE', 'DEFAULT_RATE', 'DEFAULT_PITCH', 'GEMINI_API_KEY', 'GROQ_API_KEY', 'SUPABASE_URL', 'SUPABASE_KEY', 'TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID'];
+                keys.forEach(k => {
+                    const el = document.getElementById('env_' + k);
+                    if (el && data.data[k]) {
+                        el.value = data.data[k];
+                    }
+                });
+            }
+        } catch (e) {
+            console.error("Lỗi lấy cấu hình:", e);
+        }
+    }
+
+    // Export save function to global scope
+    window.saveSettings = async function(formId) {
+        const form = document.getElementById(formId);
+        const formData = new FormData(form);
+        const payload = {};
+        formData.forEach((value, key) => {
+            if (value.trim() !== '') {
+                payload[key] = value.trim();
+            }
+        });
+        
+        const btn = form.querySelector('button[type="submit"]');
+        const oldText = btn.textContent;
+        btn.textContent = 'Đang lưu...';
+        btn.disabled = true;
+
+        try {
+            const res = await fetch('/api/settings/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                alert('Lưu cấu hình thành công! Khởi động lại ứng dụng để áp dụng.');
+            } else {
+                alert('Lỗi: ' + data.message);
+            }
+        } catch (e) {
+            alert('Không thể kết nối đến server.');
+        } finally {
+            btn.textContent = oldText;
+            btn.disabled = false;
+        }
+    };
+
+    // Load initial settings
+    fetchSettings();
 });
+

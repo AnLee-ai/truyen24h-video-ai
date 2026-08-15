@@ -3,111 +3,282 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Truyện 24h Dashboard</title>
+    <title>NovaFlow - Video Studio</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/index.css">
 </head>
 <body>
-    <div class="dashboard">
+    <div class="app-container">
         <!-- Sidebar -->
         <aside class="sidebar">
-            <div class="sidebar-header">
-                <h2>T24h</h2>
-                <div class="status-indicator">
-                    <span class="dot online"></span>
-                    <span class="status-text">Trực Tuyến</span>
-                </div>
+            <div class="logo">
+                <div class="logo-icon"></div>
+                <h2>Truyện 24h</h2>
             </div>
-            <nav class="sidebar-nav">
+            
+            <nav class="nav-menu">
                 <a href="#" class="nav-item active" data-tab="pipeline">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                    <span>Chạy Pipeline</span>
-                </a>
-                <a href="#" class="nav-item" data-tab="progress">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                    <span>Tiến Trình Chạy</span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    Dashboard
                 </a>
                 <a href="#" class="nav-item" data-tab="history">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                    <span>Lịch Sử</span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                    Lịch Sử Video
                 </a>
-                <a href="#" class="nav-item" data-tab="logs">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
-                    <span>Log Hệ Thống</span>
+                <a href="#" class="nav-item" data-tab="novels">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                    Quản Lý Nguồn Truyện
+                </a>
+                <a href="#" class="nav-item" data-tab="tts">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>
+                    Quản Lý Giọng Đọc (TTS)
+                </a>
+                <a href="#" class="nav-item" data-tab="bgm">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+                    Nhạc Nền (BGM)
+                </a>
+                <a href="#" class="nav-item" data-tab="upload">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    Upload (YT/Telegram)
+                </a>
+                <a href="#" class="nav-item" data-tab="media">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    Thư Viện Media
+                </a>
+                <a href="#" class="nav-item" data-tab="api">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
+                    Khóa API
                 </a>
                 <a href="#" class="nav-item" data-tab="settings">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                    <span>Cài Đặt</span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    Cài Đặt
                 </a>
             </nav>
         </aside>
 
         <!-- Main Content -->
         <main class="main-content">
-            <header class="header">
-                <h1 id="page-title">Chạy Pipeline</h1>
+            <header class="top-header">
+                <h1 id="page-title">Dashboard</h1>
+                <div class="user-profile">
+                    <div class="avatar">Admin</div>
+                </div>
             </header>
 
-            <div class="content-body" id="tab-pipeline">
-                <div class="control-panel">
-                    <div class="input-group">
-                        <label for="novel-id">Novel ID (Supabase UUID)</label>
-                        <input type="text" id="novel-id" placeholder="VD: 123e4567-e89b-12d3-a456-426614174000" autocomplete="off">
-                    </div>
-                    
-                    <div class="action-buttons">
-                        <button id="btn-run" class="btn btn-primary">
-                            <span>🚀 Viết Chương & Tạo Audio</span>
-                        </button>
-                        <button id="btn-thumb" class="btn btn-secondary">
-                            <span>🎨 Tạo Thumbnail 9-Agent</span>
-                        </button>
+            <div class="scrollable-content">
+                <!-- Pipeline Tab -->
+                <div class="tab-content active" id="tab-pipeline">
+                    <div class="grid-layout">
+                        <!-- Cột Trái: Form tạo -->
+                        <div class="card panel-create">
+                            <h3>Tạo Video Mới</h3>
+                            
+                            <div class="input-block">
+                                <label>Novel ID (Supabase)</label>
+                                <div class="textarea-mockup">
+                                    <input type="text" id="novel-id" placeholder="123e4567-e89b-12d3..." autocomplete="off">
+                                </div>
+                            </div>
+
+                            <div class="action-buttons">
+                                <button id="btn-run" class="btn btn-primary">Viết Chương & Video</button>
+                                <button id="btn-thumb" class="btn btn-outline">Chỉ Tạo Thumbnail</button>
+                            </div>
+                        </div>
+
+                        <!-- Cột Phải: Logs và Stats -->
+                        <div class="right-column">
+                            <div class="card panel-status">
+                                <div class="status-header">
+                                    <h3>Trạng Thái Sinh Video</h3>
+                                    <span class="badge">Live Logs</span>
+                                </div>
+                                <div class="terminal-box" id="console">
+                                    <div class="log-line text-muted">Hệ thống sẵn sàng. Vui lòng nhập Novel ID và bấm tạo...</div>
+                                </div>
+                            </div>
+
+                            <div class="card panel-stats">
+                                <h3>Tổng Quan</h3>
+                                <div class="stats-grid">
+                                    <div class="stat-box">
+                                        <span class="stat-label">System Status</span>
+                                        <span class="stat-value text-green">Online</span>
+                                    </div>
+                                    <div class="stat-box">
+                                        <span class="stat-label">Engine</span>
+                                        <span class="stat-value">9-Agent</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="terminal-container">
-                    <div class="terminal-header">
-                        <div class="terminal-dots">
-                            <span></span><span></span><span></span>
+                <!-- Lịch Sử Tab -->
+                <div class="tab-content" id="tab-history">
+                    <div class="card">
+                        <div class="status-header">
+                            <h3>Lịch Sử Video</h3>
+                            <button id="btn-refresh-history" class="btn btn-outline" style="padding: 4px 12px; font-size: 13px;">Làm mới</button>
                         </div>
-                        <span class="terminal-title">Cửa Sổ Log Nhanh</span>
-                    </div>
-                    <div class="terminal-body" id="console">
-                        <div class="log-line info">Đang chờ lệnh...</div>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Chương</th>
+                                        <th>Tên chương</th>
+                                        <th>Trạng Thái Audio</th>
+                                        <th>Trạng Thái Video</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="history-tbody">
+                                    <tr><td colspan="4" class="text-center text-muted">Đang tải dữ liệu...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
-            </div>
-            
-            <div class="content-body hidden" id="tab-progress">
-                <p>Tiến trình của các job đang chạy sẽ hiển thị ở đây (Sắp có)...</p>
-            </div>
-            
-            <div class="content-body hidden" id="tab-history">
-                <p>Nội dung lịch sử các job đã chạy sẽ hiển thị ở đây (Sắp có)...</p>
-            </div>
 
-            <div class="content-body hidden" id="tab-logs">
-                <div class="terminal-container" style="height: 600px;">
-                    <div class="terminal-header">
-                        <div class="terminal-dots">
-                            <span></span><span></span><span></span>
+                <!-- Novels Tab -->
+                <div class="tab-content" id="tab-novels">
+                    <div class="card">
+                        <div class="status-header">
+                            <h3>Quản Lý Nguồn Truyện</h3>
+                            <button id="btn-refresh-novels" class="btn btn-outline" style="padding: 4px 12px; font-size: 13px;">Làm mới</button>
                         </div>
-                        <span class="terminal-title">Log Toàn Hệ Thống</span>
-                    </div>
-                    <div class="terminal-body" id="full-logs">
-                        <div class="log-line info">Chưa có log tổng...</div>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Novel ID</th>
+                                        <th>Tên Truyện</th>
+                                        <th>Trạng Thái</th>
+                                        <th>Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="novels-tbody">
+                                    <tr><td colspan="4" class="text-center text-muted">Đang tải dữ liệu...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
-            </div>
-            
-            <div class="content-body hidden" id="tab-settings">
-                <p>Cấu hình hệ thống, sửa prompt, đổi API key sẽ hiển thị ở đây (Sắp có)...</p>
+
+                <!-- TTS Tab -->
+                <div class="tab-content" id="tab-tts">
+                    <div class="card">
+                        <h3>Cấu Hình Giọng Đọc (TTS)</h3>
+                        <form id="form-tts" onsubmit="event.preventDefault(); saveSettings('form-tts');">
+                            <div class="input-block">
+                                <label>Giọng Đọc Microsoft (TTS)</label>
+                                <div class="textarea-mockup" style="padding: 0;">
+                                    <select id="env_DEFAULT_VOICE" name="DEFAULT_VOICE" style="width: 100%; padding: 12px; border: none; background: transparent; outline: none; font-family: inherit; font-size: 0.875rem;">
+                                        <option value="vi-VN-HoaiMyNeural">Hoài My (Nữ - Truyền Cảm)</option>
+                                        <option value="vi-VN-NamMinhNeural">Nam Minh (Nam - Trầm Ấm)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="input-block">
+                                <label>Tốc độ (Rate)</label>
+                                <div class="textarea-mockup">
+                                    <input type="text" id="env_DEFAULT_RATE" name="DEFAULT_RATE" placeholder="ví dụ: +10%" autocomplete="off">
+                                </div>
+                            </div>
+                            <div class="input-block">
+                                <label>Cao độ (Pitch)</label>
+                                <div class="textarea-mockup">
+                                    <input type="text" id="env_DEFAULT_PITCH" name="DEFAULT_PITCH" placeholder="ví dụ: +0Hz" autocomplete="off">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="max-width: 200px;">Lưu Cấu Hình TTS</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- BGM Tab -->
+                <div class="tab-content" id="tab-bgm">
+                    <div class="card">
+                        <h3>Nhạc Nền (BGM) & Subtitles</h3>
+                        <p class="text-muted">Tải lên BGM mới, chỉnh âm lượng, render SRT...</p>
+                    </div>
+                </div>
+
+                <!-- Upload Tab -->
+                <div class="tab-content" id="tab-upload">
+                    <div class="card">
+                        <h3>Cấu Hình Upload & Xuất Bản</h3>
+                        <p class="text-muted">Tự động push lên Supabase Storage, kênh YouTube, và nhóm Telegram (Auto SEO Caption)...</p>
+                    </div>
+                </div>
+
+                <!-- Media Tab -->
+                <div class="tab-content" id="tab-media">
+                    <div class="card">
+                        <h3>Thư Viện Media</h3>
+                        <p class="text-muted">Quản lý hình ảnh và âm thanh đã sinh...</p>
+                    </div>
+                </div>
+
+                <!-- API Keys Tab -->
+                <div class="tab-content" id="tab-api">
+                    <div class="card">
+                        <h3>Khóa API & Credentials</h3>
+                        <form id="form-api" onsubmit="event.preventDefault(); saveSettings('form-api');">
+                            <div class="input-block">
+                                <label>Gemini API Key</label>
+                                <div class="textarea-mockup">
+                                    <input type="password" id="env_GEMINI_API_KEY" name="GEMINI_API_KEY" autocomplete="off">
+                                </div>
+                            </div>
+                            <div class="input-block">
+                                <label>Groq API Key</label>
+                                <div class="textarea-mockup">
+                                    <input type="password" id="env_GROQ_API_KEY" name="GROQ_API_KEY" autocomplete="off">
+                                </div>
+                            </div>
+                            <div class="input-block">
+                                <label>Supabase URL</label>
+                                <div class="textarea-mockup">
+                                    <input type="text" id="env_SUPABASE_URL" name="SUPABASE_URL" autocomplete="off">
+                                </div>
+                            </div>
+                            <div class="input-block">
+                                <label>Supabase Key</label>
+                                <div class="textarea-mockup">
+                                    <input type="password" id="env_SUPABASE_KEY" name="SUPABASE_KEY" autocomplete="off">
+                                </div>
+                            </div>
+                            <div class="input-block">
+                                <label>Telegram Bot Token</label>
+                                <div class="textarea-mockup">
+                                    <input type="password" id="env_TELEGRAM_BOT_TOKEN" name="TELEGRAM_BOT_TOKEN" autocomplete="off">
+                                </div>
+                            </div>
+                            <div class="input-block">
+                                <label>Telegram Chat ID</label>
+                                <div class="textarea-mockup">
+                                    <input type="text" id="env_TELEGRAM_CHAT_ID" name="TELEGRAM_CHAT_ID" autocomplete="off">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="max-width: 200px;">Lưu API Keys</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Cài Đặt Tab -->
+                <div class="tab-content" id="tab-settings">
+                    <div class="card">
+                        <h3>Cài Đặt Hệ Thống</h3>
+                        <p class="text-muted">Chức năng đang được cập nhật...</p>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
-    
+
     <script src="/static/app.js"></script>
 </body>
 </html>

@@ -4,7 +4,8 @@ import threading
 import time
 import json
 import asyncio
-from fastapi import Request
+from fastapi import Request, Body
+from pydantic import BaseModel
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -19,7 +20,84 @@ fastapi_app.mount("/static", StaticFiles(directory="templates"), name="static")
 
 @fastapi_app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="index.html", context={"request": request})
+
+@fastapi_app.get("/api/novels")
+def api_get_novels():
+    """Lấy danh sách các truyện đang active từ DB."""
+    try:
+        novels = database.get_active_novels()
+        return {"status": "success", "data": novels}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@fastapi_app.get("/api/history")
+def api_get_history(novel_id: str = ""):
+    """Lấy lịch sử các video đã sinh."""
+    try:
+        chapters = database.get_all_chapters(novel_id)
+        # Sort by chapter_number desc
+        chapters = sorted(chapters, key=lambda x: int(x.get("chapter_number", 0)), reverse=True)
+        return {"status": "success", "data": chapters[:50]} # Trả về 50 chap mới nhất
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@fastapi_app.get("/api/settings/get")
+def api_get_settings():
+    """Đọc cấu hình từ file .env"""
+    import os
+    env_path = ".env"
+    settings = {}
+    if os.path.exists(env_path):
+        with open(env_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, v = line.split("=", 1)
+                    settings[k.strip()] = v.strip()
+    return {"status": "success", "data": settings}
+
+@fastapi_app.post("/api/settings/update")
+async def api_update_settings(request: Request):
+    """Cập nhật cấu hình vào file .env"""
+    try:
+        payload = await request.json()
+        import os
+        env_path = ".env"
+        
+        # Read existing
+        lines = []
+        updated_keys = set()
+        if os.path.exists(env_path):
+            with open(env_path, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+                
+        # Update lines
+        new_lines = []
+        for line in lines:
+            if "=" in line and not line.strip().startswith("#"):
+                k, _ = line.split("=", 1)
+                k = k.strip()
+                if k in payload:
+                    new_lines.append(f"{k}={payload[k]}\n")
+                    updated_keys.add(k)
+                else:
+                    new_lines.append(line)
+            else:
+                new_lines.append(line)
+                
+        # Append new keys
+        for k, v in payload.items():
+            if k not in updated_keys:
+                new_lines.append(f"{k}={v}\n")
+                
+        # Write back
+        with open(env_path, "w", encoding="utf-8") as f:
+            f.writelines(new_lines)
+            
+        return {"status": "success", "message": "Đã cập nhật cấu hình thành công!"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 @fastapi_app.get("/api/run_pipeline")
 async def api_run_pipeline(novel_id: str):
