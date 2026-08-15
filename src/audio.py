@@ -1,4 +1,4 @@
-import os
+﻿import os
 import random
 from pydub import AudioSegment
 from pydub.effects import normalize
@@ -33,10 +33,23 @@ def mix_bgm_with_voice(voice_path: str, chapter_id: str) -> str:
         bgm_files = [f for f in os.listdir(config.BGM_DIR) if f.endswith(('.mp3', '.wav', '.ogg'))]
         
         if not bgm_files:
-            print("[INFO] 🎵 Chưa có file BGM trong bgm/ folder. Xuất file voice chuẩn hóa độ rõ nét cao...")
-            voice.export(output_path, format="mp3", bitrate="192k")
-            print(f"[SUCCESS] Exported clean normalized voice audio to: {output_path}")
-            return output_path
+            print("[INFO] Chưa có file BGM trong bgm/ folder. Kích hoạt Suno/Udio Webhook API...")
+            webhook_url = os.environ.get("COLAB_WEBHOOK_SUNO_UDIO")
+            if webhook_url:
+                try:
+                    import requests
+                    resp = requests.get(webhook_url, timeout=60)
+                    if resp.status_code == 200:
+                        bgm_path = os.path.join(config.BGM_DIR, "suno_generated_bgm.mp3")
+                        with open(bgm_path, "wb") as f:
+                            f.write(resp.content)
+                        bgm_files = ["suno_generated_bgm.mp3"]
+                        print("[SUCCESS] Đã tải nhạc nền từ Suno/Udio Colab Webhook!")
+                except Exception as e:
+                    print(f"[WARNING] Lỗi tải Suno/Udio Webhook: {e}")
+            if not bgm_files:
+                voice.export(output_path, format="mp3", bitrate="192k")
+                return output_path
             
         # 3. Select a random BGM track
         selected_bgm_name = random.choice(bgm_files)
@@ -81,3 +94,4 @@ def mix_bgm_with_voice(voice_path: str, chapter_id: str) -> str:
         except Exception as fallback_err:
             print(f"[ERROR] Fallback failed: {fallback_err}")
             return voice_path
+

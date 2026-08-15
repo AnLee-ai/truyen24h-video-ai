@@ -346,10 +346,8 @@ async def _run_tts_async(text: str, voice: str, rate: str, pitch: str, audio_pat
 def clean_tts_text(text: str) -> str:
     """Sanitize chapter text before TTS to remove unwanted section titles like 'Dẫn lược', 'Chương X', etc."""
     cleaned = text.strip()
-    pattern = r"(?m)^\s*(?:\*\*|\*|__|_)*\s*(?:Dẫn lược|Giới thiệu|Phần dẫn lược|Tóm tắt bối cảnh|Prologue|Introduction|Giới thiệu bối cảnh)\s*(?:\*\*|\*|__|_)*\s*[:：\-–—\n]?\s*(?:\*\*|\*|__|_)*\s*"
-    cleaned = re.sub(pattern, "", cleaned, flags=re.IGNORECASE).strip()
-    inline_pattern = r"(?:\*\*|\*|__|_)*\s*(?:Dẫn lược|Phần dẫn lược|Giới thiệu bối cảnh|Prologue)\s*(?:\*\*|\*|__|_)*\s*[:：\-–—]\s*"
-    cleaned = re.sub(inline_pattern, "", cleaned, flags=re.IGNORECASE).strip()
+    pattern = r"(?im)^\s*[*_]*\s*(?:Dẫn lược|Giới thiệu|Phần dẫn lược|Tóm tắt bối cảnh|Prologue|Introduction|Giới thiệu bối cảnh)\s*[:：\-–—]*\s*[*_]*\s*[:：\-–—]*\s*"
+    cleaned = re.sub(pattern, "", cleaned).strip()
     return cleaned
 
 def generate_voice_and_subs(text: str, chapter_id: str) -> tuple:

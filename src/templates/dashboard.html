@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Truyện 24h Studio</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/index.css">
+    <style>
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-layer-group text-emerald" style="font-size: 1.5rem;"></i>
+                <h2>Truyện 24h</h2>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#" class="nav-item active" onclick="switchTab(event, 'dashboard')"><i class="fas fa-chart-pie"></i> Dashboard</a></li>
+                <li><a href="#" class="nav-item" onclick="switchTab(event, 'library')"><i class="fas fa-book"></i> Novels Library</a></li>
+                <li><a href="#" class="nav-item" onclick="switchTab(event, 'jobs')"><i class="fas fa-server"></i> Active Jobs <span style="margin-left:auto; background:hsl(var(--bg-surface-elevated)); padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">0</span></a></li>
+                <li><a href="#" class="nav-item" onclick="switchTab(event, 'cache')"><i class="fas fa-database"></i> Cache Engine</a></li>
+                <li><a href="#" class="nav-item" onclick="switchTab(event, 'settings')"><i class="fas fa-cog"></i> Settings</a></li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            
+            <!-- Dashboard Tab -->
+            <div id="tab-dashboard" class="tab-pane active">
+                <header class="page-header">
+                    <div>
+                        <h1 class="page-title">Production Dashboard</h1>
+                        <p class="text-muted" style="margin-top: 4px;">Monitor automated content generation pipeline.</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="runPipeline()">
+                        <i class="fas fa-play"></i> Start Automation
+                    </button>
+                </header>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-title">Active Novels</span>
+                        <span class="stat-value text-emerald">{{ active_novels|length }}</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-title">Total Chapters</span>
+                        <span class="stat-value">{{ total_chapters }}</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-title">Pipeline Status</span>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-top: 12px;">
+                            <span class="status-dot"></span>
+                            <span style="font-size: 1.25rem; font-weight: 600; font-family: 'Inter', sans-serif;">System Online</span>
+                        </div>
+                    </div>
+                </div>
+
+                <section class="data-section">
+                    <div class="data-section-header">
+                        <h3>Active Productions</h3>
+                    </div>
+                    <div class="novel-list">
+                        {% for novel in active_novels %}
+                        <div class="novel-item">
+                            <div class="novel-info">
+                                <span class="novel-title">{{ novel.title }}</span>
+                                <span class="novel-desc">{{ novel.description }}</span>
+                            </div>
+                            <div class="novel-meta">
+                                <span class="mono text-muted text-sm" style="font-size: 0.8rem;">ID: {{ novel.id[:8] }}</span>
+                                <span class="badge badge-active">{{ novel.status }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        
+                        {% if not active_novels %}
+                        <div style="padding: 40px; text-align: center; color: hsl(var(--text-muted));">
+                            <i class="fas fa-box-open" style="font-size: 2rem; margin-bottom: 16px; opacity: 0.5;"></i>
+                            <p>No active novels in production.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </section>
+            </div>
+
+            <!-- Library Tab -->
+            <div id="tab-library" class="tab-pane">
+                <header class="page-header">
+                    <div>
+                        <h1 class="page-title">Novels Library</h1>
+                        <p class="text-muted" style="margin-top: 4px;">Manage all novels and their chapters.</p>
+                    </div>
+                </header>
+                <div style="padding: 60px; text-align: center; color: hsl(var(--text-muted)); border: 1px dashed hsl(var(--border-color)); border-radius: var(--radius-lg);">
+                    <i class="fas fa-tools" style="font-size: 3rem; margin-bottom: 16px; opacity: 0.5;"></i>
+                    <h2>Under Construction</h2>
+                    <p style="margin-top: 8px;">The library management interface is being built.</p>
+                </div>
+            </div>
+
+            <!-- Jobs Tab -->
+            <div id="tab-jobs" class="tab-pane">
+                <header class="page-header">
+                    <div>
+                        <h1 class="page-title">Active Jobs</h1>
+                        <p class="text-muted" style="margin-top: 4px;">Monitor background rendering and AI tasks.</p>
+                    </div>
+                </header>
+                <div style="padding: 60px; text-align: center; color: hsl(var(--text-muted)); border: 1px dashed hsl(var(--border-color)); border-radius: var(--radius-lg);">
+                    <i class="fas fa-server" style="font-size: 3rem; margin-bottom: 16px; opacity: 0.5;"></i>
+                    <h2>Job Queue Engine</h2>
+                    <p style="margin-top: 8px;">View real-time progress of AI Generation and FFMpeg rendering here soon.</p>
+                </div>
+            </div>
+
+            <!-- Cache Tab -->
+            <div id="tab-cache" class="tab-pane">
+                <header class="page-header">
+                    <div>
+                        <h1 class="page-title">Cache Engine</h1>
+                        <p class="text-muted" style="margin-top: 4px;">Manage local AI response cache to save tokens.</p>
+                    </div>
+                </header>
+                <div style="padding: 60px; text-align: center; color: hsl(var(--text-muted)); border: 1px dashed hsl(var(--border-color)); border-radius: var(--radius-lg);">
+                    <i class="fas fa-database" style="font-size: 3rem; margin-bottom: 16px; opacity: 0.5;"></i>
+                    <h2>Cache Explorer</h2>
+                    <p style="margin-top: 8px;">Browse and invalidate cached AI responses here soon.</p>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="tab-settings" class="tab-pane">
+                <header class="page-header">
+                    <div>
+                        <h1 class="page-title">System Settings</h1>
+                        <p class="text-muted" style="margin-top: 4px;">Configure API keys and system preferences.</p>
+                    </div>
+                </header>
+                <div style="padding: 60px; text-align: center; color: hsl(var(--text-muted)); border: 1px dashed hsl(var(--border-color)); border-radius: var(--radius-lg);">
+                    <i class="fas fa-cog" style="font-size: 3rem; margin-bottom: 16px; opacity: 0.5;"></i>
+                    <h2>Configuration</h2>
+                    <p style="margin-top: 8px;">API Key rotator and global settings will be available here.</p>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // Tab Switching Logic
+        function switchTab(event, tabId) {
+            event.preventDefault();
+            
+            // Remove active class from all nav items
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            // Add active class to clicked item
+            event.currentTarget.classList.add('active');
+            
+            // Hide all tab panes
+            document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+            // Show selected tab pane
+            document.getElementById('tab-' + tabId).classList.add('active');
+        }
+
+        // Pipeline Trigger
+        function runPipeline() {
+            if(confirm('Inititate master pipeline for all active novels?')) {
+                const btn = document.querySelector('.btn-primary');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Triggering...';
+                btn.style.opacity = '0.7';
+                
+                fetch('/run-pipeline?novel_id=all', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    alert('Success: ' + data.message);
+                })
+                .catch(err => {
+                    alert('Error triggering pipeline.');
+                })
+                .finally(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.opacity = '1';
+                });
+            }
+        }
+    </script>
+</body>
+</html>

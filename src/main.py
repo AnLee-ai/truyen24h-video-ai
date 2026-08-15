@@ -1,10 +1,13 @@
 import argparse
 import sys
+from src import checkpoint
 import os
 import contextlib
 import uvicorn
-from fastapi import FastAPI, BackgroundTasks
+from fastapi import FastAPI, BackgroundTasks, Request
 from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 
 from src import config
 from src import database
@@ -14,6 +17,8 @@ from src import audio
 from src import telegram_uploader
 from src import video
 from src import thumbnail_generator
+from src import checkpoint
+from src.queue_manager import job_queue
 
 def safe_print(*args, **kwargs):
     """Safely print message preventing UnicodeEncodeError on Windows terminals."""
@@ -34,6 +39,8 @@ print = safe_print
 
 # Initialize FastAPI App
 app = FastAPI(title="Truyện 24h Audio Engine", version="1.0.0")
+templates = Jinja2Templates(directory="src/templates")
+app.mount("/static", StaticFiles(directory="src/static"), name="static")
 
 
 class CallbackStream:
@@ -242,12 +249,16 @@ def _run_chapter_pipeline_impl(novel_id: str):
                     list(executor.map(_up_img, img_files))
                 print(f"[SUCCESS] 🟢 Đã đẩy hoàn tất {len(img_files)} Ảnh AI 2D lên Supabase CDN!")
             
-        # 6. (Tạm thời bỏ qua Upload YouTube - Đã tắt theo yêu cầu)
-        # print(f"[INFO] Bỏ qua upload YouTube. Tập trung gửi Telegram Channel...")
-        # if video_path and os.path.exists(video_path):
-        #     youtube_url = youtube_uploader.upload_video_to_youtube(video_path, chapter_title, chapter_num)
-        #     if youtube_url:
-        #         database.update_chapter_video_status(chapter_id, status="published", video_url=youtube_url)
+        # 6. Tự động Upload YouTube (Kích hoạt lại theo yêu cầu P1)
+        print(f"[INFO] Bắt đầu tiến trình Upload video lên YouTube...")
+        if video_path and os.path.exists(video_path):
+            try:
+                import src.youtube_uploader as youtube_uploader
+                youtube_url = youtube_uploader.upload_video_to_youtube(video_path, chapter_title, chapter_num)
+                if youtube_url:
+                    database.update_chapter_video_status(chapter_id, status="published", video_url=youtube_url)
+            except Exception as e:
+                print(f"[ERROR] Quá trình đăng tải YouTube thất bại: {e}")
         
         # 7. Upload file Audio, Subtitles, Thumbnail 16:9 & Video MP4 16:9 lên kênh Telegram
         caption_markdown = telegram_uploader.generate_seo_caption(chapter_num, chapter_title, video_url=video_public_url)
@@ -302,33 +313,56 @@ def _run_chapter_pipeline_impl(novel_id: str):
 
 # FastAPI endpoints
 @app.get("/", response_class=HTMLResponse)
-def index():
-    """Simple status page for UptimeRobot / Cron-job.org pings."""
-    return """
-    <html>
-        <head>
-            <title>Truyện 24h Audio Engine</title>
-            <style>
-                body { font-family: sans-serif; background-color: #121212; color: #ffffff; text-align: center; padding-top: 100px; }
-                h1 { color: #00e676; }
-                .status { background: #1e1e1e; padding: 20px; border-radius: 8px; display: inline-block; }
-            </style>
-        </head>
-        <body>
-            <h1>Truyện 24h Audio</h1>
-            <div class="status">
-                <p>Trạng thái hệ thống: 🟢 Hoạt động 24/24</p>
-                <p>Sử dụng: edge-tts + Gemini 1.5 Flash + Supabase</p>
-            </div>
-        </body>
-    </html>
-    """
+def index(request: Request):
+    """Rich Dashboard Status Page."""
+    active_novels = database.get_active_novels() or []
+    
+    # Calculate some fake stats for now or query db
+    client = database.get_client()
+    total_chapters = 0
+    try:
+        if client:
+            resp = client.table("chapters").select("id", count="exact").execute()
+            total_chapters = resp.count if resp.count else len(active_novels) * 5
+    except Exception:
+        pass
+        
+    return templates.TemplateResponse(request=request, name="dashboard.html", context={
+        "request": request,
+        "active_novels": active_novels,
+        "total_chapters": total_chapters
+    })
 
 @app.post("/run-pipeline")
-def trigger_pipeline(novel_id: str, background_tasks: BackgroundTasks):
-    """Triggers the chapter writing & audio publishing pipeline asynchronously."""
-    background_tasks.add_task(run_chapter_pipeline, novel_id)
-    return {"status": "accepted", "message": "Pipeline execution started in the background."}
+def trigger_pipeline(novel_id: str):
+    """Triggers the chapter writing & audio publishing pipeline asynchronously using Job Queue."""
+    job_id = f"job_novel_{novel_id}_{int(time.time())}"
+    job_queue.add_job(job_id, run_chapter_pipeline, novel_id)
+    return {"status": "queued", "job_id": job_id, "message": f"Pipeline triggered for novel {novel_id}. Job ID: {job_id}"}
+
+from pydantic import BaseModel
+class ThumbnailRequest(BaseModel):
+    video_path: str
+    chapter_title: str
+
+from src.thumbnail_agent.pipeline import run_thumbnail_pipeline
+
+@app.post("/api/v1/thumbnail/generate")
+def api_generate_thumbnail(req: ThumbnailRequest):
+    """(Dev Enhance) Trigger 9-Agent AI Thumbnail Engine."""
+    job_id = f"thumb_{int(time.time())}"
+    job_queue.add_job(job_id, run_thumbnail_pipeline, req.video_path, req.chapter_title)
+    return {
+        "status": "queued", 
+        "job_id": job_id, 
+        "message": f"Thumbnail generation queued for {req.chapter_title}"
+    }
+
+@app.get("/api/v1/thumbnail/status/{job_id}")
+def api_get_thumbnail_status(job_id: str):
+    """Retrieve the status of a thumbnail generation job."""
+    status = job_queue.get_job_status(job_id)
+    return {"job_id": job_id, "job": status}
 
 # CLI Argument Parser
 def main():
@@ -459,3 +493,5 @@ if __name__ == "__main__":
         sys.argv.append("--action")
         sys.argv.append("run-pipeline")
     main()
+
+

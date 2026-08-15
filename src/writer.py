@@ -1,4 +1,4 @@
-﻿import json
+import json
 import time
 import re
 import sys
@@ -14,6 +14,7 @@ except ImportError:
 from src import config
 from src import database
 from src import key_rotator
+from src.cache import cached
 from templates import prompts
 
 def safe_print(*args, **kwargs):
@@ -109,12 +110,10 @@ def remove_repetitive_sentences(text: str) -> str:
     return "\n".join(final_paragraphs)
 
 def clean_chapter_content(text: str) -> str:
-    """Clean draft content, stripping markdown and prefix headers like 'Dáº«n lÆ°á»£c:', 'ChÆ°Æ¡ng X:', etc."""
+    """Clean draft content, stripping markdown and prefix headers like 'Dẫn lược:', 'Chương X:', etc."""
     cleaned = text.strip()
-    pattern = r"(?m)^\s*(?:\*\*|\*|__|_)*\s*(?:Dáº«n lÆ°á»£c|Giá»›i thiá»‡u|Pháº§n dáº«n lÆ°á»£c|TÃ³m táº¯t bá»‘i cáº£nh|Prologue|Introduction|Giá»›i thiá»‡u bá»‘i cáº£nh)\s*(?:\*\*|\*|__|_)*\s*[:ï¼š\-â€“â€”\n]?\s*(?:\*\*|\*|__|_)*\s*"
-    cleaned = re.sub(pattern, "", cleaned, flags=re.IGNORECASE).strip()
-    inline_pattern = r"(?:\*\*|\*|__|_)*\s*(?:Dáº«n lÆ°á»£c|Pháº§n dáº«n lÆ°á»£c|Giá»›i thiá»‡u bá»‘i cáº£nh|Prologue)\s*(?:\*\*|\*|__|_)*\s*[:ï¼š\-â€“â€”]\s*"
-    cleaned = re.sub(inline_pattern, "", cleaned, flags=re.IGNORECASE).strip()
+    pattern = r"(?im)^\s*[*_]*\s*(?:Dẫn lược|Giới thiệu|Phần dẫn lược|Tóm tắt bối cảnh|Prologue|Introduction|Giới thiệu bối cảnh)\s*[:：\-–—]*\s*[*_]*\s*[:：\-–—]*\s*"
+    cleaned = re.sub(pattern, "", cleaned).strip()
     cleaned = remove_repetitive_sentences(cleaned)
     return cleaned
 
@@ -177,6 +176,7 @@ def verify_and_sanitize_chapter_content(text: str, novel_id: str = "") -> tuple:
         
     return text, False
 
+@cached(ttl_seconds=86400)
 def translate_to_vietnamese_with_gemini(text: str) -> str:
     """Tá»± Ä‘á»™ng kiá»ƒm tra vÃ  dá»‹ch toÃ n bá»™ ká»‹ch báº£n tiá»ƒu thuyáº¿t tá»« tiáº¿ng Trung/tiáº¿ng Anh sang tiáº¿ng Viá»‡t chuáº©n mÆ°á»£t mÃ  100% qua Gemini API."""
     if not text or not text.strip():
@@ -210,6 +210,7 @@ def translate_to_vietnamese_with_gemini(text: str) -> str:
         return cleaned_res
     return text
 
+@cached(ttl_seconds=86400)
 def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
     """
     Æ¯U TIÃŠN 100% HÃ€NG Äáº¦U: InkOS Multi-Agent Engine (Google Gemini 2.0 Flash API vá»›i Key Rotator).
