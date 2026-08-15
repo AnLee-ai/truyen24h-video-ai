@@ -1,4 +1,4 @@
-import json
+﻿import json
 import time
 import re
 import sys
@@ -54,13 +54,13 @@ def safe_loads(text: str, default=None):
     try:
         return json.loads(cleaned)
     except Exception:
-        # Thử làm sạch dấu phẩy thừa ở cuối (trailing commas)
+        # Thá»­ lÃ m sáº¡ch dáº¥u pháº©y thá»«a á»Ÿ cuá»‘i (trailing commas)
         cleaned_no_comma = re.sub(r",\s*([\}\]])", r"\1", cleaned)
         try:
             return json.loads(cleaned_no_comma)
         except Exception:
             pass
-        # Thử trích xuất khối {...} hoặc [...] bằng Regex
+        # Thá»­ trÃ­ch xuáº¥t khá»‘i {...} hoáº·c [...] báº±ng Regex
         json_block = re.search(r"(\{[\s\S]*\}|\[[\s\S]*\])", cleaned)
         if json_block:
             try:
@@ -80,7 +80,7 @@ def remove_repetitive_sentences(text: str) -> str:
         if not para.strip():
             cleaned_paragraphs.append("")
             continue
-        sentences = re.split(r'(?<=[.?!…])\s+(?=[a-zA-ZàáâãèéêìíòóôõùúýđÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚÝĐ0-9"\'«“])', para)
+        sentences = re.split(r'(?<=[.?!â€¦])\s+(?=[a-zA-ZÃ Ã¡Ã¢Ã£Ã¨Ã©ÃªÃ¬Ã­Ã²Ã³Ã´ÃµÃ¹ÃºÃ½Ä‘Ã€ÃÃ‚ÃƒÃˆÃ‰ÃŠÃŒÃÃ’Ã“Ã”Ã•Ã™ÃšÃÄ0-9"\'Â«â€œ])', para)
         cleaned_sentences: list[str] = []
         for sentence in sentences:
             s_strip = sentence.strip()
@@ -109,32 +109,32 @@ def remove_repetitive_sentences(text: str) -> str:
     return "\n".join(final_paragraphs)
 
 def clean_chapter_content(text: str) -> str:
-    """Clean draft content, stripping markdown and prefix headers like 'Dẫn lược:', 'Chương X:', etc."""
+    """Clean draft content, stripping markdown and prefix headers like 'Dáº«n lÆ°á»£c:', 'ChÆ°Æ¡ng X:', etc."""
     cleaned = text.strip()
-    pattern = r"(?m)^\s*(?:\*\*|\*|__|_)*\s*(?:Dẫn lược|Giới thiệu|Phần dẫn lược|Tóm tắt bối cảnh|Prologue|Introduction|Giới thiệu bối cảnh)\s*(?:\*\*|\*|__|_)*\s*[:：\-–—\n]?\s*(?:\*\*|\*|__|_)*\s*"
+    pattern = r"(?m)^\s*(?:\*\*|\*|__|_)*\s*(?:Dáº«n lÆ°á»£c|Giá»›i thiá»‡u|Pháº§n dáº«n lÆ°á»£c|TÃ³m táº¯t bá»‘i cáº£nh|Prologue|Introduction|Giá»›i thiá»‡u bá»‘i cáº£nh)\s*(?:\*\*|\*|__|_)*\s*[:ï¼š\-â€“â€”\n]?\s*(?:\*\*|\*|__|_)*\s*"
     cleaned = re.sub(pattern, "", cleaned, flags=re.IGNORECASE).strip()
-    inline_pattern = r"(?:\*\*|\*|__|_)*\s*(?:Dẫn lược|Phần dẫn lược|Giới thiệu bối cảnh|Prologue)\s*(?:\*\*|\*|__|_)*\s*[:：\-–—]\s*"
+    inline_pattern = r"(?:\*\*|\*|__|_)*\s*(?:Dáº«n lÆ°á»£c|Pháº§n dáº«n lÆ°á»£c|Giá»›i thiá»‡u bá»‘i cáº£nh|Prologue)\s*(?:\*\*|\*|__|_)*\s*[:ï¼š\-â€“â€”]\s*"
     cleaned = re.sub(inline_pattern, "", cleaned, flags=re.IGNORECASE).strip()
     cleaned = remove_repetitive_sentences(cleaned)
     return cleaned
 
 def expand_chapter_content(content: str, target_words: int = 3200) -> str:
-    """Nối dài kịch bản chương truyện nếu chưa đủ độ dài >10 phút audio (600 giây)."""
+    """Ná»‘i dÃ i ká»‹ch báº£n chÆ°Æ¡ng truyá»‡n náº¿u chÆ°a Ä‘á»§ Ä‘á»™ dÃ i >10 phÃºt audio (600 giÃ¢y)."""
     current_words = len(content.split()) if content else 0
     if current_words >= target_words:
         return content
         
-    print(f"[INFO] ⚡ CHẾ ĐỘ LÀM LẠI (>10 PHÚT): Độ dài hiện tại {current_words} từ (<{target_words} từ). Đang gọi AI viết nối tiếp phân cảnh kịch tính...")
+    print(f"[INFO] âš¡ CHáº¾ Äá»˜ LÃ€M Láº I (>10 PHÃšT): Äá»™ dÃ i hiá»‡n táº¡i {current_words} tá»« (<{target_words} tá»«). Äang gá»i AI viáº¿t ná»‘i tiáº¿p phÃ¢n cáº£nh ká»‹ch tÃ­nh...")
     
     continuation_prompt = (
-        f"Dưới đây là phần trước của chương truyện (tổng {current_words} từ):\n\n"
+        f"DÆ°á»›i Ä‘Ã¢y lÃ  pháº§n trÆ°á»›c cá»§a chÆ°Æ¡ng truyá»‡n (tá»•ng {current_words} tá»«):\n\n"
         f"{content[-1500:]}\n\n"
-        f"YÊU CẦU BẮT BUỘC (ÉP THỜI LƯỢNG KÉO DÀI >10 PHÚT AUDIO):\n"
-        f"Hãy viết tiếp phân cảnh diễn biến kịch tính tiếp theo của câu chuyện trên (tối thiểu 1500 - 2000 từ nữa).\n"
-        f"1. Viết chi tiết cuộc đối thoại gay gắt, bộc phát cảm xúc giữa các nhân vật chính.\n"
-        f"2. Miêu tả chi tiết chiêu thức, giao phong kịch tính và suy nghĩ nội tâm dồn dập.\n"
-        f"3. Kết thúc bằng một nút thắt cliffhanger kịch tính.\n"
-        f"Viết thẳng vào câu chuyện 100% bằng Tiếng Việt mượt mà, không lặp lại đoạn cũ."
+        f"YÃŠU Cáº¦U Báº®T BUá»˜C (Ã‰P THá»œI LÆ¯á»¢NG KÃ‰O DÃ€I >10 PHÃšT AUDIO):\n"
+        f"HÃ£y viáº¿t tiáº¿p phÃ¢n cáº£nh diá»…n biáº¿n ká»‹ch tÃ­nh tiáº¿p theo cá»§a cÃ¢u chuyá»‡n trÃªn (tá»‘i thiá»ƒu 1500 - 2000 tá»« ná»¯a).\n"
+        f"1. Viáº¿t chi tiáº¿t cuá»™c Ä‘á»‘i thoáº¡i gay gáº¯t, bá»™c phÃ¡t cáº£m xÃºc giá»¯a cÃ¡c nhÃ¢n váº­t chÃ­nh.\n"
+        f"2. MiÃªu táº£ chi tiáº¿t chiÃªu thá»©c, giao phong ká»‹ch tÃ­nh vÃ  suy nghÄ© ná»™i tÃ¢m dá»“n dáº­p.\n"
+        f"3. Káº¿t thÃºc báº±ng má»™t nÃºt tháº¯t cliffhanger ká»‹ch tÃ­nh.\n"
+        f"Viáº¿t tháº³ng vÃ o cÃ¢u chuyá»‡n 100% báº±ng Tiáº¿ng Viá»‡t mÆ°á»£t mÃ , khÃ´ng láº·p láº¡i Ä‘oáº¡n cÅ©."
     )
     
     for _expand_attempt in range(3):
@@ -142,26 +142,26 @@ def expand_chapter_content(content: str, target_words: int = 3200) -> str:
         if part_next and len(part_next.split()) > 200:
             cleaned_next = clean_chapter_content(part_next)
             content = content + "\n\n" + cleaned_next
-            print(f"[SUCCESS] Đã nối dài chương truyện! Tổng số từ mới: {len(content.split())} từ.")
+            print(f"[SUCCESS] ÄÃ£ ná»‘i dÃ i chÆ°Æ¡ng truyá»‡n! Tá»•ng sá»‘ tá»« má»›i: {len(content.split())} tá»«.")
             if len(content.split()) >= target_words:
                 break
     return content
 
 def verify_and_sanitize_chapter_content(text: str, novel_id: str = "") -> tuple:
     """
-    BỘ KIỂM TRA TỰ ĐỘNG BẢO VỆ CHƯƠNG TRUYỆN (Automated Chapter Auditor):
-    Tự động rà soát và khử toàn bộ tên nhân vật cũ rác (Trần Lam, Linh Vy, Minh Đức...) 
-    để ép chuẩn 100% nhân vật bộ truyện đang viết (Tiêu Viêm, Vân Vận, Dược Lão, Huân Nhi).
+    Bá»˜ KIá»‚M TRA Tá»° Äá»˜NG Báº¢O Vá»† CHÆ¯Æ NG TRUYá»†N (Automated Chapter Auditor):
+    Tá»± Ä‘á»™ng rÃ  soÃ¡t vÃ  khá»­ toÃ n bá»™ tÃªn nhÃ¢n váº­t cÅ© rÃ¡c (Tráº§n Lam, Linh Vy, Minh Äá»©c...) 
+    Ä‘á»ƒ Ã©p chuáº©n 100% nhÃ¢n váº­t bá»™ truyá»‡n Ä‘ang viáº¿t (TiÃªu ViÃªm, VÃ¢n Váº­n, DÆ°á»£c LÃ£o, HuÃ¢n Nhi).
     """
     if not text:
         return text, False
         
     LEGACY_INVALID_NAMES = {
-        "Trần Lam": "Tiêu Viêm",
-        "Linh Vy": "Vân Vận",
-        "Minh Đức": "Dược Lão",
-        "Thùy Linh": "Huân Nhi",
-        "Cao Bá": "Tiêu Chiến"
+        "Tráº§n Lam": "TiÃªu ViÃªm",
+        "Linh Vy": "VÃ¢n Váº­n",
+        "Minh Äá»©c": "DÆ°á»£c LÃ£o",
+        "ThÃ¹y Linh": "HuÃ¢n Nhi",
+        "Cao BÃ¡": "TiÃªu Chiáº¿n"
     }
     
     found_invalid = []
@@ -172,33 +172,33 @@ def verify_and_sanitize_chapter_content(text: str, novel_id: str = "") -> tuple:
             sanitized_text = re.sub(rf"\b{re.escape(old_n)}\b", new_n, sanitized_text)
             
     if found_invalid:
-        print(f"[WARNING] ⚠️ PHÁT HIỆN LỖI TÊN NHÂN VẬT CŨ: {found_invalid}! Đã tự động thay thế chuẩn thành nhân vật bộ truyện hiện tại.")
+        print(f"[WARNING] âš ï¸ PHÃT HIá»†N Lá»–I TÃŠN NHÃ‚N Váº¬T CÅ¨: {found_invalid}! ÄÃ£ tá»± Ä‘á»™ng thay tháº¿ chuáº©n thÃ nh nhÃ¢n váº­t bá»™ truyá»‡n hiá»‡n táº¡i.")
         return sanitized_text, True
         
     return text, False
 
 def translate_to_vietnamese_with_gemini(text: str) -> str:
-    """Tự động kiểm tra và dịch toàn bộ kịch bản tiểu thuyết từ tiếng Trung/tiếng Anh sang tiếng Việt chuẩn mượt mà 100% qua Gemini API."""
+    """Tá»± Ä‘á»™ng kiá»ƒm tra vÃ  dá»‹ch toÃ n bá»™ ká»‹ch báº£n tiá»ƒu thuyáº¿t tá»« tiáº¿ng Trung/tiáº¿ng Anh sang tiáº¿ng Viá»‡t chuáº©n mÆ°á»£t mÃ  100% qua Gemini API."""
     if not text or not text.strip():
         return text
         
-    # Tự động rà soát và khử tên nhân vật cũ rác
+    # Tá»± Ä‘á»™ng rÃ  soÃ¡t vÃ  khá»­ tÃªn nhÃ¢n váº­t cÅ© rÃ¡c
     text, _ = verify_and_sanitize_chapter_content(text)
     
     has_chinese = bool(re.search(r"[\u4e00-\u9fff]", text))
     if not has_chinese:
         return text
         
-    print(f"[INFO] Bắt đầu rà soát ngôn ngữ kịch bản (Has Chinese: {has_chinese})...")
-    print("[INFO] Kích hoạt Động Cơ Dịch Thuật Gemini API: Dịch/Tối ưu toàn bộ kịch bản tiểu thuyết sang Tiếng Việt mượt mà...")
+    print(f"[INFO] Báº¯t Ä‘áº§u rÃ  soÃ¡t ngÃ´n ngá»¯ ká»‹ch báº£n (Has Chinese: {has_chinese})...")
+    print("[INFO] KÃ­ch hoáº¡t Äá»™ng CÆ¡ Dá»‹ch Thuáº­t Gemini API: Dá»‹ch/Tá»‘i Æ°u toÃ n bá»™ ká»‹ch báº£n tiá»ƒu thuyáº¿t sang Tiáº¿ng Viá»‡t mÆ°á»£t mÃ ...")
     translate_prompt = (
-        "Bạn là dịch giả tiểu thuyết webtoon hàng đầu. Hãy dịch/chuyển ngữ toàn bộ chương tiểu thuyết sau đây sang tiếng Việt tự nhiên, giàu cảm xúc và hấp dẫn.\n"
-        "YÊU CẦU DỊCH THUẬT BẮT BUỘC:\n"
-        "1. Dịch 100% sang tiếng Việt thuần túy, mượt mà, văn phong tiểu thuyết hành động/huyền ảo kịch tính.\n"
-        "2. Giữ nguyên 100% độ dài văn bản, lời thoại trong ngoặc kép (\"...\"), và cấu trúc câu chuyện. TUYỆT ĐỐI KHÔNG tóm tắt hay bỏ sót chi tiết nào.\n"
-        "3. Giữ nguyên 100% tên nhân vật chuẩn từ nguyên bản. Cấm tự đổi sang tên khác.\n"
-        "4. Chỉ xuất ra duy nhất văn bản truyện đã dịch sang tiếng Việt, không kèm lời dẫn hay giải thích.\n\n"
-        f"VĂN BẢN CẦN DỊCH:\n{text[:12000]}"
+        "Báº¡n lÃ  dá»‹ch giáº£ tiá»ƒu thuyáº¿t webtoon hÃ ng Ä‘áº§u. HÃ£y dá»‹ch/chuyá»ƒn ngá»¯ toÃ n bá»™ chÆ°Æ¡ng tiá»ƒu thuyáº¿t sau Ä‘Ã¢y sang tiáº¿ng Viá»‡t tá»± nhiÃªn, giÃ u cáº£m xÃºc vÃ  háº¥p dáº«n.\n"
+        "YÃŠU Cáº¦U Dá»ŠCH THUáº¬T Báº®T BUá»˜C:\n"
+        "1. Dá»‹ch 100% sang tiáº¿ng Viá»‡t thuáº§n tÃºy, mÆ°á»£t mÃ , vÄƒn phong tiá»ƒu thuyáº¿t hÃ nh Ä‘á»™ng/huyá»n áº£o ká»‹ch tÃ­nh.\n"
+        "2. Giá»¯ nguyÃªn 100% Ä‘á»™ dÃ i vÄƒn báº£n, lá»i thoáº¡i trong ngoáº·c kÃ©p (\"...\"), vÃ  cáº¥u trÃºc cÃ¢u chuyá»‡n. TUYá»†T Äá»I KHÃ”NG tÃ³m táº¯t hay bá» sÃ³t chi tiáº¿t nÃ o.\n"
+        "3. Giá»¯ nguyÃªn 100% tÃªn nhÃ¢n váº­t chuáº©n tá»« nguyÃªn báº£n. Cáº¥m tá»± Ä‘á»•i sang tÃªn khÃ¡c.\n"
+        "4. Chá»‰ xuáº¥t ra duy nháº¥t vÄƒn báº£n truyá»‡n Ä‘Ã£ dá»‹ch sang tiáº¿ng Viá»‡t, khÃ´ng kÃ¨m lá»i dáº«n hay giáº£i thÃ­ch.\n\n"
+        f"VÄ‚N Báº¢N Cáº¦N Dá»ŠCH:\n{text[:12000]}"
     )
     if len(text) > 12000:
         print(f"[WARNING] Text too long ({len(text)} chars), truncating to 12000 chars for translation. Some content may be lost.")
@@ -206,17 +206,17 @@ def translate_to_vietnamese_with_gemini(text: str) -> str:
     if translated_res and len(translated_res.split()) > 200:
         cleaned_res = clean_chapter_content(translated_res)
         cleaned_res, _ = verify_and_sanitize_chapter_content(cleaned_res)
-        print(f"[SUCCESS] Đã hoàn thành dịch kịch bản sang Tiếng Việt qua Gemini API! Độ dài: {len(cleaned_res.split())} từ.")
+        print(f"[SUCCESS] ÄÃ£ hoÃ n thÃ nh dá»‹ch ká»‹ch báº£n sang Tiáº¿ng Viá»‡t qua Gemini API! Äá»™ dÃ i: {len(cleaned_res.split())} tá»«.")
         return cleaned_res
     return text
 
 def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
     """
-    ƯU TIÊN 100% HÀNG ĐẦU: InkOS Multi-Agent Engine (Google Gemini 2.0 Flash API với Key Rotator).
-    Chỉ khi Gemini hết Key mới chuyển sang Groq / OpenRouter dự phòng.
+    Æ¯U TIÃŠN 100% HÃ€NG Äáº¦U: InkOS Multi-Agent Engine (Google Gemini 2.0 Flash API vá»›i Key Rotator).
+    Chá»‰ khi Gemini háº¿t Key má»›i chuyá»ƒn sang Groq / OpenRouter dá»± phÃ²ng.
     """
     # =========================================================================
-    # ĐỘNG CƠ ƯU TIÊN 1: InkOS Gemini 2.0 Flash Engine (Google API với Key Rotator)
+    # Äá»˜NG CÆ  Æ¯U TIÃŠN 1: InkOS Gemini 2.0 Flash Engine (Google API vá»›i Key Rotator)
     # =========================================================================
     gemini_models = ["gemini-2.0-flash", "gemini-2.0-flash-lite"]
     for attempt in range(min(retries, 4)):
@@ -246,7 +246,7 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
                 response = model.generate_content(prompt)
 
             if response.text and len(response.text.strip().split()) > 10:
-                print(f"[SUCCESS] ⚡ InkOS Writer Agent [{current_g_model}]: Tạo kịch bản mượt mà thành công! ({len(response.text.strip().split())} từ).")
+                print(f"[SUCCESS] âš¡ InkOS Writer Agent [{current_g_model}]: Táº¡o ká»‹ch báº£n mÆ°á»£t mÃ  thÃ nh cÃ´ng! ({len(response.text.strip().split())} tá»«).")
                 return response.text.strip()
         except Exception as e:
             err_str = str(e)
@@ -264,7 +264,7 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
                 time.sleep(1.0)
 
     # =========================================================================
-    # ĐỘNG CƠ DỰ PHÒNG 2: Groq Multi-Model Engine (Dự phòng cấp 2)
+    # Äá»˜NG CÆ  Dá»° PHÃ’NG 2: Groq Multi-Model Engine (Dá»± phÃ²ng cáº¥p 2)
     # =========================================================================
     groq_key = key_rotator.get_groq_key() or config.GROQ_API_KEY
     if groq_key:
@@ -298,7 +298,7 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
                     resp_json = response.json()
                     content = resp_json["choices"][0]["message"]["content"]
                     if content and len(content.strip().split()) > 10:
-                        print(f"[SUCCESS] Groq Fallback Engine [{current_model}]: Đã sinh kịch bản ({len(content.strip().split())} từ).")
+                        print(f"[SUCCESS] Groq Fallback Engine [{current_model}]: ÄÃ£ sinh ká»‹ch báº£n ({len(content.strip().split())} tá»«).")
                         return content.strip()
                 elif response.status_code == 429:
                     time.sleep(1.5)
@@ -387,7 +387,7 @@ def call_pollinations_free_llm(prompt: str) -> str:
             print(f"[WARNING] Pollinations Free LLM ({model_name}) failed: {e}")
             continue
         
-    # Backup GET request rút gọn prompt
+    # Backup GET request rÃºt gá»n prompt
     try:
         import urllib.parse
         import urllib.request
@@ -483,12 +483,12 @@ def generate_arc_blueprints(novel_id: str, arc: dict) -> list:
     arc_title = arc.get("title")
     start_ch = arc.get("start_chapter")
     end_ch = arc.get("end_chapter")
-    arc_summary = arc.get("summary", "Tiếp tục diễn biến của bối cảnh học viện.")
+    arc_summary = arc.get("summary", "Tiáº¿p tá»¥c diá»…n biáº¿n cá»§a bá»‘i cáº£nh há»c viá»‡n.")
     
     print(f"[INFO] Generating blueprints for Arc {arc_num}: '{arc_title}' (Chapters {start_ch} - {end_ch})...")
     
     novel = database.get_novel(novel_id)
-    novel_title = novel.get("title", "Truyện mới")
+    novel_title = novel.get("title", "Truyá»‡n má»›i")
     novel_description = novel.get("description", "")
     
     existing_chapters = database.get_all_chapters(novel_id)
@@ -515,7 +515,7 @@ def generate_arc_blueprints(novel_id: str, arc: dict) -> list:
             if isinstance(blueprints_raw, list):
                 blueprints = blueprints_raw
             elif isinstance(blueprints_raw, dict):
-                # Giải nén nếu LLM bọc trong dict {"blueprints": [...]} hoặc {"chapters": [...]}
+                # Giáº£i nÃ©n náº¿u LLM bá»c trong dict {"blueprints": [...]} hoáº·c {"chapters": [...]}
                 blueprints = blueprints_raw.get("blueprints") or blueprints_raw.get("chapters") or blueprints_raw.get("arcs") or []
                 if not isinstance(blueprints, list):
                     raise ValueError("Extracted blueprints from dict is not a list")
@@ -548,24 +548,24 @@ def generate_arc_blueprints(novel_id: str, arc: dict) -> list:
             end_num = start_num + 24
         
         EPIC_TITLES = [
-            "Trùng Sinh Vạn Cổ, Thôn Phệ Vô Tận",
-            "Thức Tỉnh Thần Thể, Nén Ép Thần Ma",
-            "Huyết Mạch Thôn Thiên, Trấn Tám Phương",
-            "Quyền Trấn Sơn Hà, Uy Chấn Chư Thiên",
-            "Vô Địch Trùng Sinh, Hỗn Độn Luyện Khí",
-            "Nghịch Thiên Độc Tôn, Luyện Hóa Thần Thạch",
-            "Thôn Phệ Nguyên Khí, Phá Tam Cảnh",
-            "Vạn Giới Quỳ Bái, Tiêu Viêm Xuất Thế",
-            "Thôn Phệ Ma Nhẫn, Khai Mở Thần Thông",
-            "Vô Song Kiếm Khí, Trảm Diệt Cường Địch",
-            "Hệ Thống Thần Cấp, Thôn Phệ Vạn Vật",
-            "Bá Thần Xuất Thế, Ngăn Cản Vạn Quân",
-            "Thôn Phệ Vĩnh Hằng, Xây Dựng Đế Cơ",
-            "Thôn Thiên Luyện Địa, Độc Tôn Vạn Cổ",
-            "Tuyệt Thế Vô Địch, Phong Ấn Thần Hoàng",
-            "Khí Phách Ngút Trời, Thôn Phệ Long Mạch",
-            "Vạn Cổ Ma Cung, Đại Chiến Chư Thiên",
-            "Bá Chủ Huyền Thoại, Luyện Hóa Vạn Giới"
+            "TrÃ¹ng Sinh Váº¡n Cá»•, ThÃ´n Phá»‡ VÃ´ Táº­n",
+            "Thá»©c Tá»‰nh Tháº§n Thá»ƒ, NÃ©n Ã‰p Tháº§n Ma",
+            "Huyáº¿t Máº¡ch ThÃ´n ThiÃªn, Tráº¥n TÃ¡m PhÆ°Æ¡ng",
+            "Quyá»n Tráº¥n SÆ¡n HÃ , Uy Cháº¥n ChÆ° ThiÃªn",
+            "VÃ´ Äá»‹ch TrÃ¹ng Sinh, Há»—n Äá»™n Luyá»‡n KhÃ­",
+            "Nghá»‹ch ThiÃªn Äá»™c TÃ´n, Luyá»‡n HÃ³a Tháº§n Tháº¡ch",
+            "ThÃ´n Phá»‡ NguyÃªn KhÃ­, PhÃ¡ Tam Cáº£nh",
+            "Váº¡n Giá»›i Quá»³ BÃ¡i, TiÃªu ViÃªm Xuáº¥t Tháº¿",
+            "ThÃ´n Phá»‡ Ma Nháº«n, Khai Má»Ÿ Tháº§n ThÃ´ng",
+            "VÃ´ Song Kiáº¿m KhÃ­, Tráº£m Diá»‡t CÆ°á»ng Äá»‹ch",
+            "Há»‡ Thá»‘ng Tháº§n Cáº¥p, ThÃ´n Phá»‡ Váº¡n Váº­t",
+            "BÃ¡ Tháº§n Xuáº¥t Tháº¿, NgÄƒn Cáº£n Váº¡n QuÃ¢n",
+            "ThÃ´n Phá»‡ VÄ©nh Háº±ng, XÃ¢y Dá»±ng Äáº¿ CÆ¡",
+            "ThÃ´n ThiÃªn Luyá»‡n Äá»‹a, Äá»™c TÃ´n Váº¡n Cá»•",
+            "Tuyá»‡t Tháº¿ VÃ´ Äá»‹ch, Phong áº¤n Tháº§n HoÃ ng",
+            "KhÃ­ PhÃ¡ch NgÃºt Trá»i, ThÃ´n Phá»‡ Long Máº¡ch",
+            "Váº¡n Cá»• Ma Cung, Äáº¡i Chiáº¿n ChÆ° ThiÃªn",
+            "BÃ¡ Chá»§ Huyá»n Thoáº¡i, Luyá»‡n HÃ³a Váº¡n Giá»›i"
         ]
         
         parsed_numbers = {int(b.get("chapter_number", 0)) for b in blueprints if isinstance(b, dict)}
@@ -574,10 +574,10 @@ def generate_arc_blueprints(novel_id: str, arc: dict) -> list:
                 epic_t = EPIC_TITLES[(ch_i - 1) % len(EPIC_TITLES)]
                 blueprints.append({
                     "chapter_number": ch_i,
-                    "chapter_title": f"{epic_t} (Tập {ch_i})",
-                    "blueprint": f"Diễn biến kịch tính tiếp theo của câu chuyện ở chương {ch_i}.",
+                    "chapter_title": f"{epic_t} (Táº­p {ch_i})",
+                    "blueprint": f"Diá»…n biáº¿n ká»‹ch tÃ­nh tiáº¿p theo cá»§a cÃ¢u chuyá»‡n á»Ÿ chÆ°Æ¡ng {ch_i}.",
                     "characters_present": [],
-                    "narrative_goal": "Phát triển cốt truyện"
+                    "narrative_goal": "PhÃ¡t triá»ƒn cá»‘t truyá»‡n"
                 })
 
         existing_chapter_numbers = {c["chapter_number"] for c in existing_chapters}
@@ -586,10 +586,10 @@ def generate_arc_blueprints(novel_id: str, arc: dict) -> list:
             if not isinstance(ch_data, dict):
                 continue
             ch_num = int(ch_data.get("chapter_number", 1))
-            ch_title = ch_data.get("chapter_title") or f"Chương {ch_num}"
-            blueprint_text = ch_data.get("blueprint") or "Tiếp tục diễn biến câu chuyện."
+            ch_title = ch_data.get("chapter_title") or f"ChÆ°Æ¡ng {ch_num}"
+            blueprint_text = ch_data.get("blueprint") or "Tiáº¿p tá»¥c diá»…n biáº¿n cÃ¢u chuyá»‡n."
             
-            # Chỉ tạo blueprint nếu chương chưa tồn tại trong CSDL
+            # Chá»‰ táº¡o blueprint náº¿u chÆ°Æ¡ng chÆ°a tá»“n táº¡i trong CSDL
             if ch_num not in existing_chapter_numbers:
                 ch_record = database.create_chapter(
                     novel_id=novel_id,
@@ -628,13 +628,13 @@ def get_current_arc(novel_id: str, chapter_number: int) -> dict:
     }
 
 def write_next_chapter(novel_id: str) -> dict:
-    # Lấy tập hợp 100% tất cả các số chương đã xong từ Supabase + data/ + output/ + RAM
+    # Láº¥y táº­p há»£p 100% táº¥t cáº£ cÃ¡c sá»‘ chÆ°Æ¡ng Ä‘Ã£ xong tá»« Supabase + data/ + output/ + RAM
     completed_set = database.get_completed_chapters_set(novel_id)
     all_done_nums = {int(x) for x in completed_set if str(x).isdigit()}
 
     all_chapters = database.get_all_chapters(novel_id)
     
-    # Lọc các chương chưa viết xong kịch bản (< 1200 từ hoặc còn là BLUEPRINT)
+    # Lá»c cÃ¡c chÆ°Æ¡ng chÆ°a viáº¿t xong ká»‹ch báº£n (< 1200 tá»« hoáº·c cÃ²n lÃ  BLUEPRINT)
     unwritten_chapters = [
         c for c in all_chapters 
         if isinstance(c.get("chapter_number"), (int, str)) and str(c.get("chapter_number")).isdigit()
@@ -649,7 +649,7 @@ def write_next_chapter(novel_id: str) -> dict:
         existing_nums = [int(c["chapter_number"]) for c in all_chapters if str(c.get("chapter_number", "")).isdigit()] + list(all_done_nums)
         next_ch_number = (max(existing_nums) + 1) if existing_nums else 1
         
-    print(f"[INFO] BẮT ĐẦU QUY TRÌNH VIẾT CHƯƠNG MỚI: Chương {next_ch_number} (Đã hoàn thành các tập: {sorted(list(all_done_nums))})...")
+    print(f"[INFO] Báº®T Äáº¦U QUY TRÃŒNH VIáº¾T CHÆ¯Æ NG Má»šI: ChÆ°Æ¡ng {next_ch_number} (ÄÃ£ hoÃ n thÃ nh cÃ¡c táº­p: {sorted(list(all_done_nums))})...")
     
     current_arc = get_current_arc(novel_id, next_ch_number)
     chapter_record = next((c for c in all_chapters if c["chapter_number"] == next_ch_number), None)
@@ -659,14 +659,14 @@ def write_next_chapter(novel_id: str) -> dict:
         all_chapters = database.get_all_chapters(novel_id)
         chapter_record = next((c for c in all_chapters if c["chapter_number"] == next_ch_number), None)
         
-    # LỚP BẢO VỆ TỐI THƯỢNG: Nếu vẫn chưa có chapter_record, tự sinh Blueprint trực tiếp ngay lập tức!
+    # Lá»šP Báº¢O Vá»† Tá»I THÆ¯á»¢NG: Náº¿u váº«n chÆ°a cÃ³ chapter_record, tá»± sinh Blueprint trá»±c tiáº¿p ngay láº­p tá»©c!
     if not chapter_record:
-        print(f"[INFO] Tự động tạo Blueprint trực tiếp cho Chương {next_ch_number}...")
+        print(f"[INFO] Tá»± Ä‘á»™ng táº¡o Blueprint trá»±c tiáº¿p cho ChÆ°Æ¡ng {next_ch_number}...")
         chapter_record = database.create_chapter(
             novel_id=novel_id,
             chapter_number=next_ch_number,
-            title=f"Bí Mật Tập {next_ch_number}",
-            content=f"BLUEPRINT: Diễn biến kịch tính tiếp theo cho chương {next_ch_number}."
+            title=f"BÃ­ Máº­t Táº­p {next_ch_number}",
+            content=f"BLUEPRINT: Diá»…n biáº¿n ká»‹ch tÃ­nh tiáº¿p theo cho chÆ°Æ¡ng {next_ch_number}."
         )
         
     blueprint_text = chapter_record["content"]
@@ -691,10 +691,10 @@ def write_next_chapter(novel_id: str) -> dict:
     
     previous_chapters = [c for c in all_chapters if c["chapter_number"] < next_ch_number and not c["content"].startswith("BLUEPRINT:")]
     working_memory_text = ""
-    # Tăng tham chiếu từ 2-3 chương lên 7 chương gần nhất (5 - 10 chương) để đảm bảo mạch truyện cực kỳ nhất quán
+    # TÄƒng tham chiáº¿u tá»« 2-3 chÆ°Æ¡ng lÃªn 7 chÆ°Æ¡ng gáº§n nháº¥t (5 - 10 chÆ°Æ¡ng) Ä‘á»ƒ Ä‘áº£m báº£o máº¡ch truyá»‡n cá»±c ká»³ nháº¥t quÃ¡n
     for ch in previous_chapters[-7:]:
         ch_snippet = ch['content'][:600] + "\n...\n" + ch['content'][-600:] if len(ch['content']) > 1200 else ch['content']
-        working_memory_text += f"\n--- Chương {ch['chapter_number']}: {ch['title']} ---\n{ch_snippet}\n"
+        working_memory_text += f"\n--- ChÆ°Æ¡ng {ch['chapter_number']}: {ch['title']} ---\n{ch_snippet}\n"
         
     attempt = 0
     max_attempts = 3
@@ -703,7 +703,7 @@ def write_next_chapter(novel_id: str) -> dict:
     prompt = prompts.WRITING_PROMPT.format(
         chapter_number=next_ch_number,
         chapter_title=chapter_record["title"],
-        title="Truyện 24h Audio",
+        title="Truyá»‡n 24h Audio",
         blueprint=blueprint_text,
         world_lore=world_lore_text,
         characters=json.dumps(chars, ensure_ascii=False, indent=2),
@@ -717,11 +717,11 @@ def write_next_chapter(novel_id: str) -> dict:
     
     if next_ch_number == 1:
         prologue_instruction = (
-            f"- Phần mở đầu (Prologue): BẮT BUỘC mở đầu chương bằng một phân cảnh cuốn hút (khoảng 300 - 500 từ) miêu tả bối cảnh thế giới linh hồn, hệ thống Tinh Thần Ấn và bí mật chiếc hộp đồng Đông Sơn.\n"
-            f"- **CẢNH BÁO QUAN TRỌNG VỀ NHÂN VẬT**: Trong phần mở đầu này, CHỈ TẬP TRUNG duy nhất vào nhân vật chính ({protagonist_name}). "
-            f"TUYỆT ĐỐI KHÔNG liệt kê hay giới thiệu tràn lan các nhân vật phụ. Các nhân vật phụ sẽ chỉ xuất hiện tự nhiên khi có tình huống đối thoại trong câu chuyện.\n"
-            f"- **CẢNH BÁO QUAN TRỌNG VỀ TIÊU ĐỀ**: TUYỆT ĐỐI KHÔNG VIẾT CHỮ 'Dẫn lược', 'Dẫn lược:', 'Giới thiệu:', hay 'Prologue:'. "
-            f"Hãy nhập vai viết thẳng vào nội dung truyện một cách tự nhiên nhất."
+            f"- Pháº§n má»Ÿ Ä‘áº§u (Prologue): Báº®T BUá»˜C má»Ÿ Ä‘áº§u chÆ°Æ¡ng báº±ng má»™t phÃ¢n cáº£nh cuá»‘n hÃºt (khoáº£ng 300 - 500 tá»«) miÃªu táº£ bá»‘i cáº£nh tháº¿ giá»›i linh há»“n, há»‡ thá»‘ng Tinh Tháº§n áº¤n vÃ  bÃ­ máº­t chiáº¿c há»™p Ä‘á»“ng ÄÃ´ng SÆ¡n.\n"
+            f"- **Cáº¢NH BÃO QUAN TRá»ŒNG Vá»€ NHÃ‚N Váº¬T**: Trong pháº§n má»Ÿ Ä‘áº§u nÃ y, CHá»ˆ Táº¬P TRUNG duy nháº¥t vÃ o nhÃ¢n váº­t chÃ­nh ({protagonist_name}). "
+            f"TUYá»†T Äá»I KHÃ”NG liá»‡t kÃª hay giá»›i thiá»‡u trÃ n lan cÃ¡c nhÃ¢n váº­t phá»¥. CÃ¡c nhÃ¢n váº­t phá»¥ sáº½ chá»‰ xuáº¥t hiá»‡n tá»± nhiÃªn khi cÃ³ tÃ¬nh huá»‘ng Ä‘á»‘i thoáº¡i trong cÃ¢u chuyá»‡n.\n"
+            f"- **Cáº¢NH BÃO QUAN TRá»ŒNG Vá»€ TIÃŠU Äá»€**: TUYá»†T Äá»I KHÃ”NG VIáº¾T CHá»® 'Dáº«n lÆ°á»£c', 'Dáº«n lÆ°á»£c:', 'Giá»›i thiá»‡u:', hay 'Prologue:'. "
+            f"HÃ£y nháº­p vai viáº¿t tháº³ng vÃ o ná»™i dung truyá»‡n má»™t cÃ¡ch tá»± nhiÃªn nháº¥t."
         )
         prompt = prompt.replace("Constraints:", f"Constraints:\n{prologue_instruction}")
     
@@ -744,7 +744,7 @@ def write_next_chapter(novel_id: str) -> dict:
                 current_prompt = prompt[:2500] if len(prompt) > 2500 else prompt
                 continue
                 
-            ends_abruptly = not final_content.strip().endswith((".", "?", "!", '"', "”", "»", "*"))
+            ends_abruptly = not final_content.strip().endswith((".", "?", "!", '"', "â€", "Â»", "*"))
             
             if ends_abruptly and word_count >= 2500:
                 last_punct = max(
@@ -758,36 +758,36 @@ def write_next_chapter(novel_id: str) -> dict:
                     print(f"[INFO] Automatically trimmed unfinished trailing sentence. Clean word count: {word_count} words.")
                     ends_abruptly = False
 
-            # VÒNG LẶP ÉP BẮT BUỘC ĐẠT >2800 TỪ (Guaranteed 2800+ Words Multi-Pass Expansion Loop for 12-18 min Audio)
+            # VÃ’NG Láº¶P Ã‰P Báº®T BUá»˜C Äáº T >2800 Tá»ª (Guaranteed 2800+ Words Multi-Pass Expansion Loop for 12-18 min Audio)
             if word_count >= 2800 and not ends_abruptly:
-                # INKOS MULTI-AGENT AUDITOR PASS: Khử AI cliché & Bảo toàn 100% độ dài văn bản
+                # INKOS MULTI-AGENT AUDITOR PASS: Khá»­ AI clichÃ© & Báº£o toÃ n 100% Ä‘á»™ dÃ i vÄƒn báº£n
                 try:
-                    print("[INFO] InkOS Auditor Agent: Bắt đầu rà soát 37 tiêu chuẩn chất lượng & Khử AI cliché...")
+                    print("[INFO] Quality Assurance Agent: Báº¯t Ä‘áº§u rÃ  soÃ¡t 37 tiÃªu chuáº©n cháº¥t lÆ°á»£ng & Khá»­ AI clichÃ©...")
                     audit_prompt = prompts.INKOS_AUDITOR_PROMPT.format(chapter_content=final_content[:6000])
                     audited_res = call_gemini(audit_prompt)
                     if audited_res and len(audited_res.split()) >= len(final_content.split()) * 0.9:
                         final_content = clean_chapter_content(audited_res)
                         word_count = len(final_content.split())
-                        print(f"[SUCCESS] InkOS Auditor Agent hoàn thành khử AI cliché. Tổng số từ tinh chế: {word_count} từ.")
+                        print(f"[SUCCESS] Quality Assurance Agent hoÃ n thÃ nh khá»­ AI clichÃ©. Tá»•ng sá»‘ tá»« tinh cháº¿: {word_count} tá»«.")
                     else:
                         final_content = clean_chapter_content(final_content)
                         word_count = len(final_content.split())
-                        print(f"[INFO] Giữ nguyên độ dài văn bản đầy đủ: {word_count} từ (Tránh bị rút ngắn).")
+                        print(f"[INFO] Giá»¯ nguyÃªn Ä‘á»™ dÃ i vÄƒn báº£n Ä‘áº§y Ä‘á»§: {word_count} tá»« (TrÃ¡nh bá»‹ rÃºt ngáº¯n).")
                 except Exception as audit_err:
-                    print(f"[WARNING] InkOS Auditor Agent pass warning: {audit_err}")
+                    print(f"[WARNING] Quality Assurance Agent pass warning: {audit_err}")
                 break
                 
             expand_cycles = 0
             while word_count < 2800 and expand_cycles < 6:
                 expand_cycles += 1
-                print(f"[INFO] (Lượt nối tiếp {expand_cycles}/6) Chương hiện tại đạt {word_count} từ (<2800 từ). Tự động kích hoạt AI Viết Nối Tiếp...")
+                print(f"[INFO] (LÆ°á»£t ná»‘i tiáº¿p {expand_cycles}/6) ChÆ°Æ¡ng hiá»‡n táº¡i Ä‘áº¡t {word_count} tá»« (<2800 tá»«). Tá»± Ä‘á»™ng kÃ­ch hoáº¡t AI Viáº¿t Ná»‘i Tiáº¿p...")
                 
                 continuation_prompt = (
-                    f"Dưới đây là phần trước của Chương {next_ch_number} (tổng {word_count} từ):\n\n"
+                    f"DÆ°á»›i Ä‘Ã¢y lÃ  pháº§n trÆ°á»›c cá»§a ChÆ°Æ¡ng {next_ch_number} (tá»•ng {word_count} tá»«):\n\n"
                     f"{final_content[-1200:]}\n\n"
-                    f"YÊU CẦU BẮT BUỘC: Hãy viết tiếp đoạn nối theo câu chuyện trên (tối thiểu 1200 - 1800 từ nữa). "
-                    f"Miêu tả diễn biến tiếp theo, đối thoại sâu sắc, cảm xúc nhân vật và kết thúc bằng một nút thắt kịch tính. "
-                    f"Viết thẳng vào nội dung truyện, không lặp lại đoạn cũ."
+                    f"YÃŠU Cáº¦U Báº®T BUá»˜C: HÃ£y viáº¿t tiáº¿p Ä‘oáº¡n ná»‘i theo cÃ¢u chuyá»‡n trÃªn (tá»‘i thiá»ƒu 1200 - 1800 tá»« ná»¯a). "
+                    f"MiÃªu táº£ diá»…n biáº¿n tiáº¿p theo, Ä‘á»‘i thoáº¡i sÃ¢u sáº¯c, cáº£m xÃºc nhÃ¢n váº­t vÃ  káº¿t thÃºc báº±ng má»™t nÃºt tháº¯t ká»‹ch tÃ­nh. "
+                    f"Viáº¿t tháº³ng vÃ o ná»™i dung truyá»‡n, khÃ´ng láº·p láº¡i Ä‘oáº¡n cÅ©."
                 )
                 
                 part_next = call_gemini(continuation_prompt)
@@ -795,7 +795,7 @@ def write_next_chapter(novel_id: str) -> dict:
                     cleaned_next = clean_chapter_content(part_next)
                     final_content = final_content + "\n\n" + cleaned_next
                     word_count = len(final_content.split())
-                    print(f"[SUCCESS] Đã nối tiếp thành công! Tổng độ dài chương hiện tại: {word_count} từ.")
+                    print(f"[SUCCESS] ÄÃ£ ná»‘i tiáº¿p thÃ nh cÃ´ng! Tá»•ng Ä‘á»™ dÃ i chÆ°Æ¡ng hiá»‡n táº¡i: {word_count} tá»«.")
                     if word_count >= 2800:
                         break
                 else:
@@ -807,19 +807,19 @@ def write_next_chapter(novel_id: str) -> dict:
             if ends_abruptly:
                 print(f"[WARNING] Draft ends abruptly (no punctuation at the end). Requesting completion (Attempt {draft_attempt}/3)...")
                 current_prompt = prompt + (
-                    "\n\n**CẢNH BÁO CỰC KỲ QUAN TRỌNG**: Bản thảo trước của bạn bị cắt cụt đột ngột ở cuối (chưa hết câu, chưa có dấu chấm câu kết thúc). "
-                    "Bạn BẮT BUỘC phải viết trọn vẹn câu chuyện, mở rộng chi tiết các phân cảnh, hội thoại và kết thúc chương một cách trọn vẹn bằng dấu chấm câu."
+                    "\n\n**Cáº¢NH BÃO Cá»°C Ká»² QUAN TRá»ŒNG**: Báº£n tháº£o trÆ°á»›c cá»§a báº¡n bá»‹ cáº¯t cá»¥t Ä‘á»™t ngá»™t á»Ÿ cuá»‘i (chÆ°a háº¿t cÃ¢u, chÆ°a cÃ³ dáº¥u cháº¥m cÃ¢u káº¿t thÃºc). "
+                    "Báº¡n Báº®T BUá»˜C pháº£i viáº¿t trá»n váº¹n cÃ¢u chuyá»‡n, má»Ÿ rá»™ng chi tiáº¿t cÃ¡c phÃ¢n cáº£nh, há»™i thoáº¡i vÃ  káº¿t thÃºc chÆ°Æ¡ng má»™t cÃ¡ch trá»n váº¹n báº±ng dáº¥u cháº¥m cÃ¢u."
                 )
             else:
                 print(f"[WARNING] Draft too short ({word_count} words). Requesting longer expansion (Attempt {draft_attempt}/3)...")
                 current_prompt = prompt + (
-                    f"\n\n**CẢNH BÁO CỰC KỲ QUAN TRỌNG VỀ ĐỘ DÀI (BẮT BUỘC)**:\n"
-                    f"Bản thảo bạn vừa viết quá ngắn (chỉ có {word_count} từ), trong khi yêu cầu tối thiểu là 2200 từ để đạt 10 phút nói.\n"
-                    f"Để sửa lỗi này, bạn phải viết cực kỳ chi tiết theo hướng dẫn sau:\n"
-                    f"1. Chia chương truyện thành ít nhất 5 phân cảnh lớn riêng biệt (Mỗi phân cảnh viết tối thiểu 5-6 đoạn văn dài).\n"
-                    f"2. Đi sâu miêu tả cực kỳ tỉ mỉ: cảnh sắc không gian học viện, thời tiết, âm thanh gió thổi, biểu cảm nét mặt từng nhân vật, cử chỉ tay chân, và dòng suy nghĩ nội tâm kéo dài.\n"
-                    f"3. Viết các đoạn đối thoại dài, thực tế và sâu sắc giữa các nhân vật (Trần Lam, Linh Vy, Minh Đức, v.v.). Không được viết lướt qua.\n"
-                    f"4. TUYỆT ĐỐI không tóm tắt hay kết thúc chương truyện sớm khi chưa đủ độ dài yêu cầu."
+                    f"\n\n**Cáº¢NH BÃO Cá»°C Ká»² QUAN TRá»ŒNG Vá»€ Äá»˜ DÃ€I (Báº®T BUá»˜C)**:\n"
+                    f"Báº£n tháº£o báº¡n vá»«a viáº¿t quÃ¡ ngáº¯n (chá»‰ cÃ³ {word_count} tá»«), trong khi yÃªu cáº§u tá»‘i thiá»ƒu lÃ  2200 tá»« Ä‘á»ƒ Ä‘áº¡t 10 phÃºt nÃ³i.\n"
+                    f"Äá»ƒ sá»­a lá»—i nÃ y, báº¡n pháº£i viáº¿t cá»±c ká»³ chi tiáº¿t theo hÆ°á»›ng dáº«n sau:\n"
+                    f"1. Chia chÆ°Æ¡ng truyá»‡n thÃ nh Ã­t nháº¥t 5 phÃ¢n cáº£nh lá»›n riÃªng biá»‡t (Má»—i phÃ¢n cáº£nh viáº¿t tá»‘i thiá»ƒu 5-6 Ä‘oáº¡n vÄƒn dÃ i).\n"
+                    f"2. Äi sÃ¢u miÃªu táº£ cá»±c ká»³ tá»‰ má»‰: cáº£nh sáº¯c khÃ´ng gian há»c viá»‡n, thá»i tiáº¿t, Ã¢m thanh giÃ³ thá»•i, biá»ƒu cáº£m nÃ©t máº·t tá»«ng nhÃ¢n váº­t, cá»­ chá»‰ tay chÃ¢n, vÃ  dÃ²ng suy nghÄ© ná»™i tÃ¢m kÃ©o dÃ i.\n"
+                    f"3. Viáº¿t cÃ¡c Ä‘oáº¡n Ä‘á»‘i thoáº¡i dÃ i, thá»±c táº¿ vÃ  sÃ¢u sáº¯c giá»¯a cÃ¡c nhÃ¢n váº­t (Tráº§n Lam, Linh Vy, Minh Äá»©c, v.v.). KhÃ´ng Ä‘Æ°á»£c viáº¿t lÆ°á»›t qua.\n"
+                    f"4. TUYá»†T Äá»I khÃ´ng tÃ³m táº¯t hay káº¿t thÃºc chÆ°Æ¡ng truyá»‡n sá»›m khi chÆ°a Ä‘á»§ Ä‘á»™ dÃ i yÃªu cáº§u."
                 )
             
         review_prompt = prompts.REVIEW_PROMPT.format(
@@ -846,20 +846,20 @@ def write_next_chapter(novel_id: str) -> dict:
             break
             
     cleaned_content = clean_chapter_content(final_content)
-    # ĐỘNG CƠ DỊCH THUẬT TIẾNG VIỆT GEMINI API: Đảm bảo 100% kịch bản tiểu thuyết chuẩn Tiếng Việt mượt mà
+    # Äá»˜NG CÆ  Dá»ŠCH THUáº¬T TIáº¾NG VIá»†T GEMINI API: Äáº£m báº£o 100% ká»‹ch báº£n tiá»ƒu thuyáº¿t chuáº©n Tiáº¿ng Viá»‡t mÆ°á»£t mÃ 
     cleaned_content = translate_to_vietnamese_with_gemini(cleaned_content)
     
-    # Đảm bảo tiêu đề chương không bị trùng lặp placeholder
+    # Äáº£m báº£o tiÃªu Ä‘á» chÆ°Æ¡ng khÃ´ng bá»‹ trÃ¹ng láº·p placeholder
     cur_title = chapter_record.get("title", "")
-    if "Hành Trình Mới" in cur_title or not cur_title or cur_title == f"Chương {next_ch_number}":
+    if "HÃ nh TrÃ¬nh Má»›i" in cur_title or not cur_title or cur_title == f"ChÆ°Æ¡ng {next_ch_number}":
         EPIC_TITLES = [
-            "Trùng Sinh Vạn Cổ, Thôn Phệ Vô Tận", "Thức Tỉnh Thần Thể, Nén Ép Thần Ma", "Huyết Mạch Thôn Thiên, Trấn Tám Phương",
-            "Quyền Trấn Sơn Hà, Uy Chấn Chư Thiên", "Vô Địch Trùng Sinh, Hỗn Độn Luyện Khí", "Nghịch Thiên Độc Tôn, Luyện Hóa Thần Thạch",
-            "Thôn Phệ Nguyên Khí, Phá Tam Cảnh", "Vạn Giới Quỳ Bái, Tiêu Viêm Xuất Thế", "Thôn Phệ Ma Nhẫn, Khai Mở Thần Thông",
-            "Vô Song Kiếm Khí, Trảm Diệt Cường Địch", "Hệ Thống Thần Cấp, Thôn Phệ Vạn Vật", "Bá Thần Xuất Thế, Ngăn Cản Vạn Quân"
+            "TrÃ¹ng Sinh Váº¡n Cá»•, ThÃ´n Phá»‡ VÃ´ Táº­n", "Thá»©c Tá»‰nh Tháº§n Thá»ƒ, NÃ©n Ã‰p Tháº§n Ma", "Huyáº¿t Máº¡ch ThÃ´n ThiÃªn, Tráº¥n TÃ¡m PhÆ°Æ¡ng",
+            "Quyá»n Tráº¥n SÆ¡n HÃ , Uy Cháº¥n ChÆ° ThiÃªn", "VÃ´ Äá»‹ch TrÃ¹ng Sinh, Há»—n Äá»™n Luyá»‡n KhÃ­", "Nghá»‹ch ThiÃªn Äá»™c TÃ´n, Luyá»‡n HÃ³a Tháº§n Tháº¡ch",
+            "ThÃ´n Phá»‡ NguyÃªn KhÃ­, PhÃ¡ Tam Cáº£nh", "Váº¡n Giá»›i Quá»³ BÃ¡i, TiÃªu ViÃªm Xuáº¥t Tháº¿", "ThÃ´n Phá»‡ Ma Nháº«n, Khai Má»Ÿ Tháº§n ThÃ´ng",
+            "VÃ´ Song Kiáº¿m KhÃ­, Tráº£m Diá»‡t CÆ°á»ng Äá»‹ch", "Há»‡ Thá»‘ng Tháº§n Cáº¥p, ThÃ´n Phá»‡ Váº¡n Váº­t", "BÃ¡ Tháº§n Xuáº¥t Tháº¿, NgÄƒn Cáº£n Váº¡n QuÃ¢n"
         ]
         epic_name = EPIC_TITLES[(next_ch_number - 1) % len(EPIC_TITLES)]
-        cur_title = f"{epic_name} (Tập {next_ch_number})"
+        cur_title = f"{epic_name} (Táº­p {next_ch_number})"
 
     client = database.get_client()
     response = client.table("chapters")\
@@ -885,18 +885,18 @@ def sync_story_bible(novel_id: str, chapter: dict, current_chars: list):
     try:
         data = safe_loads(extract_json)
         
-        # 1. TỰ ĐỘNG LƯU CÁC NHÂN VẬT MỚI SÁNG TẠO VÀO CSDL SUPABASE
+        # 1. Tá»° Äá»˜NG LÆ¯U CÃC NHÃ‚N Váº¬T Má»šI SÃNG Táº O VÃ€O CSDL SUPABASE
         new_chars = data.get("new_characters", [])
         if new_chars:
-            print(f"[INFO] 🌟 Đã phát hiện {len(new_chars)} nhân vật MỚI được AI sáng tạo trong chương!")
+            print(f"[INFO] ðŸŒŸ ÄÃ£ phÃ¡t hiá»‡n {len(new_chars)} nhÃ¢n váº­t Má»šI Ä‘Æ°á»£c AI sÃ¡ng táº¡o trong chÆ°Æ¡ng!")
             for n_char in new_chars:
                 n_name = n_char.get("name")
                 if n_name and n_name.strip():
                     database.upsert_character(
                         novel_id=novel_id,
                         name=n_name.strip(),
-                        description=n_char.get("description", "Nhân vật mới xuất hiện trong kịch bản"),
-                        power_tier=n_char.get("power_tier", "Cao Thủ Mới"),
+                        description=n_char.get("description", "NhÃ¢n váº­t má»›i xuáº¥t hiá»‡n trong ká»‹ch báº£n"),
+                        power_tier=n_char.get("power_tier", "Cao Thá»§ Má»›i"),
                         combat_stats=n_char.get("combat_stats", {}),
                         relationships=n_char.get("relationships", {}),
                         failure_flag=False,
@@ -904,7 +904,7 @@ def sync_story_bible(novel_id: str, chapter: dict, current_chars: list):
                     )
                     print(f"   [SUPABASE] + Da tu dong nhat Nhan Vat MOI: {n_name} ({n_char.get('power_tier')})")
 
-        # 2. CẬP NHẬT TRẠNG THÁI CÁC NHÂN VẬT CŨ
+        # 2. Cáº¬P NHáº¬T TRáº NG THÃI CÃC NHÃ‚N Váº¬T CÅ¨
         for char_up in data.get("character_updates", []):
             name = char_up["name"]
             exist = database.get_character_by_name(novel_id, name)
@@ -966,3 +966,4 @@ def sync_story_bible(novel_id: str, chapter: dict, current_chars: list):
         
     except Exception as e:
         print(f"[ERROR] Story bible sync failed: {e}. Raw JSON: {extract_json}")
+
