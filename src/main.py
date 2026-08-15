@@ -40,7 +40,7 @@ print = safe_print
 # Initialize FastAPI App
 app = FastAPI(title="Truyện 24h Audio Engine", version="1.0.0")
 templates = Jinja2Templates(directory="src/templates")
-app.mount("/static", StaticFiles(directory="src/static"), name="static")
+# app.mount("/static", StaticFiles(directory="src/static"), name="static")
 
 
 class CallbackStream:
@@ -312,26 +312,10 @@ def _run_chapter_pipeline_impl(novel_id: str):
         print(f"[ERROR] Critical error in pipeline execution: {e}")
 
 # FastAPI endpoints
-@app.get("/", response_class=HTMLResponse)
-def index(request: Request):
-    """Rich Dashboard Status Page."""
-    active_novels = database.get_active_novels() or []
-    
-    # Calculate some fake stats for now or query db
-    client = database.get_client()
-    total_chapters = 0
-    try:
-        if client:
-            resp = client.table("chapters").select("id", count="exact").execute()
-            total_chapters = resp.count if resp.count else len(active_novels) * 5
-    except Exception:
-        pass
-        
-    return templates.TemplateResponse(request=request, name="dashboard.html", context={
-        "request": request,
-        "active_novels": active_novels,
-        "total_chapters": total_chapters
-    })
+# Bỏ route index cũ để sử dụng giao diện mới từ app.py
+# @app.get("/", response_class=HTMLResponse)
+# def index(request: Request):
+#     ...
 
 @app.post("/run-pipeline")
 def trigger_pipeline(novel_id: str):
