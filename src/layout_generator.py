@@ -75,7 +75,15 @@ def generate_webtoon_strip(image_paths: list, output_path: str) -> bool:
         return False
         
     try:
-        images = [Image.open(p) for p in image_paths if os.path.exists(p)]
+        images = []
+        for p in image_paths:
+            if os.path.exists(p):
+                try:
+                    img = Image.open(p)
+                    images.append(img)
+                except Exception:
+                    pass
+                    
         if not images:
             return False
             
@@ -94,6 +102,11 @@ def generate_webtoon_strip(image_paths: list, output_path: str) -> bool:
             y_offset += im.height + 20
             
         new_im.save(output_path, "JPEG", quality=90)
+        
+        # Proper resource cleanup
+        for img in images:
+            img.close()
+            
         print(f"[SUCCESS] Mangstoon AI: Đã tạo dải Webtoon cuộn dọc thành công tại {output_path}")
         return True
     except Exception as e:

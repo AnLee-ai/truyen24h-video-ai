@@ -20,22 +20,12 @@ from src import thumbnail_generator
 from src import checkpoint
 from src.queue_manager import job_queue
 
-def safe_print(*args, **kwargs):
-    """Safely print message preventing UnicodeEncodeError on Windows terminals."""
-    msg = " ".join(str(arg) for arg in args)
+# Reconfigure stdout to utf-8 safely instead of monkey-patching print
+if hasattr(sys.stdout, 'reconfigure'):
     try:
-        sys.stdout.write(msg + kwargs.get("end", "\n"))
-        sys.stdout.flush()
-    except UnicodeEncodeError:
-        try:
-            encoding = sys.stdout.encoding or 'utf-8'
-            sys.stdout.write(msg.encode(encoding, errors='replace').decode(encoding) + kwargs.get("end", "\n"))
-            sys.stdout.flush()
-        except Exception:
-            sys.stdout.write(msg.encode('ascii', errors='replace').decode('ascii') + kwargs.get("end", "\n"))
-            sys.stdout.flush()
-
-print = safe_print
+        sys.stdout.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
 
 # Initialize FastAPI App
 app = FastAPI(title="Truyện 24h Audio Engine", version="1.0.0")
@@ -89,8 +79,13 @@ def find_chapter_needing_video(novel_id: str) -> dict:
     completed_set = database.get_completed_chapters_set(novel_id)
 
     try:
+        # Fetch only the uncompleted chapters directly from DB if possible, or reverse iterate the last few.
+        # But since Supabase requires REST API, we fetch all ordered by chapter_number
         all_chapters = database.get_all_chapters(novel_id)
-        for ch in all_chapters:
+        # Limit the search to the last 50 chapters to avoid O(N) on 2000+ chapter novels
+        recent_chapters = all_chapters[-50:] if len(all_chapters) > 50 else all_chapters
+        
+        for ch in recent_chapters:
             ch_id = str(ch.get("id", ""))
             ch_num = int(ch.get("chapter_number", 0)) if str(ch.get("chapter_number", "")).isdigit() else 0
             
@@ -383,7 +378,7 @@ def main():
         desc = args.desc or ""
         
         if not title:
-            safe_print("[INFO] No title provided. Brainstorming novel concept using Gemini...")
+            print("[INFO] No title provided. Brainstorming novel concept using Gemini...")
             try:
                 import json
                 import re
@@ -396,16 +391,16 @@ def main():
                 brainstorm_data = json.loads(cleaned_json)
                 title = brainstorm_data.get("title", "Huyen Thoai Troi Day")
                 desc = brainstorm_data.get("description", "Mot cau chuyen gia tuong ky thu.")
-                safe_print(f"[INFO] Generated Title: '{title}'")
-                safe_print(f"[INFO] Generated Description: '{desc[:150]}...'")
+                print(f"[INFO] Generated Title: '{title}'")
+                print(f"[INFO] Generated Description: '{desc[:150]}...'")
             except Exception as e:
-                safe_print(f"[ERROR] Failed to brainstorm novel: {e}")
+                print(f"[ERROR] Failed to brainstorm novel: {e}")
                 title = "Huyen Thoai Aetheria"
                 desc = "Cau chuyen gia tuong day loi cuon."
-                safe_print(f"[INFO] Using fallback Title: '{title}'")
+                print(f"[INFO] Using fallback Title: '{title}'")
                 
         novel = writer.init_novel_pipeline(title, desc)
-        safe_print(f"SUCCESS: Novel initialized. ID: {novel['id']}")
+        print(f"SUCCESS: Novel initialized. ID: {novel['id']}")
         
     elif args.action == "run-pipeline":
         # 1. Đọc ưu tiên tuyệt đối từ file data/active_novel.json (được Git theo dõi) hoặc output/current_novel.json
@@ -422,9 +417,9 @@ def main():
                     curr_n = json.load(f)
                     if curr_n.get("id"):
                         file_novel_id = curr_n["id"]
-                        safe_print(f"[INFO] ⚡ PHÁT HIỆN BỘ TRUYỆN MỚI TỪ FILE '{novel_file}': '{curr_n.get('title')}' (ID: {file_novel_id})")
+                        print(f"[INFO] ⚡ PHÁT HIỆN BỘ TRUYỆN MỚI TỪ FILE '{novel_file}': '{curr_n.get('title')}' (ID: {file_novel_id})")
             except Exception as e:
-                safe_print(f"[WARNING] Không thể đọc {novel_file}: {e}")
+                print(f"[WARNING] Không thể đọc {novel_file}: {e}")
 
         # Cho file local đè hoàn toàn SECRET_NOVEL_ID trên GitHub secrets (chỉ dùng SECRET_NOVEL_ID nếu không có file local)
         novel_id = args.novel_id or os.getenv("INPUT_NOVEL_ID") or file_novel_id or os.getenv("SECRET_NOVEL_ID") or os.getenv("NOVEL_ID")
@@ -436,18 +431,18 @@ def main():
                 sys.exit(1)
             active_novels = database.get_active_novels()
             if not active_novels:
-                safe_print("[INFO] No active novels found in database with status 'writing'.")
+                print("[INFO] No active novels found in database with status 'writing'.")
                 sys.exit(0)
             
-            safe_print(f"[INFO] Found {len(active_novels)} active novels. Executing pipelines...")
+            print(f"[INFO] Found {len(active_novels)} active novels. Executing pipelines...")
             for novel in active_novels:
-                safe_print("\n=========================================")
-                safe_print(f"EXECUTING PIPELINE FOR: {novel['title']} (ID: {novel['id']})")
-                safe_print("=========================================")
+                print("\n=========================================")
+                print(f"EXECUTING PIPELINE FOR: {novel['title']} (ID: {novel['id']})")
+                print("=========================================")
                 try:
                     run_chapter_pipeline(novel['id'])
                 except Exception as e:
-                    safe_print(f"[ERROR] Failed running pipeline for {novel['title']}: {e}")
+                    print(f"[ERROR] Failed running pipeline for {novel['title']}: {e}")
         else:
             run_chapter_pipeline(novel_id)
         
@@ -481,7 +476,7 @@ def main():
 if __name__ == "__main__":
     g_raw = os.getenv("GEMINI_API_KEY", "").strip()
     mask_g = f"{g_raw[:4]}...{g_raw[-6:]}" if len(g_raw) >= 10 else "EMPTY"
-    safe_print(f"[DEBUG] GitHub Secret GEMINI_API_KEY value: {mask_g}")
+    print(f"[DEBUG] GitHub Secret GEMINI_API_KEY value: {mask_g}")
     
     if len(sys.argv) == 1:
         sys.argv.append("--action")

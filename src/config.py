@@ -21,7 +21,7 @@ def _clean_env(var_name: str) -> str:
     val = os.getenv(var_name, "")
     if not val:
         return ""
-    return val.strip().strip("'").strip('"').replace('\r', '').replace('\n', '')
+    return str(val).strip().strip("'").strip('"').replace('\r', '').replace('\n', '')
 
 # Environment variables
 GEMINI_API_KEY = _clean_env("GEMINI_API_KEY")

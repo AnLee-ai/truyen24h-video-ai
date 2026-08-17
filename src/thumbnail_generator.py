@@ -49,10 +49,8 @@ def generate_youtube_thumbnail(chapter_num: int, chapter_title: str, scene_image
                 from src.image_generator import generate_scene_image
                 prompt_tb = (
                     f"masterpiece epic 2D anime manhwa webtoon illustration, {chapter_title}, "
-                    f"ultra cool badass 18yo male cultivator hero portrait (Tiêu Viêm / Xiao Yan), "
-                    f"intense fierce posture, glowing cyan eyes, spiky black hair blown by storm wind, "
-                    f"holding glowing violet flaming sword, swirling cyan energy aura, floating particles, "
-                    f"dramatic rim lighting, dark misty bamboo mountain background, trending on ArtStation, 8k resolution, 16:9"
+                    f"ultra cool badass main character portrait, "
+                    f"intense fierce posture, dramatic rim lighting, trending on ArtStation, 8k resolution, 16:9"
                 )
                 gen_p = generate_scene_image(prompt_tb, scene_image_path, width, height)
                 if gen_p and os.path.exists(gen_p) and os.path.getsize(gen_p) > 1000:
@@ -128,6 +126,7 @@ def generate_youtube_thumbnail(chapter_num: int, chapter_title: str, scene_image
             canvas_draw.polygon([(hx - 50, hy), (hx + 50, hy), (hx + 30, hy - 90), (hx - 30, hy - 90)], fill=(12, 16, 28))  # Thân áo trường bào
 
         bg_img = bg_img.resize((width, height), Image.Resampling.LANCZOS)
+        original_bg_img = bg_img
             
         # 2. Phủ lớp Radial Vignette & Dark Gradient Manhwa (Cân bằng độ trong suốt để ảnh nền rực rỡ)
         overlay = Image.new('RGBA', (width, height), (0, 0, 0, 0))
@@ -226,8 +225,8 @@ def generate_youtube_thumbnail(chapter_num: int, chapter_title: str, scene_image
         # Chữ Vàng Hoàng Kim Tương Phản Cao
         draw.text((tx, ty), title_text, fill=(255, 223, 0), font=title_font)
         
-        # 6. Vẽ Brand Watermark 'TRUYỆN 24H AUDIO STUDIO' góc dưới phải
-        brand_text = "TRUYỆN 24H AUDIO STUDIO"
+        # 6. Vẽ Brand Watermark 'AI NOVEL STUDIO' góc dưới phải
+        brand_text = "AI NOVEL STUDIO"
         br_w, _ = get_safe_text_size(brand_font, brand_text, 20, 40)
         br_w = min(max(br_w, 300), 700)
         rx = width - br_w - 80
@@ -238,6 +237,12 @@ def generate_youtube_thumbnail(chapter_num: int, chapter_title: str, scene_image
         draw.text((rx, ry), brand_text, fill=(0, 230, 118), font=brand_font)
         
         bg_img.save(output_path, quality=95)
+        
+        # Proper resource cleanup
+        original_bg_img.close()
+        bg_img.close()
+        overlay.close()
+        
         print(f"[SUCCESS] Generated 16:9 MoneyPrinter/ComfyUI YouTube Thumbnail at: {output_path}")
         return output_path
     except Exception as e:

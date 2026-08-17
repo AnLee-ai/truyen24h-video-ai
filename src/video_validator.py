@@ -14,7 +14,7 @@ def validate_video_file(video_path: str, min_size_bytes: int = 100000) -> bool:
         
     try:
         cmd = ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", video_path]
-        res = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
         if res.returncode == 0 and res.stdout.strip():
             duration = float(res.stdout.strip())
             if duration > 1.0:
@@ -24,11 +24,11 @@ def validate_video_file(video_path: str, min_size_bytes: int = 100000) -> bool:
                 print(f"[VALIDATION FAIL] Video duration too short: {duration}s")
                 return False
         else:
-            print(f"[VALIDATION FAIL] Corrupted MP4 stream or header error detected by ffprobe: {res.stderr}")
+            print(f"[VALIDATION FAIL] Corrupted MP4 stream or header error detected by ffprobe.")
             return False
     except subprocess.TimeoutExpired:
         print(f"[VALIDATION FAIL] ffprobe timed out probing {video_path}. File may be corrupted or locked.")
         return False
     except Exception as e:
-        print(f"[VALIDATION WARNING] Could not run ffprobe ({e}). Falling back to size validation.")
+        print(f"[VALIDATION WARNING] Could not run ffprobe. Falling back to size validation.")
         return size > 5000000

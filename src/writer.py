@@ -140,28 +140,21 @@ def expand_chapter_content(content: str, target_words: int = 3200) -> str:
         part_next = call_gemini(continuation_prompt)
         if part_next and len(part_next.split()) > 200:
             cleaned_next = clean_chapter_content(part_next)
+            if cleaned_next.lower() in content.lower():
+                continue
             content = content + "\n\n" + cleaned_next
-            print(f"[SUCCESS] ÄÃ£ ná»‘i dÃ i chÆ°Æ¡ng truyá»‡n! Tá»•ng sá»‘ tá»« má»›i: {len(content.split())} tá»«.")
+            print(f"[SUCCESS] Ä Ã£ ná»‘i dÃ i chÆ°Æ¡ng truyá»‡n! Tá»•ng sá»‘ tá»« má»›i: {len(content.split())} tá»«.")
             if len(content.split()) >= target_words:
                 break
     return content
 
 def verify_and_sanitize_chapter_content(text: str, novel_id: str = "") -> tuple:
     """
-    Bá»˜ KIá»‚M TRA Tá»° Äá»˜NG Báº¢O Vá»† CHÆ¯Æ NG TRUYá»†N (Automated Chapter Auditor):
-    Tá»± Ä‘á»™ng rÃ  soÃ¡t vÃ  khá»­ toÃ n bá»™ tÃªn nhÃ¢n váº­t cÅ© rÃ¡c (Tráº§n Lam, Linh Vy, Minh Äá»©c...) 
-    Ä‘á»ƒ Ã©p chuáº©n 100% nhÃ¢n váº­t bá»™ truyá»‡n Ä‘ang viáº¿t (TiÃªu ViÃªm, VÃ¢n Váº­n, DÆ°á»£c LÃ£o, HuÃ¢n Nhi).
+    Bá»˜ KIá»‚M TRA Tá»° Ä á»˜NG Báº¢O Vá»† CHÆ¯Æ NG TRUYá»†N (Automated Chapter Auditor).
     """
     if not text:
         return text, False
         
-    LEGACY_INVALID_NAMES = {
-        "Tráº§n Lam": "TiÃªu ViÃªm",
-        "Linh Vy": "VÃ¢n Váº­n",
-        "Minh Äá»©c": "DÆ°á»£c LÃ£o",
-        "ThÃ¹y Linh": "HuÃ¢n Nhi",
-        "Cao BÃ¡": "TiÃªu Chiáº¿n"
-    }
     
     found_invalid = []
     sanitized_text = text
@@ -198,10 +191,8 @@ def translate_to_vietnamese_with_gemini(text: str) -> str:
         "2. Giá»¯ nguyÃªn 100% Ä‘á»™ dÃ i vÄƒn báº£n, lá»i thoáº¡i trong ngoáº·c kÃ©p (\"...\"), vÃ  cáº¥u trÃºc cÃ¢u chuyá»‡n. TUYá»†T Äá»I KHÃ”NG tÃ³m táº¯t hay bá» sÃ³t chi tiáº¿t nÃ o.\n"
         "3. Giá»¯ nguyÃªn 100% tÃªn nhÃ¢n váº­t chuáº©n tá»« nguyÃªn báº£n. Cáº¥m tá»± Ä‘á»•i sang tÃªn khÃ¡c.\n"
         "4. Chá»‰ xuáº¥t ra duy nháº¥t vÄƒn báº£n truyá»‡n Ä‘Ã£ dá»‹ch sang tiáº¿ng Viá»‡t, khÃ´ng kÃ¨m lá»i dáº«n hay giáº£i thÃ­ch.\n\n"
-        f"VÄ‚N Báº¢N Cáº¦N Dá»ŠCH:\n{text[:12000]}"
+        f"VÄ‚N Báº¢N Cáº¦N Dá»ŠCH:\n{text}"
     )
-    if len(text) > 12000:
-        print(f"[WARNING] Text too long ({len(text)} chars), truncating to 12000 chars for translation. Some content may be lost.")
     translated_res = call_gemini(translate_prompt)
     if translated_res and len(translated_res.split()) > 200:
         cleaned_res = clean_chapter_content(translated_res)
@@ -344,7 +335,7 @@ def call_openrouter_free_llm(prompt: str) -> str:
     for m in free_models:
         payload = {
             "model": m,
-            "messages": [{"role": "user", "content": prompt[:3000] + ("\n...\n" + prompt[-400:] if len(prompt) > 3500 else "")}],
+            "messages": [{"role": "user", "content": prompt}],
             "temperature": 0.7
         }
         try:
@@ -372,7 +363,7 @@ def call_pollinations_free_llm(prompt: str) -> str:
     for model_name in pollination_models:
         payload = {
             "messages": [
-                {"role": "user", "content": prompt[:3000]}
+                {"role": "user", "content": prompt}
             ],
             "model": model_name
         }
@@ -793,7 +784,10 @@ def write_next_chapter(novel_id: str) -> dict:
                 
                 part_next = call_gemini(continuation_prompt)
                 if part_next and len(part_next.split()) > 100:
-                    cleaned_next = clean_chapter_content(part_next)
+                    # Tránh nối chuỗi lặp lại vô tận
+                    if cleaned_next in final_content:
+                        print("[WARNING] Đã phát hiện đoạn nối tiếp bị lặp lại, ngắt vòng lặp expansion.")
+                        break
                     final_content = final_content + "\n\n" + cleaned_next
                     word_count = len(final_content.split())
                     print(f"[SUCCESS] ÄÃ£ ná»‘i tiáº¿p thÃ nh cÃ´ng! Tá»•ng Ä‘á»™ dÃ i chÆ°Æ¡ng hiá»‡n táº¡i: {word_count} tá»«.")

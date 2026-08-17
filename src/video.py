@@ -182,7 +182,9 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
         idx += 1
         
     # 5. Tạo file danh sách FFmpeg concat với thời lượng riêng biệt KHỚP THOẠI CHO TỪNG ẢNH
-    concat_list_path = os.path.join(out_dir, "concat_list.txt")
+    import uuid
+    unique_id = uuid.uuid4().hex[:8]
+    concat_list_path = os.path.join(out_dir, f"concat_list_{unique_id}.txt")
     valid_sequences = []
     
     for item in full_scene_sequence:
@@ -211,13 +213,14 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
             last_img_clean = os.path.abspath(valid_sequences[-1]['image']).replace("\\", "/").replace("'", "'\\''")
             f.write(f"file '{last_img_clean}'\n")
             
-    # 6. Định dạng bộ lọc Phụ Đề Kinetic Nổi Bật 4K (Chữ Vàng Chanh Neon & Khung Nền Bo Góc Mờ Mượt Chống Chói 100%)
-    subtitle_style = "Fontname=DejaVu Sans,FontSize=28,PrimaryColour=&H0000FFFF&,OutlineColour=&H00000000&,BackColour=&H90080A14&,BorderStyle=3,Outline=3,Shadow=2,Alignment=2,MarginV=55,MarginL=80,MarginR=80,WrapStyle=2"
+    # 6. Định dạng bộ lọc Phụ Đề Kinetic Nổi Bật 4K (Chữ Vàng Nhạt & Khung Nền Bo Góc Mờ Mượt Chống Chói 100%)
+    subtitle_style = "Fontname=DejaVu Sans,FontSize=28,PrimaryColour=&H0099FFFF&,OutlineColour=&H00000000&,BackColour=&H90080A14&,BorderStyle=3,Outline=3,Shadow=2,Alignment=2,MarginV=55,MarginL=80,MarginR=80,WrapStyle=2"
     
     srt_escaped = ""
     if srt_path and os.path.exists(srt_path):
-        srt_abs = os.path.abspath(srt_path).replace("\\", "/")
-        srt_escaped = srt_abs.replace(":", "\\:").replace("'", "'\\\\''").replace("[", "\\[").replace("]", "\\]")
+        # Sử dụng đường dẫn tương đối để tránh lỗi dấu hai chấm (C:) trên Windows
+        srt_rel = os.path.relpath(srt_path, os.getcwd()).replace("\\", "/")
+        srt_escaped = srt_rel.replace("'", "'\\\\''").replace("[", "\\[").replace("]", "\\]")
     
     # 6b. ĐỘNG CƠ TỰ ĐỘNG CHUYỂN CẢNH ĐIỆN ẢNH & SẮC NÉT 4K
     vf_filter = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,eq=brightness=0.04:contrast=1.12:saturation=1.22[bg]"
@@ -235,8 +238,8 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
                     h2, m2, s2 = int(t_end//3600), int((t_end%3600)//60), int(t_end%60)
                     f_sub.write(f"{s_i+2}\n{h1:02d}:{m1:02d}:{s1:02d},000 --> {h2:02d}:{m2:02d}:{s2:02d},800\n{s_item['text']}\n\n")
             srt_path = fallback_srt
-            srt_abs = os.path.abspath(srt_path).replace("\\", "/")
-            srt_escaped = srt_abs.replace(":", "\\:").replace("'", "'\\\\''").replace("[", "\\[").replace("]", "\\]")
+            srt_rel = os.path.relpath(srt_path, os.getcwd()).replace("\\", "/")
+            srt_escaped = srt_rel.replace("'", "'\\\\''").replace("[", "\\[").replace("]", "\\]")
         except Exception as sub_e:
             print(f"[WARNING] Fallback srt creation warning: {sub_e}")
 
@@ -271,7 +274,7 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
         "-i", audio_path,
         "-filter_complex", vf_filter,
         "-map", "[out]", "-map", "1:a",
-        "-r", "20",
+        "-vsync", "1", "-async", "1", "-r", "25",
         "-c:v", codec
     ] + encoder_opts + [
         "-b:v", "1200k", "-maxrate", "1800k", "-bufsize", "2500k",

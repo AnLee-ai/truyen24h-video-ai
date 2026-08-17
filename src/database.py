@@ -27,13 +27,7 @@ def init_novel(title: str, description: str = "") -> dict:
     client = get_client()
     MASTER_ID = "d1c402ea-4882-4ffa-81e5-639e93fed463"
     try:
-        # 1. Nếu là bộ Vạn Cổ Thần Vương, ưu tiên tra cứu theo Master ID trước
-        if "Vạn Cổ Thần Vương" in title or "van-co-than-vuong" in title:
-            master_res = client.table("novels").select("*").eq("id", MASTER_ID).execute()
-            if master_res.data:
-                return master_res.data[0]
-
-        # 2. Tìm kiếm theo tiêu đề chính xác hoặc tiêu đề tương tự
+        # 1. Tìm kiếm theo tiêu đề chính xác hoặc tiêu đề tương tự
         existing = client.table("novels").select("*").eq("title", title).execute()
         if not existing.data and len(title) > 10:
             prefix = title[:20]
@@ -104,12 +98,7 @@ def get_active_novels() -> list:
             except Exception:
                 pass
                 
-    return [{
-        "id": "van-co-than-vuong-v1",
-        "title": "Vạn Cổ Thần Vương: Ta Có Hệ Thống Thôn Phệ Vô Tận",
-        "description": "Truyện tiên hiệp huyền huyễn cực kỳ kịch tính. Nam chính Tiêu Viêm trùng sinh mang theo Hệ Thống Thôn Phệ Vô Tận, từng bước luyện hóa vạn giới chư thiên, nén ép vạn giới thần ma, xây dựng lại trật tự vĩnh hằng.",
-        "status": "writing"
-    }]
+    return []
 
 # Chapter Operations
 def get_latest_chapter(novel_id: str) -> dict:
@@ -276,7 +265,7 @@ def record_completed_chapter_local(chapter_id: str, chapter_number: int = 0):
         for prog_file in ["data/chapters_progress.json", "output/completed_chapters.json"]:
             try:
                 os.makedirs(os.path.dirname(prog_file), exist_ok=True)
-                data = {"novel_id": "van-co-than-vuong-v1", "completed_chapters": [], "current_chapter": 1}
+                data = {"novel_id": "default-novel", "completed_chapters": [], "current_chapter": 1}
                 if os.path.exists(prog_file):
                     try:
                         with open(prog_file, "r", encoding="utf-8") as f:
@@ -425,12 +414,10 @@ def upload_file_to_supabase(file_path: str, bucket_name: str = "media", destinat
         else:
             content_type = "application/octet-stream"
 
-    # 3. Đọc file (warn if large)
+    # 3. Đọc file (stream mode for memory efficiency)
     file_size = os.path.getsize(file_path)
     if file_size > 100 * 1024 * 1024:  # 100MB warning
-        print(f"[WARNING] Large file upload ({file_size/(1024*1024):.1f}MB). This may use significant memory.")
-    with open(file_path, "rb") as f:
-        file_data = f.read()
+        print(f"[WARNING] Large file upload ({file_size/(1024*1024):.1f}MB).")
 
     # 4. Upload với cơ chế Retry 3 lần (chống đứt mạng khi upload video dung lượng lớn)
     max_retries = 3
@@ -438,11 +425,12 @@ def upload_file_to_supabase(file_path: str, bucket_name: str = "media", destinat
     
     for attempt in range(max_retries):
         try:
-            client.storage.from_(bucket_name).upload(
-                path=rel_path,
-                file=file_data,
-                file_options=file_opts
-            )
+            with open(file_path, "rb") as f:
+                client.storage.from_(bucket_name).upload(
+                    path=rel_path,
+                    file=f,
+                    file_options=file_opts
+                )
             raw_pub = client.storage.from_(bucket_name).get_public_url(rel_path)
             public_url = raw_pub if isinstance(raw_pub, str) and raw_pub.startswith("http") else guaranteed_cdn_url
             print(f"[SUCCESS] Supabase Storage CDN ({content_type}): {os.path.basename(file_path)} -> {public_url}")
@@ -513,8 +501,8 @@ def get_character_by_name(novel_id: str, name: str) -> dict:
 def upsert_character(novel_id: str, name: str, description: str = "", power_tier: str = "Ordinary", 
                      combat_stats: Optional[dict] = None, relationships: Optional[dict] = None, 
                      failure_flag: bool = False, last_breakthrough_chapter: int = 0,
-                     novel_title: str = "V?n C? Th?n V??ng: Ta C? H? Th?ng Th?n Ph? V? T?n",
-                     world_name: str = "Đấu Khí Đại Lục / Vạn Cổ Thần Vương Universe") -> dict:
+                     novel_title: str = "",
+                     world_name: str = "") -> dict:
     """Insert or update character details with strict deduplication check."""
     client = get_client()
     data = {
@@ -590,8 +578,8 @@ def get_world_lore(novel_id: str) -> list:
         return []
 
 def upsert_world_lore(novel_id: str, keyword: str, description: str,
-                      novel_title: str = "V?n C? Th?n V??ng: Ta C? H? Th?ng Th?n Ph? V? T?n",
-                      world_name: str = "Đấu Khí Đại Lục / Vạn Cổ Thần Vương Universe") -> dict:
+                      novel_title: str = "",
+                      world_name: str = "") -> dict:
     """Insert or update lore entries with strict deduplication check."""
     client = get_client()
     data = {
@@ -649,7 +637,7 @@ def get_narrative_threads(novel_id: str, status: str | None = None) -> list:
         return []
 
 def upsert_narrative_thread(novel_id: str, thread_name: str, description: str, status: str = "open",
-                            novel_title: str = "V?n C? Th?n V??ng: Ta C? H? Th?ng Th?n Ph? V? T?n") -> dict:
+                            novel_title: str = "") -> dict:
     """Insert or update a narrative thread with strict deduplication check."""
     client = get_client()
     data = {

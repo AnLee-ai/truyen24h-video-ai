@@ -40,7 +40,7 @@ def api_get_history(novel_id: str = ""):
         chapters = database.get_all_chapters(novel_id)
         # Sort by chapter_number desc
         chapters = sorted(chapters, key=lambda x: int(x.get("chapter_number", 0)), reverse=True)
-        return {"status": "success", "data": chapters[:50]} # Trả về 50 chap mới nhất
+        return JSONResponse(content={"status": "success", "data": chapters[:50]}, media_type="application/json; charset=utf-8")
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -67,6 +67,11 @@ async def api_update_settings(request: Request):
         import os
         env_path = ".env"
         
+        ALLOWED_KEYS = {
+            "GEMINI_API_KEY", "SUPABASE_URL", "SUPABASE_KEY", 
+            "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID", "DISCORD_WEBHOOK_URL"
+        }
+        
         # Read existing
         lines = []
         updated_keys = set()
@@ -80,7 +85,7 @@ async def api_update_settings(request: Request):
             if "=" in line and not line.strip().startswith("#"):
                 k, _ = line.split("=", 1)
                 k = k.strip()
-                if k in payload:
+                if k in payload and k in ALLOWED_KEYS:
                     new_lines.append(f"{k}={payload[k]}\n")
                     updated_keys.add(k)
                 else:
@@ -90,7 +95,7 @@ async def api_update_settings(request: Request):
                 
         # Append new keys
         for k, v in payload.items():
-            if k not in updated_keys:
+            if k not in updated_keys and k in ALLOWED_KEYS:
                 new_lines.append(f"{k}={v}\n")
                 
         # Write back
@@ -104,17 +109,19 @@ async def api_update_settings(request: Request):
 @fastapi_app.get("/api/tts/preview")
 async def api_tts_preview(voice: str = "vi-VN-HoaiMyNeural", text: str = "Xin chào, đây là giọng đọc thử nghiệm."):
     """Tạo audio preview nhanh chóng bằng edge-tts."""
+    tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
+    tmp_file.close()
     try:
         communicate = edge_tts.Communicate(text=text, voice=voice, rate="+0%", pitch="+0Hz")
-        tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
-        tmp_file.close()
-        
         await communicate.save(tmp_file.name)
-        
         from starlette.background import BackgroundTask
         return FileResponse(tmp_file.name, media_type="audio/mpeg", background=BackgroundTask(os.remove, tmp_file.name))
     except Exception as e:
+        if os.path.exists(tmp_file.name):
+            os.remove(tmp_file.name)
         return {"status": "error", "message": str(e)}
+
+active_pipelines = set()
 
 @fastapi_app.get("/api/run_pipeline")
 async def api_run_pipeline(novel_id: str):
@@ -131,38 +138,46 @@ async def api_run_pipeline(novel_id: str):
             yield f"data: {json.dumps({'msg': '[ERROR] Novel ID không đúng định dạng UUID!', 'done': True})}\n\n"
             return
             
-        log_queue = queue.Queue()
-        def log_callback(msg):
-            log_queue.put(msg)
-            
-        try:
-            thread = threading.Thread(
-                target=run_chapter_pipeline, 
-                args=(n_id,), 
-                kwargs={"log_callback": log_callback}
-            )
-            thread.daemon = True
-            thread.start()
-        except Exception as e:
-            yield f"data: {json.dumps({'msg': f'[ERROR] Không thể khởi tạo tiến trình: {e}', 'done': True})}\n\n"
+        if n_id in active_pipelines:
+            yield f"data: {json.dumps({'msg': '[ERROR] Tiến trình cho bộ truyện này đang chạy, vui lòng không spam!', 'done': True})}\n\n"
             return
             
-        yield f"data: {json.dumps({'msg': '[INFO] Đang khởi động tiến trình...'})}\n\n"
-        
-        has_error = False
-        while thread.is_alive() or not log_queue.empty():
-            try:
-                msg = log_queue.get_nowait()
-                if "[ERROR]" in msg:
-                    has_error = True
-                yield f"data: {json.dumps({'msg': msg})}\n\n"
-            except queue.Empty:
-                await asyncio.sleep(0.1)
+        active_pipelines.add(n_id)
+        try:
+            log_queue = queue.Queue()
+            def log_callback(msg):
+                log_queue.put(msg)
                 
-        if has_error:
-            yield f"data: {json.dumps({'msg': '[ERROR] Tiến trình kết thúc với lỗi.', 'done': True})}\n\n"
-        else:
-            yield f"data: {json.dumps({'msg': '✅ Hoàn thành! Audio đã được gửi lên Telegram.', 'done': True})}\n\n"
+            try:
+                thread = threading.Thread(
+                    target=run_chapter_pipeline, 
+                    args=(n_id,), 
+                    kwargs={"log_callback": log_callback}
+                )
+                thread.daemon = True
+                thread.start()
+            except Exception as e:
+                yield f"data: {json.dumps({'msg': f'[ERROR] Không thể khởi tạo tiến trình: {e}', 'done': True})}\n\n"
+                return
+                
+            yield f"data: {json.dumps({'msg': '[INFO] Đang khởi động tiến trình...'})}\n\n"
+            
+            has_error = False
+            while thread.is_alive() or not log_queue.empty():
+                try:
+                    msg = log_queue.get_nowait()
+                    if "[ERROR]" in msg:
+                        has_error = True
+                    yield f"data: {json.dumps({'msg': msg})}\n\n"
+                except queue.Empty:
+                    await asyncio.sleep(0.1)
+                    
+            if has_error:
+                yield f"data: {json.dumps({'msg': '[ERROR] Tiến trình kết thúc với lỗi.', 'done': True})}\n\n"
+            else:
+                yield f"data: {json.dumps({'msg': '✅ Hoàn thành! Audio đã được gửi lên Telegram.', 'done': True})}\n\n"
+        finally:
+            active_pipelines.discard(n_id)
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 

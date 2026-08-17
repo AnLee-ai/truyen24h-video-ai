@@ -15,6 +15,15 @@ class LightweightQueueManager:
         self.workers = []
         self._start_workers()
 
+    def _cleanup_old_jobs(self):
+        # Keep only the last 100 jobs to prevent memory leak
+        if len(self.active_jobs) > 100:
+            # Sort by queued_at and remove oldest completed/failed jobs
+            old_jobs = sorted(self.active_jobs.items(), key=lambda x: x[1].get("queued_at", 0))
+            for job_id, info in old_jobs:
+                if info["status"] in ["completed", "failed"] and len(self.active_jobs) > 100:
+                    del self.active_jobs[job_id]
+
     def _start_workers(self):
         for i in range(self.max_workers):
             t = threading.Thread(target=self._worker_loop, daemon=True, name=f"QueueWorker-{i}")
@@ -45,6 +54,7 @@ class LightweightQueueManager:
 
     def add_job(self, job_id: str, func: Callable, *args, **kwargs):
         """Adds a job to the queue."""
+        self._cleanup_old_jobs()
         self.active_jobs[job_id] = {
             "status": "queued",
             "queued_at": time.time(),

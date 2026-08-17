@@ -1,4 +1,4 @@
-﻿import os
+import os
 import random
 from pydub import AudioSegment
 from pydub.effects import normalize
@@ -94,4 +94,3 @@ def mix_bgm_with_voice(voice_path: str, chapter_id: str) -> str:
         except Exception as fallback_err:
             print(f"[ERROR] Fallback failed: {fallback_err}")
             return voice_path
-

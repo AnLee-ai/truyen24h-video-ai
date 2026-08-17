@@ -465,20 +465,4 @@ class Ultimate50FeatureMemoryEngine:
 ultimate_memory_50 = Ultimate50FeatureMemoryEngine()
 
 if __name__ == "__main__":
-    # Test 50-Feature Memory Engine
-    ultimate_memory_50.register_character(
-        name="Tiêu Viêm",
-        aliases=["tiêu viêm", "viêm đế"],
-        base_appearance="handsome young warrior, short black hair, sharp eyes",
-        outfit="black battle robes",
-        weapon="giant heavy ruler sword",
-        color_palette="black and gold"
-    )
-    
-    ultimate_memory_50.update_character_status("Tiêu Viêm", injury="scar on left cheek", emotion="furious", transformation="Green Flame Form")
-    ultimate_memory_50.update_environment(location="Volcanic Crater Peak", weather="ash rainfall", environmental_damage="shattered rocks and molten lava")
-    
-    compiled = ultimate_memory_50.compile_master_prompt("Tiêu Viêm vung kiếm chiến đấu trên đỉnh núi lửa")
-    print("=== ULTIMATE 50-FEATURE MEMORY COMPILED ===")
-    print("POSITIVE:", compiled["positive_prompt"])
-    print("NEGATIVE:", compiled["negative_prompt"])
+    print("[INFO] Ultimate 50-Feature Visual Memory Engine Initialized.")

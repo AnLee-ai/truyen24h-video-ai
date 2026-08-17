@@ -28,8 +28,8 @@ def generate_shorts_video(audio_path: str, srt_path: str, chapter_id: str, title
     # 2. Chuẩn hóa phụ đề: Chữ trắng (&H00FFFFFF&), Viền đen mỏng (Outline=1), Cỡ chữ vừa (FontSize=20), 1 hàng (WrapStyle=2)
     srt_escaped = ""
     if srt_path and os.path.exists(srt_path):
-        srt_abs = os.path.abspath(srt_path).replace("\\", "/")
-        srt_escaped = srt_abs.replace(":", "\\:").replace("'", "'\\\\''").replace("[", "\\[").replace("]", "\\]")
+        srt_rel = os.path.relpath(srt_path, os.getcwd()).replace("\\", "/")
+        srt_escaped = srt_rel.replace("'", "'\\\\''").replace("[", "\\[").replace("]", "\\]")
         
     subtitle_style = "FontSize=20,PrimaryColour=&H00FFFFFF&,OutlineColour=&H00000000&,Outline=1,Shadow=0,Alignment=2,MarginV=180,WrapStyle=2"
     
@@ -94,6 +94,8 @@ def generate_shorts_video(audio_path: str, srt_path: str, chapter_id: str, title
             if res2.returncode == 0 and os.path.exists(shorts_video_path):
                 print(f"[SUCCESS] Pass 2 Tạo thành công Video Shorts (9:16): {shorts_video_path}")
                 return shorts_video_path
+    except subprocess.TimeoutExpired:
+        print(f"[ERROR] Timeout quá 300s khi render Shorts FFmpeg. Đã huỷ tác vụ bảo vệ RAM.")
     except Exception as e:
         print(f"[ERROR] Exception running Shorts FFmpeg: {e}")
         

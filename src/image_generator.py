@@ -40,7 +40,9 @@ def call_colab_webhook(prompt: str, output_path: str, repo_name: str, width: int
         print(f"[WARNING] Webhook {repo_name} failed: {e}")
     return False
 
-def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, height: int = 1080) -> str:
+import random
+
+def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, height: int = 1080, seed: int = None) -> str:
     """
     KIẾN TRÚC MEGA-PIPELINE 5 ENGINE (CLOUD/COLAB BASED)
     Mỗi ảnh sẽ được đẩy qua các tầng engine từ cao xuống thấp để đảm bảo tỷ lệ ra ảnh 100%.
@@ -53,7 +55,7 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     # Xử lý Prompt
     clean_prompt = re.sub(r'Scene\s*\d+:', '', scene_text, flags=re.IGNORECASE).strip()
     english_prompt = clean_prompt # Trong thực tế cần gọi g4f để dịch, ở đây tạm giả lập
-    base_seed = int(hashlib.md5(scene_text.encode('utf-8')).hexdigest()[:8], 16)
+    base_seed = seed if seed is not None else random.randint(1, 999999999)
     
     # =========================================================================
     # ENGINE 1: StoryDiffusion (Consistent Character) via Colab Webhook
@@ -100,7 +102,7 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
     try:
         img = Image.new('RGB', (width, height), color=(15, 20, 35))
         draw = ImageDraw.Draw(img)
-        seed_num = int(hashlib.md5(scene_text.encode('utf-8')).hexdigest()[:6], 16)
+        seed_num = base_seed
         r_theme = (seed_num * 13) % 150 + 20
         g_theme = (seed_num * 29) % 150 + 30
         b_theme = (seed_num * 43) % 180 + 70

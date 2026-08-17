@@ -21,22 +21,9 @@ LIGHTING_STYLES = [
     "Dusk golden hour warm sunlight, atmospheric haze"
 ]
 
-# BẢNG THƯ VỊỆN KHÓA CHI TIẾT MÔI TRƯỜNG BẮT BUỘC (MASTER ENVIRONMENT VISUAL ANCHORS)
-MASTER_ENVIRONMENT_LOCKS = {
-    "Ô Thán Thành": "Wu Tan City, ancient oriental courtyard, stone tile pavement, traditional Chinese pavilions, warm dusk glow",
-    "Ma Thú Sơn Mạch": "Magical Beast Mountain Range, misty ancient pine forest, towering jagged cliffs, bioluminescent spirit flora, dense fog",
-    "Vân Lam Tông": "Yun Lan Sect, floating jade mountain peak, cloud sea, white marble pillars, soaring cranes, majestic sect hall",
-    "Hồn Điện": "Hall of Souls, dark gothic underworld fortress, floating black iron chains, eerie purple soul fire, ominous fog",
-    "Gia Mã Đế Quốc": "Jia Ma Empire, grand imperial palace, golden roofs, vibrant ancient market street, soaring banners"
-}
-
-# BẢNG THƯ VỊỆN KHÓA CHI TIẾT NGOẠI HÌNH NHÂN VẬT BẮT BUỘC (MASTER CHARACTER VISUAL ANCHORS)
-MASTER_CHARACTER_LOCKS = {
-    "Tiêu Viêm": "Xiao Yan young male cultivator, sharp black hair, dark blue martial robe, purple fire glowing aura, purple flame sword, fierce eyes",
-    "Vân Vận": "Yun Yun beautiful female sect leader, elegant green silk dress, emerald wind sword, graceful cold demeanor, floating sash",
-    "Dược Lão": "Yao Lao ancient grandmaster spirit, white robe, ethereal glowing soul form, white hair, floating purple pill cauldron",
-    "Huân Nhi": "Xun Er noble young maiden, purple elegant hanfu gown, gentle intelligent expression, golden flame aura"
-}
+# Dynamic lock dictionaries are loaded from Database instead of hardcoding
+MASTER_ENVIRONMENT_LOCKS = {}
+MASTER_CHARACTER_LOCKS = {}
 
 NEGATIVE_PROMPT_DEFAULT = "blurry, extra limbs, bad anatomy, deformed, distorted, 3d photorealistic, out of style, lowres, watermark, text"
 
@@ -61,7 +48,7 @@ def _enrich_single_scene(item: tuple, characters_data: list, world_lore_data: li
                 char_lock_prompts.append(f"{c_name} ({desc[:70]}, {power})")
                 
     if not char_lock_prompts:
-        char_lock_prompts.append("Xiao Yan young male cultivator in dark blue martial robe holding purple fire sword")
+        char_lock_prompts.append("Cinematic focal character")
 
     # 2. KHÓA CHI TIẾT MÔI TRƯỜNG & BỐI CẢNH THẾ GIỚI (MASTER ENVIRONMENT VISUAL LOCK)
     detected_lore = []
@@ -83,7 +70,7 @@ def _enrich_single_scene(item: tuple, characters_data: list, world_lore_data: li
             env_lock_prompts.append(env_anchor)
 
     if not env_lock_prompts:
-        env_lock_prompts.append("Ancient Oriental Xianxia World background, cinematic landscape")
+        env_lock_prompts.append("Cinematic atmospheric background")
 
     # 3. PHỐI ĐẠO DIỄN CAMERA & ÁNH SÁNG
     camera = CAMERA_ANGLES[idx % len(CAMERA_ANGLES)]
@@ -170,9 +157,9 @@ def batch_enrich_visual_prompts_parallel(scenes: list, novel_id: str = "", chapt
 
 if __name__ == "__main__":
     test_scenes = [
-        "Tiêu Viêm từ từ mở mắt tại Ô Thán Thành, tay cầm hỏa kiếm tím",
-        "Vân Vận múa Phong Linh Kiếm đối đầu Ma Thú Sơn Mạch",
-        "Dược Lão hiện thân từ nhẫn cổ làm chủ Cốt Chưng U Hỏa"
+        "Một thanh niên bí ẩn đứng giữa thành phố hiện đại, cầm thanh gươm laser",
+        "Cô gái trẻ bay lượn trên bầu trời hoàng hôn của vương quốc phép thuật",
+        "Đại ma vương xuất hiện từ cánh cổng không gian"
     ]
     res_manifest, res_prompts = batch_enrich_visual_prompts_parallel(test_scenes, chapter_id="test_lock_ch")
     print(f"Test output 0 with Master Locks: {res_prompts[0]}")

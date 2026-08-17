@@ -200,38 +200,38 @@ def detect_speaker_role(text_segment: str, default_voice: str) -> tuple[str, str
     if any(kw in lower_segment for kw in ["hệ thống", "[thông báo]", "kích hoạt", "thôn phệ", "thăng cấp", "[nhiệm vụ]"]):
         return ("vi-VN-NamMinhNeural", "+0Hz", "+20%", "🤖 Hệ Thống Thôn Phệ (AI System)")
         
-    # 4. 👿 Phản Diện Hồn Điện / Tà Ma / Sát Thủ (Giọng U Tối, Ma Mị, Đáng Sợ)
-    if any(kw in lower_segment for kw in ["hồn điện", "tà ma", "phản diện", "sát thủ", "ma vương", "huyết tộc", "hắc y nhân"]):
-        return ("vi-VN-NamMinhNeural", "-10Hz", "-5%", "👿 Phản Diện Hồn Điện (Nam Minh -10Hz)")
+    # 4. 👿 Phản Diện / Tà Ma / Sát Thủ (Giọng U Tối, Ma Mị, Đáng Sợ)
+    if any(kw in lower_segment for kw in ["tà ma", "phản diện", "sát thủ", "ma vương", "huyết tộc", "hắc y nhân", "kẻ địch"]):
+        return ("vi-VN-NamMinhNeural", "-10Hz", "-5%", "👿 Phản Diện (Nam Minh -10Hz)")
         
-    # 5. 🐉 Ma Thú / Rồng / Thần Thú Thượng Cổ (Giọng Trầm Đục, Vang Rền)
-    if any(kw in lower_segment for kw in ["ma thú", "yêu thú", "cổ long", "thần long", "gầm lên", "hung thú"]):
-        return ("vi-VN-NamMinhNeural", "-12Hz", "-8%", "🐉 Ma Thú Thượng Cổ (Nam Minh -12Hz)")
+    # 5. 🐉 Ma Thú / Quái Vật (Giọng Trầm Đục, Vang Rền)
+    if any(kw in lower_segment for kw in ["ma thú", "yêu thú", "cổ long", "thần long", "gầm lên", "hung thú", "quái vật"]):
+        return ("vi-VN-NamMinhNeural", "-12Hz", "-8%", "🐉 Quái Vật Thượng Cổ (Nam Minh -12Hz)")
 
-    # 6. 👑 Nữ Đế / Nữ Vương Kiêu Hãnh (Giọng Quyến Rũ, Lạnh Lùng, Kiêu Hãnh)
-    if any(kw in lower_segment for kw in ["nữ đế", "nữ vương", "mỹ đỗ toa nữ vương", "xà nhân"]):
-        return ("vi-VN-HoaiMyNeural", "-3Hz", "+6%", "👑 Nữ Đế / Xà Nhân Nữ Vương (Hoài Mỹ -3Hz)")
+    # 6. 👑 Nữ Đế / Nữ Vương / Boss Nữ (Giọng Quyến Rũ, Lạnh Lùng, Kiêu Hãnh)
+    if any(kw in lower_segment for kw in ["nữ đế", "nữ vương", "công chúa", "boss nữ"]):
+        return ("vi-VN-HoaiMyNeural", "-3Hz", "+6%", "👑 Nữ Đế / Nữ Vương (Hoài Mỹ -3Hz)")
 
-    # 7. 🧙 Dược Lão / Thượng Cổ Tôn Giả (Giọng Trầm Ấm, Uy Nghiêm)
-    if any(kw in lower_segment for kw in ["dược lão", "dược trần", "lão giả", "sư phụ", "tiền bối", "khí linh"]):
-        return ("vi-VN-NamMinhNeural", "-6Hz", "-2%", "🧙 Dược Lão (Nam Minh -6Hz)")
+    # 7. 🧙 Tiền Bối / Trưởng Lão (Giọng Trầm Ấm, Uy Nghiêm)
+    if any(kw in lower_segment for kw in ["trưởng lão", "lão giả", "sư phụ", "tiền bối", "ông lão", "bà lão"]):
+        return ("vi-VN-NamMinhNeural", "-6Hz", "-2%", "🧙 Tiền Bối (Nam Minh -6Hz)")
         
-    # 8. 🧝 Vân Vận / Tông Chủ Vân Lam Tông (Giọng Nữ Kiều Diễm, Thanh Cao)
-    if any(kw in lower_segment for kw in ["vân vận", "vân tông chủ", "nữ vương", "sư tỷ"]):
-        return ("vi-VN-HoaiMyNeural", "+0Hz", "+8%", "🧝 Vân Vận - Nữ Chính (Hoài Mỹ Standard)")
+    # 8. 🧝 Nữ Phụ / Nữ Chính Thư Thái (Giọng Nữ Kiều Diễm, Thanh Cao)
+    if any(kw in lower_segment for kw in ["tiểu thư", "tông chủ", "sư tỷ"]):
+        return ("vi-VN-HoaiMyNeural", "+0Hz", "+8%", "🧝 Nữ Trưởng (Hoài Mỹ Standard)")
         
-    # 9. 👶 Tiểu Đệ Tử / Đồng Tử (Giọng Ngây Thơ, Háo Hức)
-    if has_quotes and any(kw in lower_segment for kw in ["đệ tử", "tiểu sư đệ", "tiểu tử", "đồng tử"]):
-        return ("vi-VN-HoaiMyNeural", "+4Hz", "+14%", "👶 Tiểu Đệ Tử (Hoài Mỹ +4Hz)")
+    # 9. 👶 Tiểu Đệ Tử / Đồng Tử / Trẻ Em (Giọng Ngây Thơ, Háo Hức)
+    if has_quotes and any(kw in lower_segment for kw in ["đệ tử", "tiểu sư đệ", "tiểu tử", "đồng tử", "đứa bé"]):
+        return ("vi-VN-HoaiMyNeural", "+4Hz", "+14%", "👶 Trẻ Em (Hoài Mỹ +4Hz)")
 
-    # 10. 🌸 Huân Nhi / Tiếu Thiếu Nữ (Giọng Nữ Ngọt Ngào, Trong Trẻo)
-    if has_quotes and any(kw in lower_segment for kw in ["huân nhi", "tiểu y tiên", "nàng", "cô", "thiếu nữ", "sư muội"]):
-        return ("vi-VN-HoaiMyNeural", "+3Hz", "+10%", "🌸 Huân Nhi / Thiếu Nữ (Hoài Mỹ +3Hz)")
+    # 10. 🌸 Thiếu Nữ (Giọng Nữ Ngọt Ngào, Trong Trẻo)
+    if has_quotes and any(kw in lower_segment for kw in ["nàng", "cô gái", "thiếu nữ", "sư muội"]):
+        return ("vi-VN-HoaiMyNeural", "+3Hz", "+10%", "🌸 Thiếu Nữ (Hoài Mỹ +3Hz)")
         
-    # 11. 🔥 Tiêu Viêm / Nam Chính Trùng Sinh (Giọng Nam Ngạo Khí, Uy Phong)
-    if has_quotes or any(kw in lower_segment for kw in ["tiêu viêm", "hắn", "nam tử", "thiếu niên"]):
+    # 11. 🔥 Nam Chính / Nam Nhân (Giọng Nam Ngạo Khí, Uy Phong)
+    if has_quotes or any(kw in lower_segment for kw in ["hắn", "nam tử", "thiếu niên", "chàng", "cậu bé"]):
         rate_mod = "+15%" if has_exclamation else "+10%"
-        return ("vi-VN-NamMinhNeural", "+2Hz", rate_mod, "🔥 Tiêu Viêm - Nam Chính (Nam Minh +2Hz)")
+        return ("vi-VN-NamMinhNeural", "+2Hz", rate_mod, "🔥 Nam Chính (Nam Minh +2Hz)")
         
     # 12. 🎙️ Người Dẫn Chuyện Tiên Hiệp (Narrator Trầm Hùng, Lôi Cuốn)
     return ("vi-VN-NamMinhNeural", "+0Hz", "+8%", "🎙️ Người Dẫn Chuyện (Nam Minh Standard)")
