@@ -95,6 +95,13 @@ document.addEventListener('DOMContentLoaded', () => {
         connectSSE('run_thumbnail');
     });
 
+    function escapeHTML(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>'"]/g, 
+            tag => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[tag] || tag)
+        );
+    }
+
     // Data Fetching Logic
     async function fetchNovels() {
         const tbody = document.getElementById('novels-tbody');
@@ -109,11 +116,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 tbody.innerHTML = data.data.map(n => `
                     <tr>
-                        <td style="font-family: monospace; font-size: 0.8rem">${n.id}</td>
-                        <td style="font-weight: 500">${n.title || 'N/A'}</td>
-                        <td><span class="badge-status badge-success">${n.status}</span></td>
+                        <td style="font-family: monospace; font-size: 0.8rem">${escapeHTML(n.id)}</td>
+                        <td style="font-weight: 500">${escapeHTML(n.title || 'N/A')}</td>
+                        <td><span class="badge-status badge-success">${escapeHTML(n.status)}</span></td>
                         <td>
-                            <button class="btn btn-outline" style="padding: 4px 8px; font-size: 12px;" onclick="document.getElementById('novel-id').value='${n.id}'; document.querySelector('.nav-item[data-tab=\\'pipeline\\']').click();">Chọn</button>
+                            <button class="btn btn-outline" style="padding: 4px 8px; font-size: 12px;" onclick="document.getElementById('novel-id').value='${escapeHTML(n.id)}'; document.querySelector('.nav-item[data-tab=\\'pipeline\\']').click();">Chọn</button>
                         </td>
                     </tr>
                 `).join('');
@@ -144,8 +151,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     return `
                     <tr>
-                        <td style="font-weight: 600">Chương ${c.chapter_number}</td>
-                        <td>${c.title || `Chương ${c.chapter_number}`}</td>
+                        <td style="font-weight: 600">Chương ${escapeHTML(c.chapter_number)}</td>
+                        <td>${escapeHTML(c.title || `Chương ${c.chapter_number}`)}</td>
                         <td><span class="badge-status ${audioStatus}">${audioText}</span></td>
                         <td><span class="badge-status ${videoStatus}">${videoText}</span></td>
                     </tr>
@@ -250,6 +257,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = await fetch(url);
             if (res.ok) {
                 const blob = await res.blob();
+                if (audioPlayer.src) URL.revokeObjectURL(audioPlayer.src);
                 const blobUrl = URL.createObjectURL(blob);
                 audioPlayer.src = blobUrl;
                 audioContainer.style.display = 'block';

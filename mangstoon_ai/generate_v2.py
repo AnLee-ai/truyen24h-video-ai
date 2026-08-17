@@ -5,7 +5,7 @@ import os
 from google import genai
 from google.genai import types
 
-API_KEY = os.getenv("GOOGLE_API_KEY", "")
+API_KEY = os.getenv("GOOGLE_API_KEY", "DUMMY_KEY_FOR_TESTS")
 client = genai.Client(api_key=API_KEY)
 
 MODEL = "gemini-3.1-flash-image-preview"

@@ -610,7 +610,7 @@ class Predictor(BasePredictor):
         if ref_image is not None:
             assert (
                 "img" in character_description
-            ), f"When using ref_image, please add the trigger word 'img' behind the class word you want to customize, such as: man img or woman img"
+            ), "When using ref_image, please add the trigger word 'img' behind the class word you want to customize, such as: man img or woman img"
             assert (
                 "[NC]" not in comic_description
             ), "You should not use trigger word [NC] when ref_image is provided."

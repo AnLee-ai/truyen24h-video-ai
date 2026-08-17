@@ -1,4 +1,3 @@
-from this import d
 import gradio as gr
 import numpy as np
 import torch
@@ -732,7 +731,7 @@ def process_generation(
             'Please add the triger word " img "  behind the class word you want to customize, such as: man img or woman img'
         )
     if _upload_images is None and _model_type != "original":
-        raise gr.Error(f"Cannot find any input face image!")
+        raise gr.Error("Cannot find any input face image!")
     global sa32, sa64, id_length, total_length, attn_procs, unet, cur_model_type
     global write
     global cur_step, attn_count

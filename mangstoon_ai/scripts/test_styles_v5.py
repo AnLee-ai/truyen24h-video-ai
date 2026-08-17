@@ -14,7 +14,7 @@ from google.genai import types
 
 load_dotenv(Path(__file__).parent.parent / "backend" / ".env")
 
-client = genai.Client(api_key=os.environ["GOOGLE_API_KEY"])
+client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY", "DUMMY_KEY_FOR_TESTS"))
 OUTPUT_DIR = Path(__file__).parent.parent / "output" / "style_test_v5"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 

@@ -1,21 +1,17 @@
 from typing import Any, Callable, Dict, List, Optional, Union, Tuple
-from collections import OrderedDict
-import os
 import PIL
-import numpy as np
 
 import torch
-from torchvision import transforms as T
 
 from safetensors import safe_open
 from huggingface_hub.utils import validate_hf_hub_args
-from transformers import CLIPImageProcessor, CLIPTokenizer
+from diffusers.models.attention_processor import Attention, AttnProcessor2_0, XFormersAttnProcessor
+from diffusers.pipelines.stable_diffusion_xl.pipeline_stable_diffusion_xl import rescale_noise_cfg
+from transformers import CLIPImageProcessor
 from diffusers import StableDiffusionXLPipeline
 from diffusers.pipelines.stable_diffusion_xl import StableDiffusionXLPipelineOutput
 from diffusers.utils import (
     _get_model_file,
-    is_transformers_available,
-    logging,
 )
 
 from . import PhotoMakerIDEncoder
@@ -543,7 +539,7 @@ class PhotoMakerStableDiffusionXLPipeline(StableDiffusionXLPipeline):
                     for k in callback_on_step_end_tensor_inputs:
                         callback_kwargs[k] = locals()[k]
 
-                    ck_outputs = callback_on_step_end(self, i, t, callback_kwargs)
+                    callback_outputs = callback_on_step_end(self, i, t, callback_kwargs)
 
                     latents = callback_outputs.pop("latents", latents)
                     prompt_embeds = callback_outputs.pop("prompt_embeds", prompt_embeds)

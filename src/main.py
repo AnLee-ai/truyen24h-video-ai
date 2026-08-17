@@ -1,14 +1,15 @@
 import argparse
 import sys
-from src import checkpoint
 import os
 import contextlib
 import uvicorn
-from fastapi import FastAPI, BackgroundTasks, Request
+from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-
+from pydantic import BaseModel
+from fastapi.responses import FileResponse
+import time
 from src import config
 from src import database
 from src import writer
@@ -17,9 +18,8 @@ from src import audio
 from src import telegram_uploader
 from src import video
 from src import thumbnail_generator
-from src import checkpoint
 from src.queue_manager import job_queue
-
+from src.thumbnail_agent.pipeline import run_thumbnail_pipeline
 # Reconfigure stdout to utf-8 safely instead of monkey-patching print
 if hasattr(sys.stdout, 'reconfigure'):
     try:
@@ -30,7 +30,6 @@ if hasattr(sys.stdout, 'reconfigure'):
 # Initialize FastAPI App
 app = FastAPI(title="Truyện 24h Audio Engine", version="1.0.0")
 templates = Jinja2Templates(directory="src/templates")
-import os
 app.mount("/static", StaticFiles(directory="templates"), name="static")
 
 
@@ -246,7 +245,7 @@ def _run_chapter_pipeline_impl(novel_id: str):
                 print(f"[SUCCESS] 🟢 Đã đẩy hoàn tất {len(img_files)} Ảnh AI 2D lên Supabase CDN!")
             
         # 6. Tự động Upload YouTube (Kích hoạt lại theo yêu cầu P1)
-        print(f"[INFO] Bắt đầu tiến trình Upload video lên YouTube...")
+        print("[INFO] Bắt đầu tiến trình Upload video lên YouTube...")
         if video_path and os.path.exists(video_path):
             try:
                 import src.youtube_uploader as youtube_uploader
@@ -320,12 +319,12 @@ def trigger_pipeline(novel_id: str):
     job_queue.add_job(job_id, run_chapter_pipeline, novel_id)
     return {"status": "queued", "job_id": job_id, "message": f"Pipeline triggered for novel {novel_id}. Job ID: {job_id}"}
 
-from pydantic import BaseModel
+
 class ThumbnailRequest(BaseModel):
     video_path: str
     chapter_title: str
 
-from src.thumbnail_agent.pipeline import run_thumbnail_pipeline
+
 
 @app.post("/api/v1/thumbnail/generate")
 def api_generate_thumbnail(req: ThumbnailRequest):
@@ -349,7 +348,7 @@ def api_get_thumbnail_status(job_id: str):
 
 
 
-from fastapi.responses import FileResponse
+
 @app.get("/", response_class=HTMLResponse)
 def index_web():
     return FileResponse("templates/index.html")
@@ -474,10 +473,6 @@ def main():
         print("SUCCESS: Audio exported and sent.")
 
 if __name__ == "__main__":
-    g_raw = os.getenv("GEMINI_API_KEY", "").strip()
-    mask_g = f"{g_raw[:4]}...{g_raw[-6:]}" if len(g_raw) >= 10 else "EMPTY"
-    print(f"[DEBUG] GitHub Secret GEMINI_API_KEY value: {mask_g}")
-    
     if len(sys.argv) == 1:
         sys.argv.append("--action")
         sys.argv.append("run-pipeline")

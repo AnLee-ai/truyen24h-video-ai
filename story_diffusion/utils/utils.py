@@ -1,9 +1,8 @@
-from email.mime import image
 import torch
 import base64
 import gradio as gr
 import numpy as np
-from PIL import Image,ImageOps,ImageDraw, ImageFont
+from PIL import Image,ImageOps,ImageDraw
 from io import BytesIO
 import random
 MAX_COLORS = 12
@@ -91,7 +90,7 @@ def add_caption(image, text, position = "bottom-mid",  font = None, text_color= 
     return image.convert('RGB')
 
 def get_comic(images,types = "4panel",captions = [],font = None,pad_image = None):
-    if pad_image == None:
+    if pad_image is None:
         pad_image = Image.open("./images/pad_images.png")
 
     if types == "No typesetting (default)":
@@ -112,25 +111,25 @@ def get_caption_group(images_groups,captions = []):
     return caption_groups
 
 def get_comic_classical(images,captions = None,font = None,pad_image = None):
-    if pad_image == None:
+    if pad_image is None:
         raise ValueError("pad_image is None")
     images = [add_white_border(image) for image in images]
     pad_image = pad_image.resize(images[0].size, Image.LANCZOS)
     images_groups = distribute_images2(images,pad_image)
     print(images_groups)
-    if captions != None:
+    if captions is not None:
         captions_groups = get_caption_group(images_groups,captions)
     # print(images_groups)
     row_images = []
     for ind, img_group in enumerate(images_groups):
-        row_images.append(get_row_image2(img_group ,captions= captions_groups[ind] if captions != None else None,font = font))    
+        row_images.append(get_row_image2(img_group ,captions= captions_groups[ind] if captions is not None else None,font = font))    
 
     return [combine_images_vertically_with_resize(row_images)]
 
 
 
 def get_comic_4panel(images,captions = [],font = None,pad_image = None):
-    if pad_image == None:
+    if pad_image is None:
         raise ValueError("pad_image is None")
     pad_image = pad_image.resize(images[0].size, Image.LANCZOS)
     images = [add_white_border(image) for image in images]
@@ -183,7 +182,7 @@ def get_row_image2(images,captions = None, font = None):
     index = 0
     for length in sequence_list:
         if length == 1:
-            if captions != None:
+            if captions is not None:
                 images_tmp = add_caption(images[0],text = captions[index],font= font)
             else:
                 images_tmp = images[0]

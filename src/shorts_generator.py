@@ -95,7 +95,7 @@ def generate_shorts_video(audio_path: str, srt_path: str, chapter_id: str, title
                 print(f"[SUCCESS] Pass 2 Tạo thành công Video Shorts (9:16): {shorts_video_path}")
                 return shorts_video_path
     except subprocess.TimeoutExpired:
-        print(f"[ERROR] Timeout quá 300s khi render Shorts FFmpeg. Đã huỷ tác vụ bảo vệ RAM.")
+        print("[ERROR] Timeout quá 300s khi render Shorts FFmpeg. Đã huỷ tác vụ bảo vệ RAM.")
     except Exception as e:
         print(f"[ERROR] Exception running Shorts FFmpeg: {e}")
         

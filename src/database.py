@@ -1,3 +1,4 @@
+from typing import Any
 import os
 import json
 import re
@@ -22,10 +23,10 @@ def get_client() -> Client:
     return _client
 
 # Novel Operations
-def init_novel(title: str, description: str = "") -> dict:
+def init_novel(title: str, description: str = "") -> Any:
     """Create or fetch existing novel record strictly avoiding duplicate novel rows."""
     client = get_client()
-    MASTER_ID = "d1c402ea-4882-4ffa-81e5-639e93fed463"
+
     try:
         # 1. Tìm kiếm theo tiêu đề chính xác hoặc tiêu đề tương tự
         existing = client.table("novels").select("*").eq("title", title).execute()
@@ -39,7 +40,10 @@ def init_novel(title: str, description: str = "") -> dict:
             if len(existing.data) > 1:
                 for dup in existing.data[1:]:
                     try:
-                        client.table("novels").delete().eq("id", dup["id"]).execute()
+                        # KIỂM TRA: Nếu truyện có chapter thì không được xóa
+                        ch_check = client.table("chapters").select("id").eq("novel_id", dup["id"]).limit(1).execute()
+                        if not ch_check.data:
+                            client.table("novels").delete().eq("id", dup["id"]).execute()
                     except Exception:
                         pass
             return primary_novel
@@ -55,7 +59,7 @@ def init_novel(title: str, description: str = "") -> dict:
         print(f"[WARNING] init_novel failed: {e}")
         return {}
 
-def get_novel(novel_id: str) -> dict:
+def get_novel(novel_id: str) -> Any:
     """Fetch novel details by ID with local active novel fallback."""
     import os
     import json
@@ -78,7 +82,7 @@ def get_novel(novel_id: str) -> dict:
                 pass
     return {}
 
-def get_active_novels() -> list:
+def get_active_novels() -> Any:
     """Fetch all active novels currently in writing status with local active novel fallback."""
     try:
         client = get_client()
@@ -101,7 +105,7 @@ def get_active_novels() -> list:
     return []
 
 # Chapter Operations
-def get_latest_chapter(novel_id: str) -> dict:
+def get_latest_chapter(novel_id: str) -> Any:
     """Fetch the latest chapter of a novel with fail-safe error handling."""
     try:
         client = get_client()
@@ -117,7 +121,7 @@ def get_latest_chapter(novel_id: str) -> dict:
         print(f"[WARNING] Supabase get_latest_chapter failed ({e}). Returning empty dict fallback.")
     return {}
 
-def get_all_chapters(novel_id: str = "") -> list:
+def get_all_chapters(novel_id: str = "") -> Any:
     """Fetch all chapters of a novel, ordered by chapter number with fail-safe error handling."""
     import uuid
     try:
@@ -129,7 +133,7 @@ def get_all_chapters(novel_id: str = "") -> list:
             try:
                 uuid.UUID(str(novel_id))
                 is_valid_uuid = True
-            except ValueError:
+            except (ValueError, TypeError, AttributeError):
                 is_valid_uuid = False
                 
         if is_valid_uuid:
@@ -138,12 +142,18 @@ def get_all_chapters(novel_id: str = "") -> list:
         response = query.order("chapter_number", desc=False).execute()
         if response.data:
             res_data = response.data or []
-            return sorted(res_data, key=lambda x: int(x.get("chapter_number", 0) or 0) if str(x.get("chapter_number", "0")).lstrip('-').isdigit() else 0)
+            def safe_int(val):
+                try:
+                    if val is None or str(val).strip() == "": return 0
+                    return int(float(str(val).strip()))
+                except (ValueError, TypeError):
+                    return 0
+            return sorted(res_data, key=lambda x: safe_int(x.get("chapter_number", 0)))
     except Exception as e:
         print(f"[WARNING] Supabase get_all_chapters failed ({e}). Returning empty list fallback.")
     return []
 
-def create_chapter(novel_id: str, chapter_number: int, title: str, content: str) -> dict:
+def create_chapter(novel_id: str, chapter_number: int, title: str, content: str) -> Any:
     """Create or update a chapter record safely using explicit SELECT-then-UPDATE/INSERT by (novel_id, chapter_number)."""
     client = get_client()
     data = {
@@ -178,7 +188,7 @@ def create_chapter(novel_id: str, chapter_number: int, title: str, content: str)
         print(f"[WARNING] create_chapter SELECT-then-UPDATE failed for Chapter {chapter_number}: {e}")
         return {}
 
-def update_chapter_audio(chapter_id: str, audio_url: str) -> dict:
+def update_chapter_audio(chapter_id: str, audio_url: str) -> Any:
     """Update the audio URL of a chapter."""
     try:
         client = get_client()
@@ -191,7 +201,7 @@ def update_chapter_audio(chapter_id: str, audio_url: str) -> dict:
         print(f"[INFO] Ghi nhận audio_url ({audio_url[:30]}...) cho chapter {chapter_id}: {e}")
         return {}
 
-def update_chapter_video_status(chapter_id: str, status: str, video_url: str = None) -> dict:
+def update_chapter_video_status(chapter_id: str, status: str, video_url: str = None) -> Any:
     """Cập nhật trạng thái render video cho chương."""
     try:
         client = get_client()
@@ -316,7 +326,7 @@ def record_completed_chapter_local(chapter_id: str, chapter_number: int = 0):
     except Exception as db_err:
         print(f"[WARNING] Supabase sync fallback warning: {db_err}")
 
-def mark_chapter_completed_atomic(chapter_id: str, audio_url: str = "", video_url: str = "", chapter_number: int = 0) -> dict:
+def mark_chapter_completed_atomic(chapter_id: str, audio_url: str = "", video_url: str = "", chapter_number: int = 0) -> Any:
     """Atomic update: Đánh dấu chương hoàn thành 100% cả audio lẫn video trong 1 query duy nhất (Thích ứng cột mờ)."""
     record_completed_chapter_local(chapter_id, chapter_number)
     try:
@@ -359,7 +369,7 @@ def mark_chapter_completed_atomic(chapter_id: str, audio_url: str = "", video_ur
         print(f"[INFO] Trạng thái hoàn thành Chapter {chapter_id} đã lưu thành công: {e}")
         return {}
 
-def get_pending_video_chapter(novel_id: str = "") -> dict:
+def get_pending_video_chapter(novel_id: str = "") -> Any:
     """Fetch the oldest chapter that has not had a video created yet (video_status='pending' or NULL)."""
     client = get_client()
     try:
@@ -444,7 +454,7 @@ def upload_file_to_supabase(file_path: str, bucket_name: str = "media", destinat
     return ""
 
 # Episode Summary & Vector Search
-def create_episode_summary(chapter_id: str, event_summary: str, embedding: list) -> dict:
+def create_episode_summary(chapter_id: str, event_summary: str, embedding: list) -> Any:
     """Save the episodic summary and its embedding vector."""
     client = get_client()
     response = client.table("episodes_summary").insert({
@@ -454,7 +464,7 @@ def create_episode_summary(chapter_id: str, event_summary: str, embedding: list)
     }).execute()
     return response.data[0] if response.data else {}  # type: ignore[return-value]
 
-def search_episodes(novel_id: str, query_embedding: list, limit: int = 5, threshold: float = 0.3) -> list:
+def search_episodes(novel_id: str, query_embedding: list, limit: int = 5, threshold: float = 0.3) -> Any:
     """Perform pgvector similarity search on past episodes."""
     client = get_client()
     try:
@@ -472,7 +482,7 @@ def search_episodes(novel_id: str, query_embedding: list, limit: int = 5, thresh
         return []
 
 # Character Operations (Protagonist control and power-tier logic)
-def get_characters(novel_id: str) -> list:
+def get_characters(novel_id: str) -> Any:
     """Fetch all characters of a novel."""
     try:
         client = get_client()
@@ -485,7 +495,7 @@ def get_characters(novel_id: str) -> list:
         print(f"[WARNING] get_characters failed: {e}")
         return []
 
-def get_character_by_name(novel_id: str, name: str) -> dict:
+def get_character_by_name(novel_id: str, name: str) -> Any:
     """Fetch character by name."""
     try:
         client = get_client()
@@ -564,7 +574,7 @@ def is_valid_uuid(val: str) -> bool:
         return False
 
 # World Lore Operations
-def get_world_lore(novel_id: str) -> list:
+def get_world_lore(novel_id: str) -> Any:
     """Fetch all lore entries of a novel."""
     try:
         client = get_client()
@@ -621,7 +631,7 @@ def upsert_world_lore(novel_id: str, keyword: str, description: str,
         return {}
 
 # Narrative Threads Operations
-def get_narrative_threads(novel_id: str, status: str | None = None) -> list:
+def get_narrative_threads(novel_id: str, status: str | None = None) -> Any:
     """Fetch narrative threads of a novel."""
     try:
         client = get_client()
@@ -676,7 +686,7 @@ def upsert_narrative_thread(novel_id: str, thread_name: str, description: str, s
         print(f"[WARNING] upsert_narrative_thread failed: {e}")
         return {}
 
-def update_novel_description(novel_id: str, description: str) -> dict:
+def update_novel_description(novel_id: str, description: str) -> Any:
     """Update description of a novel."""
     client = get_client()
     response = client.table("novels").update({
@@ -686,7 +696,7 @@ def update_novel_description(novel_id: str, description: str) -> dict:
 
 # Extended Enterprise Supabase Tables (6 Bảng Mới Siêu Hữu Ích)
 
-def record_publishing_analytics(chapter_id: str, chapter_number: int, views: int = 0, likes: int = 0, telegram_reach: int = 0, retention_rate: float = 0.0) -> dict:
+def record_publishing_analytics(chapter_id: str, chapter_number: int, views: int = 0, likes: int = 0, telegram_reach: int = 0, retention_rate: float = 0.0) -> Any:
     """Bảng 7: publishing_analytics - Thống kê tương tác & chỉ số tăng trưởng kênh."""
     try:
         client = get_client()
@@ -704,7 +714,7 @@ def record_publishing_analytics(chapter_id: str, chapter_number: int, views: int
         print(f"[INFO] Supabase publishing_analytics record notice: {e}")
         return {}
 
-def upsert_character_inventory(novel_id: str, character_name: str, item_name: str, item_type: str, description: str, power_boost: str = "") -> dict:
+def upsert_character_inventory(novel_id: str, character_name: str, item_name: str, item_type: str, description: str, power_boost: str = "") -> Any:
     """Bảng 8: character_inventory - Túi đồ, Trang phục, Pháp bảo & Dị Hỏa nhân vật."""
     try:
         client = get_client()
@@ -722,7 +732,7 @@ def upsert_character_inventory(novel_id: str, character_name: str, item_name: st
         print(f"[INFO] Supabase character_inventory notice: {e}")
         return {}
 
-def log_ai_prompt(chapter_id: str, prompt_text: str, engine_name: str = "Pollinations/Gemini", image_url: str = "", aesthetic_score: float = 9.5) -> dict:
+def log_ai_prompt(chapter_id: str, prompt_text: str, engine_name: str = "Pollinations/Gemini", image_url: str = "", aesthetic_score: float = 9.5) -> Any:
     """Bảng 9: ai_prompts_log - Lịch sử nhật ký sinh ảnh AI & thẩm mỹ."""
     try:
         client = get_client()
@@ -739,7 +749,7 @@ def log_ai_prompt(chapter_id: str, prompt_text: str, engine_name: str = "Pollina
         print(f"[INFO] Supabase ai_prompts_log notice: {e}")
         return {}
 
-def upsert_tts_voice_config(novel_id: str, character_name: str, voice_name: str, pitch: str = "+0Hz", rate: str = "+0%", emotional_style: str = "epic") -> dict:
+def upsert_tts_voice_config(novel_id: str, character_name: str, voice_name: str, pitch: str = "+0Hz", rate: str = "+0%", emotional_style: str = "epic") -> Any:
     """Bảng 10: tts_voice_configs - Cấu hình giọng đọc AI & diễn cảm nhân vật."""
     try:
         client = get_client()
@@ -757,7 +767,7 @@ def upsert_tts_voice_config(novel_id: str, character_name: str, voice_name: str,
         print(f"[INFO] Supabase tts_voice_configs notice: {e}")
         return {}
 
-def record_system_log(level: str, module_name: str, message: str) -> dict:
+def record_system_log(level: str, module_name: str, message: str) -> Any:
     """Bảng 11: system_logs - Nhật ký hoạt động & cảnh báo vận hành tự động."""
     try:
         client = get_client()
@@ -772,7 +782,7 @@ def record_system_log(level: str, module_name: str, message: str) -> dict:
         print(f"[INFO] Supabase system_logs notice: {e}")
         return {}
 
-def upsert_channel_subscriber(user_id: str, platform: str = "Telegram", membership_level: str = "VIP Subscriber") -> dict:
+def upsert_channel_subscriber(user_id: str, platform: str = "Telegram", membership_level: str = "VIP Subscriber") -> Any:
     """Bảng 12: channel_subscribers - Quản lý thành viên & VIP của kênh."""
     try:
         client = get_client()

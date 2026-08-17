@@ -41,7 +41,7 @@ def get_genai_client(api_key: str = None):
     if USE_NEW_GENAI:
         return genai.Client(api_key=current_key)
     else:
-        genai.configure(api_key=current_key)
+        genai.configure(api_key=current_key)  # type: ignore
         return genai
 
 def safe_loads(text: str, default=None):
@@ -148,6 +148,8 @@ def expand_chapter_content(content: str, target_words: int = 3200) -> str:
                 break
     return content
 
+LEGACY_INVALID_NAMES = {}
+
 def verify_and_sanitize_chapter_content(text: str, novel_id: str = "") -> tuple:
     """
     Bá»˜ KIá»‚M TRA Tá»° Ä á»˜NG Báº¢O Vá»† CHÆ¯Æ NG TRUYá»†N (Automated Chapter Auditor).
@@ -230,11 +232,11 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
                     config=generation_config
                 )
             else:
-                genai.configure(api_key=g_key)
+                genai.configure(api_key=g_key)  # type: ignore
                 g_config = {"max_output_tokens": 8192}
                 if json_mode:
                     g_config["response_mime_type"] = "application/json"
-                model = genai.GenerativeModel(current_g_model, generation_config=g_config)
+                model = genai.GenerativeModel(current_g_model, generation_config=g_config)  # type: ignore
                 response = model.generate_content(prompt)
 
             if response.text and len(response.text.strip().split()) > 10:
@@ -412,7 +414,7 @@ def get_embedding(text: str) -> list:
             )
             emb = result.embeddings[0].values
         else:
-            genai.configure(api_key=g_key)
+            genai.configure(api_key=g_key)  # type: ignore
             result = genai.embed_content(
                 model=f"models/{config.GEMINI_MODEL_EMBED}",
                 content=text,
@@ -784,6 +786,7 @@ def write_next_chapter(novel_id: str) -> dict:
                 
                 part_next = call_gemini(continuation_prompt)
                 if part_next and len(part_next.split()) > 100:
+                    cleaned_next, _ = verify_and_sanitize_chapter_content(part_next)
                     # Tránh nối chuỗi lặp lại vô tận
                     if cleaned_next in final_content:
                         print("[WARNING] Đã phát hiện đoạn nối tiếp bị lặp lại, ngắt vòng lặp expansion.")

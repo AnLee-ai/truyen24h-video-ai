@@ -46,62 +46,43 @@ def api_get_history(novel_id: str = ""):
 
 @fastapi_app.get("/api/settings/get")
 def api_get_settings():
-    """Đọc cấu hình từ file .env"""
+    """Đọc cấu hình từ file .env (Masked để bảo mật)"""
     import os
+    from dotenv import dotenv_values
     env_path = ".env"
     settings = {}
     if os.path.exists(env_path):
-        with open(env_path, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith("#") and "=" in line:
-                    k, v = line.split("=", 1)
-                    settings[k.strip()] = v.strip()
+        raw_settings = dotenv_values(env_path)
+        for k, v in raw_settings.items():
+            if not v:
+                settings[k] = ""
+            elif k in ["GEMINI_API_KEY", "SUPABASE_KEY", "TELEGRAM_BOT_TOKEN"]:
+                settings[k] = f"{v[:4]}...{v[-4:]}" if len(v) > 8 else "***"
+            else:
+                settings[k] = v
     return {"status": "success", "data": settings}
 
 @fastapi_app.post("/api/settings/update")
 async def api_update_settings(request: Request):
-    """Cập nhật cấu hình vào file .env"""
+    """Cập nhật cấu hình vào file .env an toàn"""
     try:
         payload = await request.json()
         import os
+        from dotenv import set_key
         env_path = ".env"
-        
+        if not os.path.exists(env_path):
+            open(env_path, "w").close()
+            
         ALLOWED_KEYS = {
             "GEMINI_API_KEY", "SUPABASE_URL", "SUPABASE_KEY", 
-            "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID", "DISCORD_WEBHOOK_URL"
+            "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID", "DISCORD_WEBHOOK_URL", "DEFAULT_VOICE"
         }
         
-        # Read existing
-        lines = []
-        updated_keys = set()
-        if os.path.exists(env_path):
-            with open(env_path, "r", encoding="utf-8") as f:
-                lines = f.readlines()
-                
-        # Update lines
-        new_lines = []
-        for line in lines:
-            if "=" in line and not line.strip().startswith("#"):
-                k, _ = line.split("=", 1)
-                k = k.strip()
-                if k in payload and k in ALLOWED_KEYS:
-                    new_lines.append(f"{k}={payload[k]}\n")
-                    updated_keys.add(k)
-                else:
-                    new_lines.append(line)
-            else:
-                new_lines.append(line)
-                
-        # Append new keys
         for k, v in payload.items():
-            if k not in updated_keys and k in ALLOWED_KEYS:
-                new_lines.append(f"{k}={v}\n")
+            if k in ALLOWED_KEYS:
+                if "..." not in str(v) and "***" not in str(v):
+                    set_key(env_path, k, str(v))
                 
-        # Write back
-        with open(env_path, "w", encoding="utf-8") as f:
-            f.writelines(new_lines)
-            
         return {"status": "success", "message": "Đã cập nhật cấu hình thành công!"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
@@ -122,6 +103,7 @@ async def api_tts_preview(voice: str = "vi-VN-HoaiMyNeural", text: str = "Xin ch
         return {"status": "error", "message": str(e)}
 
 active_pipelines = set()
+pipeline_lock = threading.Lock()
 
 @fastapi_app.get("/api/run_pipeline")
 async def api_run_pipeline(novel_id: str):
@@ -133,16 +115,18 @@ async def api_run_pipeline(novel_id: str):
             return
             
         try:
-            uuid.UUID(n_id)
+            val = uuid.UUID(n_id)
+            if str(val) != n_id:
+                raise ValueError()
         except ValueError:
             yield f"data: {json.dumps({'msg': '[ERROR] Novel ID không đúng định dạng UUID!', 'done': True})}\n\n"
             return
             
-        if n_id in active_pipelines:
-            yield f"data: {json.dumps({'msg': '[ERROR] Tiến trình cho bộ truyện này đang chạy, vui lòng không spam!', 'done': True})}\n\n"
-            return
-            
-        active_pipelines.add(n_id)
+        with pipeline_lock:
+            if n_id in active_pipelines:
+                yield f"data: {json.dumps({'msg': '[ERROR] Tiến trình cho bộ truyện này đang chạy, vui lòng không spam!', 'done': True})}\n\n"
+                return
+            active_pipelines.add(n_id)
         try:
             log_queue = queue.Queue()
             def log_callback(msg):
@@ -191,8 +175,8 @@ async def api_run_thumbnail(novel_id: str):
             
         yield f"data: {json.dumps({'msg': f'[INFO] Đang lấy thông tin Chapter mới nhất cho Novel: {n_id}...'})}\n\n"
         
-        # Blocking call but should be fast
-        chapter = database.get_latest_chapter(n_id)
+        # Giải phóng event loop cho thao tác đọc DB
+        chapter = await asyncio.to_thread(database.get_latest_chapter, n_id)
         if not chapter:
             yield f"data: {json.dumps({'msg': '[ERROR] Không tìm thấy Chapter nào. Hãy chạy Viết Chương trước.', 'done': True})}\n\n"
             return

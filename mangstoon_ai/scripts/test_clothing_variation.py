@@ -17,7 +17,7 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT / ".env")
 
-client = genai.Client(api_key=os.environ["GOOGLE_API_KEY"])
+client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY", "DUMMY_KEY_FOR_TESTS"))
 MODEL = "gemini-3.1-flash-image-preview"
 OUTPUT = ROOT / "output" / "v3"
 OUTPUT.mkdir(parents=True, exist_ok=True)

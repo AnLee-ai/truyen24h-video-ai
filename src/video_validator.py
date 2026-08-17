@@ -24,11 +24,11 @@ def validate_video_file(video_path: str, min_size_bytes: int = 100000) -> bool:
                 print(f"[VALIDATION FAIL] Video duration too short: {duration}s")
                 return False
         else:
-            print(f"[VALIDATION FAIL] Corrupted MP4 stream or header error detected by ffprobe.")
+            print("[VALIDATION FAIL] Corrupted MP4 stream or header error detected by ffprobe.")
             return False
     except subprocess.TimeoutExpired:
         print(f"[VALIDATION FAIL] ffprobe timed out probing {video_path}. File may be corrupted or locked.")
         return False
-    except Exception as e:
-        print(f"[VALIDATION WARNING] Could not run ffprobe. Falling back to size validation.")
+    except Exception:
+        print("[VALIDATION WARNING] Could not run ffprobe. Falling back to size validation.")
         return size > 5000000

@@ -1,10 +1,9 @@
 import os
 import re
 import urllib.parse
-import hashlib
 import requests
 from PIL import Image, ImageDraw
-
+import random
 def is_valid_image_file(file_path: str) -> bool:
     if not os.path.exists(file_path):
         return False
@@ -40,7 +39,6 @@ def call_colab_webhook(prompt: str, output_path: str, repo_name: str, width: int
         print(f"[WARNING] Webhook {repo_name} failed: {e}")
     return False
 
-import random
 
 def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, height: int = 1080, seed: int = None) -> str:
     """
