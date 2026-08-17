@@ -41,7 +41,7 @@ print = safe_print
 app = FastAPI(title="Truyện 24h Audio Engine", version="1.0.0")
 templates = Jinja2Templates(directory="src/templates")
 import os
-app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")), name="static")
+app.mount("/static", StaticFiles(directory="templates"), name="static")
 
 
 class CallbackStream:
@@ -351,17 +351,13 @@ def api_get_thumbnail_status(job_id: str):
 
 # CLI Argument Parser
 
+
+
+
+from fastapi.responses import FileResponse
 @app.get("/", response_class=HTMLResponse)
-def index_web(request: Request):
-    from src import database
-    active_novels = database.get_active_novels()
-    total_chapters = sum([len(database.get_completed_chapters_set(n["id"])) for n in active_novels])
-    
-    return templates.TemplateResponse(
-        request=request,
-        name="dashboard.html",
-        context={"active_novels": active_novels, "total_chapters": total_chapters}
-    )
+def index_web():
+    return FileResponse("templates/index.html")
 
 def main():
     parser = argparse.ArgumentParser(description="Truyen 24h Audio CLI Orchestrator")
