@@ -6,7 +6,7 @@ import json
 import asyncio
 from fastapi import Request, Body
 from pydantic import BaseModel
-from fastapi.responses import HTMLResponse, StreamingResponse, FileResponse
+from fastapi.responses import HTMLResponse, StreamingResponse, FileResponse, JSONResponse
 import tempfile
 import edge_tts
 from fastapi.staticfiles import StaticFiles
@@ -29,7 +29,7 @@ def api_get_novels():
     """Lấy danh sách các truyện đang active từ DB."""
     try:
         novels = database.get_active_novels()
-        return {"status": "success", "data": novels}
+        return JSONResponse(content={"status": "success", "data": novels}, media_type="application/json; charset=utf-8")
     except Exception as e:
         return {"status": "error", "message": str(e)}
 

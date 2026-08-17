@@ -513,7 +513,7 @@ def get_character_by_name(novel_id: str, name: str) -> dict:
 def upsert_character(novel_id: str, name: str, description: str = "", power_tier: str = "Ordinary", 
                      combat_stats: Optional[dict] = None, relationships: Optional[dict] = None, 
                      failure_flag: bool = False, last_breakthrough_chapter: int = 0,
-                     novel_title: str = "Vạn Cổ Thần Vương: Ta Có Hệ Thống Thôn Phệ Vô Tận",
+                     novel_title: str = "V?n C? Th?n V??ng: Ta C? H? Th?ng Th?n Ph? V? T?n",
                      world_name: str = "Đấu Khí Đại Lục / Vạn Cổ Thần Vương Universe") -> dict:
     """Insert or update character details with strict deduplication check."""
     client = get_client()
@@ -590,7 +590,7 @@ def get_world_lore(novel_id: str) -> list:
         return []
 
 def upsert_world_lore(novel_id: str, keyword: str, description: str,
-                      novel_title: str = "Vạn Cổ Thần Vương: Ta Có Hệ Thống Thôn Phệ Vô Tận",
+                      novel_title: str = "V?n C? Th?n V??ng: Ta C? H? Th?ng Th?n Ph? V? T?n",
                       world_name: str = "Đấu Khí Đại Lục / Vạn Cổ Thần Vương Universe") -> dict:
     """Insert or update lore entries with strict deduplication check."""
     client = get_client()
@@ -649,7 +649,7 @@ def get_narrative_threads(novel_id: str, status: str | None = None) -> list:
         return []
 
 def upsert_narrative_thread(novel_id: str, thread_name: str, description: str, status: str = "open",
-                            novel_title: str = "Vạn Cổ Thần Vương: Ta Có Hệ Thống Thôn Phệ Vô Tận") -> dict:
+                            novel_title: str = "V?n C? Th?n V??ng: Ta C? H? Th?ng Th?n Ph? V? T?n") -> dict:
     """Insert or update a narrative thread with strict deduplication check."""
     client = get_client()
     data = {
