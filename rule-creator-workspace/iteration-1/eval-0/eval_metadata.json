@@ -1,0 +1,9 @@
+{
+  "eval_id": 0,
+  "eval_name": "vietnamese-comments",
+  "prompt": "Hãy tạo một rule yêu cầu AI luôn comment code bằng tiếng Việt. Lưu rule này lại nhé.",
+  "assertions": [
+    "Output is a markdown file with valid YAML frontmatter containing 'name', 'description', and 'trigger' fields.",
+    "The rule explicitly instructs the AI to always write code comments in Vietnamese."
+  ]
+}

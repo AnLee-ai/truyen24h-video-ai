@@ -1,12 +1,9 @@
 import os
 import re
 import urllib.parse
-import hashlib
-import time
 import requests
-import json
-from PIL import Image, ImageEnhance, ImageFilter, ImageDraw
-
+from PIL import Image, ImageDraw
+import random
 def is_valid_image_file(file_path: str) -> bool:
     if not os.path.exists(file_path):
         return False
@@ -150,7 +147,7 @@ def batch_generate_scene_images(scenes: list, chapter_id: str, max_workers: int 
                 idx, res_p = future.result()
                 if res_p and is_valid_image_file(res_p):
                     image_map[idx] = res_p
-            except Exception as fe:
+            except Exception:
                 pass
 
     result_paths = [image_map[i] for i in sorted(image_map.keys())]

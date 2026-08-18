@@ -1,0 +1,17 @@
+{
+  "skill_name": "rule-creator",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Hãy tạo một rule yêu cầu AI luôn comment code bằng tiếng Việt. Lưu rule này lại nhé.",
+      "expected_output": "A markdown file created at C:\\Users\\david\\.gemini\\config\\rules\\vietnamese-comments.md containing the rule with proper YAML frontmatter.",
+      "files": []
+    },
+    {
+      "id": 1,
+      "prompt": "Thêm luật mới: Từ nay khi tạo file script python, luôn thêm đoạn if __name__ == '__main__': ở cuối.",
+      "expected_output": "A markdown file created at C:\\Users\\david\\.gemini\\config\\rules\\python-main-block.md containing the rule with proper YAML frontmatter.",
+      "files": []
+    }
+  ]
+}

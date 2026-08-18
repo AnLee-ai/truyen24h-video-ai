@@ -1,0 +1,12 @@
+[
+  {
+    "text": "Output is a markdown file with valid YAML frontmatter containing 'name', 'description', and 'trigger' fields.",
+    "passed": true,
+    "evidence": "Output contains name, description, and trigger fields in YAML frontmatter."
+  },
+  {
+    "text": "The rule explicitly instructs the AI to always write code comments in Vietnamese.",
+    "passed": true,
+    "evidence": "Output explicitly says 'Luôn viết comment code bằng tiếng Việt'."
+  }
+]

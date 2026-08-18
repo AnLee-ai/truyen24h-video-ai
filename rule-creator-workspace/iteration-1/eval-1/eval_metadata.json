@@ -1,0 +1,9 @@
+{
+  "eval_id": 1,
+  "eval_name": "python-main-block",
+  "prompt": "Thêm luật mới: Từ nay khi tạo file script python, luôn thêm đoạn if __name__ == '__main__': ở cuối.",
+  "assertions": [
+    "Output is a markdown file with valid YAML frontmatter containing 'name', 'description', and 'trigger' fields.",
+    "The rule explicitly instructs the AI to include the `if __name__ == '__main__':` block at the end of Python scripts."
+  ]
+}
