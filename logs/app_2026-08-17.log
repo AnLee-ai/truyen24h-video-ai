@@ -1,0 +1,117 @@
+2026-08-17 15:41:20.626 | INFO     | src.main:custom_print:40 - [INFO] Starting server on port 8080...
+2026-08-17 15:42:53.452 | INFO     | src.task_manager:connect_ws:16 - WebSocket connected. Total clients: 1
+2026-08-17 15:42:53.455 | INFO     | __main__:api_get_settings:75 - Fetching settings from .env (Cache miss)
+2026-08-17 15:43:05.655 | INFO     | __main__:api_get_novels:46 - Fetching novels from Database (Cache miss)
+2026-08-17 15:43:24.704 | INFO     | __main__:api_get_novels:46 - Fetching novels from Database (Cache miss)
+2026-08-17 15:43:28.938 | INFO     | src.task_manager:add_task:40 - Task pipeline_d1c402ea-4882-4ffa-81e5-639e93fed463 added to queue.
+2026-08-17 15:43:28.939 | INFO     | src.task_manager:_worker:53 - Worker started task pipeline_d1c402ea-4882-4ffa-81e5-639e93fed463
+2026-08-17 15:43:29.217 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 1 (ID: 8c15e32a-a27b-44f9-a8b6-2db5c04a8846) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 1: Kịch bản quá ngắn (0 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:43:29.220 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 2 (ID: fa6fae98-8bab-47ce-8275-22a3a931e11d) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 2: Kịch bản quá ngắn (26 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:43:29.220 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 3 (ID: 5fcfaf8b-b861-449e-8568-c1c98ae7c23e) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 3: Kịch bản quá ngắn (23 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:43:29.221 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 4 (ID: f9c1865d-e573-4e6e-a85d-d7a888b7b622) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 4: Kịch bản quá ngắn (25 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:43:29.221 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 5 (ID: be4576a2-1607-4a9e-89ac-5665a7ff25df) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 5: Kịch bản quá ngắn (16 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:43:29.221 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 6 (ID: ea767a4c-695b-4096-a95f-7e19b8085902) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 6: Kịch bản quá ngắn (18 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:43:29.221 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 7 (ID: da83b298-d8ec-4722-82d0-d3c684161365) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 7: Kịch bản quá ngắn (15 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:43:29.221 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 8 (ID: 3bf9d111-36a5-4c8b-8239-8145e0b8ae56) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 8: Kịch bản quá ngắn (24 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:43:29.221 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 9 (ID: e931882c-295f-4165-959b-c7a9f99330fe) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 9: Kịch bản quá ngắn (13 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:43:29.221 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 10 (ID: cd39c9b7-5401-4e09-b304-6a55fbf94465) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 10: Kịch bản quá ngắn (13 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:43:29.222 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 11 (ID: 972a72e8-8627-4e83-9570-f6222cc0ab0a) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 11: Kịch bản quá ngắn (13 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:43:29.222 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 12 (ID: 4c6ed694-8466-4e45-ad98-a728ed38259f) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 12: Kịch bản quá ngắn (13 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:43:29.222 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 13 (ID: 666c7c11-8fc2-4f1f-b36e-65b17ade7faf) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 13: Kịch bản quá ngắn (13 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:43:29.222 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 14 (ID: e75c2509-196e-478c-b6a4-6ec8722c0462) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 14: Kịch bản quá ngắn (13 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:43:29.222 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 15 (ID: c5c1c6c0-eb00-4bb2-94fb-4df971a4d20b) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 15: Kịch bản quá ngắn (13 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:43:29.222 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 16 (ID: 30483167-717b-4a2b-9665-51f98a40c0d8) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 16: Kịch bản quá ngắn (13 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:43:29.222 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 17 (ID: f2db30f3-0126-42d7-a46e-c91e2e2a5cc0) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 17: Kịch bản quá ngắn (13 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:43:29.223 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 18 (ID: fc5288b1-9dd1-4696-9c5a-7a48f60aa600) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 18: Kịch bản quá ngắn (13 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:43:29.223 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 19 (ID: 12165f92-9ad7-4ae4-8a68-4d2140171725) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 19: Kịch bản quá ngắn (13 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:43:29.223 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 20 (ID: ad33ae76-6d10-417a-8ac0-ad80bed4588a) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 20: Kịch bản quá ngắn (13 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:43:29.223 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 21 (ID: f23c60de-6b3a-42db-85c1-4addb827f0a9) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 21: Kịch bản quá ngắn (13 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:43:29.223 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 22 (ID: aeb23eb4-3140-4283-b6c1-aa2218df1075) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 22: Kịch bản quá ngắn (13 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:43:29.223 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 23 (ID: 0b5773e4-a126-4f68-9dc0-00c63dc50319) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 23: Kịch bản quá ngắn (13 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:43:29.223 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 24 (ID: dad7624c-150f-46f3-b1c0-ec6d1ba46d11) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 24: Kịch bản quá ngắn (13 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:43:29.223 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 25 (ID: 1f1e6f57-9631-44f9-8e55-0301cc9ec4f2) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 25: Kịch bản quá ngắn (13 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:43:31.027 | WARNING  | src.main:custom_print:38 - [WARNING] API Key [Gemini] ...J_Xg is invalid (401). Permanently disabled for this run.
+2026-08-17 15:43:32.441 | WARNING  | src.main:custom_print:38 - [WARNING] API Key [Gemini] ...J_Xg is invalid (401). Permanently disabled for this run.
+2026-08-17 15:43:33.843 | WARNING  | src.main:custom_print:38 - [WARNING] API Key [Gemini] ...J_Xg is invalid (401). Permanently disabled for this run.
+2026-08-17 15:43:35.081 | WARNING  | src.main:custom_print:38 - [WARNING] API Key [Gemini] ...J_Xg is invalid (401). Permanently disabled for this run.
+2026-08-17 15:43:36.550 | WARNING  | src.main:custom_print:38 - [WARNING] API Key [Gemini] ...J_Xg is invalid (401). Permanently disabled for this run.
+2026-08-17 15:45:48.263 | WARNING  | src.main:custom_print:38 - [WARNING] API Key [Gemini] ...J_Xg is invalid (401). Permanently disabled for this run.
+2026-08-17 15:45:49.527 | WARNING  | src.main:custom_print:38 - [WARNING] API Key [Gemini] ...J_Xg is invalid (401). Permanently disabled for this run.
+2026-08-17 15:45:50.551 | WARNING  | src.main:custom_print:38 - [WARNING] API Key [Gemini] ...J_Xg is invalid (401). Permanently disabled for this run.
+2026-08-17 15:45:51.759 | WARNING  | src.main:custom_print:38 - [WARNING] API Key [Gemini] ...J_Xg is invalid (401). Permanently disabled for this run.
+2026-08-17 15:45:57.654 | INFO     | src.main:custom_print:40 - [CACHE] Cache hit for call_gemini!
+2026-08-17 15:46:01.947 | WARNING  | src.main:custom_print:38 - [WARNING] API Key [Gemini] ...J_Xg is invalid (401). Permanently disabled for this run.
+2026-08-17 15:46:03.386 | WARNING  | src.main:custom_print:38 - [WARNING] API Key [Gemini] ...J_Xg is invalid (401). Permanently disabled for this run.
+2026-08-17 15:46:04.962 | WARNING  | src.main:custom_print:38 - [WARNING] API Key [Gemini] ...J_Xg is invalid (401). Permanently disabled for this run.
+2026-08-17 15:46:06.215 | WARNING  | src.main:custom_print:38 - [WARNING] API Key [Gemini] ...J_Xg is invalid (401). Permanently disabled for this run.
+2026-08-17 15:48:15.247 | WARNING  | src.main:custom_print:38 - [WARNING] API Key [Gemini] ...J_Xg is invalid (401). Permanently disabled for this run.
+2026-08-17 15:48:16.432 | WARNING  | src.main:custom_print:38 - [WARNING] API Key [Gemini] ...J_Xg is invalid (401). Permanently disabled for this run.
+2026-08-17 15:48:17.726 | WARNING  | src.main:custom_print:38 - [WARNING] API Key [Gemini] ...J_Xg is invalid (401). Permanently disabled for this run.
+2026-08-17 15:48:18.875 | WARNING  | src.main:custom_print:38 - [WARNING] API Key [Gemini] ...J_Xg is invalid (401). Permanently disabled for this run.
+2026-08-17 15:48:24.352 | WARNING  | src.main:custom_print:38 - [WARNING] API Key [Gemini] ...J_Xg is invalid (401). Permanently disabled for this run.
+2026-08-17 15:48:25.514 | WARNING  | src.main:custom_print:38 - [WARNING] API Key [Gemini] ...J_Xg is invalid (401). Permanently disabled for this run.
+2026-08-17 15:48:26.589 | WARNING  | src.main:custom_print:38 - [WARNING] API Key [Gemini] ...J_Xg is invalid (401). Permanently disabled for this run.
+2026-08-17 15:48:27.639 | WARNING  | src.main:custom_print:38 - [WARNING] API Key [Gemini] ...J_Xg is invalid (401). Permanently disabled for this run.
+2026-08-17 15:50:46.286 | INFO     | src.main:custom_print:40 - [CACHE] Cache hit for call_gemini!
+2026-08-17 15:50:48.289 | INFO     | src.main:custom_print:40 - [CACHE] Cache hit for call_gemini!
+2026-08-17 15:50:50.292 | INFO     | src.main:custom_print:40 - [CACHE] Cache hit for call_gemini!
+2026-08-17 15:50:52.295 | INFO     | src.main:custom_print:40 - [CACHE] Cache hit for call_gemini!
+2026-08-17 15:50:54.296 | INFO     | src.main:custom_print:40 - [CACHE] Cache hit for call_gemini!
+2026-08-17 15:50:57.231 | WARNING  | src.main:custom_print:38 - [WARNING] API Key [Gemini] ...J_Xg is invalid (401). Permanently disabled for this run.
+2026-08-17 15:50:58.586 | WARNING  | src.main:custom_print:38 - [WARNING] API Key [Gemini] ...J_Xg is invalid (401). Permanently disabled for this run.
+2026-08-17 15:50:59.756 | WARNING  | src.main:custom_print:38 - [WARNING] API Key [Gemini] ...J_Xg is invalid (401). Permanently disabled for this run.
+2026-08-17 15:51:00.940 | WARNING  | src.main:custom_print:38 - [WARNING] API Key [Gemini] ...J_Xg is invalid (401). Permanently disabled for this run.
+2026-08-17 15:51:43.992 | INFO     | src.main:custom_print:40 - [INFO] Starting server on port 8080...
+2026-08-17 15:51:44.240 | INFO     | src.task_manager:connect_ws:17 - WebSocket connected. Total clients: 1
+2026-08-17 15:52:22.041 | INFO     | src.task_manager:disconnect_ws:22 - WebSocket disconnected. Total clients: 0
+2026-08-17 15:52:22.063 | INFO     | __main__:api_get_settings:75 - Fetching settings from .env (Cache miss)
+2026-08-17 15:52:22.073 | INFO     | src.task_manager:connect_ws:17 - WebSocket connected. Total clients: 1
+2026-08-17 15:54:14.325 | INFO     | src.task_manager:add_task:52 - Task pipeline_d1c402ea-4882-4ffa-81e5-639e93fed463 added to queue.
+2026-08-17 15:54:14.325 | INFO     | src.task_manager:_worker:74 - Worker started task pipeline_d1c402ea-4882-4ffa-81e5-639e93fed463
+2026-08-17 15:54:16.047 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 1 (ID: 8c15e32a-a27b-44f9-a8b6-2db5c04a8846) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 1: Kịch bản quá ngắn (0 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:54:16.049 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 2 (ID: fa6fae98-8bab-47ce-8275-22a3a931e11d) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 2: Kịch bản quá ngắn (26 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:54:16.049 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 3 (ID: 5fcfaf8b-b861-449e-8568-c1c98ae7c23e) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 3: Kịch bản quá ngắn (23 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:54:16.049 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 4 (ID: f9c1865d-e573-4e6e-a85d-d7a888b7b622) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 4: Kịch bản quá ngắn (25 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:54:16.050 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 5 (ID: be4576a2-1607-4a9e-89ac-5665a7ff25df) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 5: Kịch bản quá ngắn (16 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:54:16.050 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 6 (ID: ea767a4c-695b-4096-a95f-7e19b8085902) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 6: Kịch bản quá ngắn (18 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:54:16.050 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 7 (ID: da83b298-d8ec-4722-82d0-d3c684161365) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 7: Kịch bản quá ngắn (15 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:54:16.051 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 8 (ID: 3bf9d111-36a5-4c8b-8239-8145e0b8ae56) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 8: Kịch bản quá ngắn (24 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:54:16.051 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 9 (ID: e931882c-295f-4165-959b-c7a9f99330fe) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 9: Kịch bản quá ngắn (13 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:54:16.051 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 10 (ID: cd39c9b7-5401-4e09-b304-6a55fbf94465) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 10: Kịch bản quá ngắn (13 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:54:16.051 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 11 (ID: 972a72e8-8627-4e83-9570-f6222cc0ab0a) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 11: Kịch bản quá ngắn (13 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:54:16.051 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 12 (ID: 4c6ed694-8466-4e45-ad98-a728ed38259f) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 12: Kịch bản quá ngắn (13 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:54:16.052 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 13 (ID: 666c7c11-8fc2-4f1f-b36e-65b17ade7faf) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 13: Kịch bản quá ngắn (13 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:54:16.052 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 14 (ID: e75c2509-196e-478c-b6a4-6ec8722c0462) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 14: Kịch bản quá ngắn (13 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:54:16.052 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 15 (ID: c5c1c6c0-eb00-4bb2-94fb-4df971a4d20b) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 15: Kịch bản quá ngắn (13 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:54:16.053 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 16 (ID: 30483167-717b-4a2b-9665-51f98a40c0d8) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 16: Kịch bản quá ngắn (13 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:54:16.053 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 17 (ID: f2db30f3-0126-42d7-a46e-c91e2e2a5cc0) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 17: Kịch bản quá ngắn (13 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:54:16.053 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 18 (ID: fc5288b1-9dd1-4696-9c5a-7a48f60aa600) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 18: Kịch bản quá ngắn (13 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:54:16.053 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 19 (ID: 12165f92-9ad7-4ae4-8a68-4d2140171725) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 19: Kịch bản quá ngắn (13 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:54:16.054 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 20 (ID: ad33ae76-6d10-417a-8ac0-ad80bed4588a) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 20: Kịch bản quá ngắn (13 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:54:16.054 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 21 (ID: f23c60de-6b3a-42db-85c1-4addb827f0a9) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 21: Kịch bản quá ngắn (13 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:54:16.054 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 22 (ID: aeb23eb4-3140-4283-b6c1-aa2218df1075) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 22: Kịch bản quá ngắn (13 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:54:16.054 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 23 (ID: 0b5773e4-a126-4f68-9dc0-00c63dc50319) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 23: Kịch bản quá ngắn (13 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:54:16.054 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 24 (ID: dad7624c-150f-46f3-b1c0-ec6d1ba46d11) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 24: Kịch bản quá ngắn (13 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:54:16.055 | INFO     | src.main:custom_print:40 - [QUALITY AUDITOR] ⚠️ TẬP 25 (ID: 1f1e6f57-9631-44f9-8e55-0301cc9ec4f2) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN (Chương 25: Kịch bản quá ngắn (13 từ < 1000 từ tiêu chuẩn)). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!
+2026-08-17 15:54:18.467 | WARNING  | src.main:custom_print:38 - [WARNING] API Key [Gemini] ...J_Xg is invalid (401). Permanently disabled for this run.
+2026-08-17 15:54:18.629 | INFO     | src.main:custom_print:40 - [CACHE] Cache hit for call_gemini!
+2026-08-17 15:54:21.632 | INFO     | src.main:custom_print:40 - [CACHE] Cache hit for call_gemini!
+2026-08-17 15:54:24.632 | INFO     | src.main:custom_print:40 - [CACHE] Cache hit for call_gemini!
+2026-08-17 15:54:27.888 | INFO     | src.main:custom_print:40 - [CACHE] Cache hit for call_gemini!
+2026-08-17 15:54:27.914 | INFO     | src.main:custom_print:40 - [CACHE] Cache hit for call_gemini!
+2026-08-17 15:54:27.917 | INFO     | src.main:custom_print:40 - [CACHE] Cache hit for call_gemini!
+2026-08-17 15:54:29.918 | INFO     | src.main:custom_print:40 - [CACHE] Cache hit for call_gemini!
+2026-08-17 15:54:31.922 | INFO     | src.main:custom_print:40 - [CACHE] Cache hit for call_gemini!
+2026-08-17 15:54:33.924 | INFO     | src.main:custom_print:40 - [CACHE] Cache hit for call_gemini!
+2026-08-17 15:54:35.927 | INFO     | src.main:custom_print:40 - [CACHE] Cache hit for call_gemini!
+2026-08-17 15:54:37.928 | INFO     | src.main:custom_print:40 - [CACHE] Cache hit for call_gemini!
+2026-08-17 15:54:41.015 | WARNING  | src.main:custom_print:38 - [WARNING] API Key [Gemini] ...J_Xg is invalid (401). Permanently disabled for this run.
+2026-08-17 15:54:42.473 | WARNING  | src.main:custom_print:38 - [WARNING] API Key [Gemini] ...J_Xg is invalid (401). Permanently disabled for this run.
+2026-08-17 15:54:43.639 | WARNING  | src.main:custom_print:38 - [WARNING] API Key [Gemini] ...J_Xg is invalid (401). Permanently disabled for this run.
+2026-08-17 15:54:44.862 | WARNING  | src.main:custom_print:38 - [WARNING] API Key [Gemini] ...J_Xg is invalid (401). Permanently disabled for this run.
+2026-08-17 15:56:54.612 | INFO     | src.main:custom_print:40 - [CACHE] Cache hit for call_gemini!
+2026-08-17 15:56:57.616 | INFO     | src.main:custom_print:40 - [CACHE] Cache hit for call_gemini!
+2026-08-17 15:56:58.937 | WARNING  | src.main:custom_print:38 - [WARNING] API Key [Gemini] ...J_Xg is invalid (401). Permanently disabled for this run.
+2026-08-17 15:57:00.384 | WARNING  | src.main:custom_print:38 - [WARNING] API Key [Gemini] ...J_Xg is invalid (401). Permanently disabled for this run.
+2026-08-17 15:57:01.938 | WARNING  | src.main:custom_print:38 - [WARNING] API Key [Gemini] ...J_Xg is invalid (401). Permanently disabled for this run.
+2026-08-17 15:57:03.385 | WARNING  | src.main:custom_print:38 - [WARNING] API Key [Gemini] ...J_Xg is invalid (401). Permanently disabled for this run.
