@@ -1,0 +1,46 @@
+name: Mangstoon Auto Production
+
+on:
+  schedule:
+    # Ch?y 2 l?n m?i ngày (8:00 Sáng và 20:00 T?i gi? Vi?t Nam = 01:00 và 13:00 UTC)
+    - cron: '0 1,13 * * *'
+  workflow_dispatch: # Cho phép b?m nút ch?y th? công trên giao di?n GitHub
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Ki?m tra mã ngu?n (Checkout Repository)
+      uses: actions/checkout@v4
+
+    - name: Cài d?t Node.js (Cho Inkos)
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Cài d?t Python (Cho Core & MoneyPrinter)
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        
+    - name: Cài d?t thu vi?n h? th?ng (FFmpeg)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg
+
+    - name: Cài d?t các gói Python (Dependencies)
+      run: |
+        pip install -r requirements.txt
+        pip install gradio_client # Ð? g?i Hugging Face
+
+    - name: Ch?y quy trình T? d?ng s?n xu?t (Auto Pipeline)
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        HF_SPACE_URL: ${{ secrets.HF_SPACE_URL }}
+      run: |
+        python src/main.py --auto

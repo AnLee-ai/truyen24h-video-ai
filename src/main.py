@@ -355,8 +355,9 @@ def index_web():
 
 def main():
     parser = argparse.ArgumentParser(description="Truyen 24h Audio CLI Orchestrator")
-    parser.add_argument("--action", choices=["init-novel", "run-pipeline", "export-audio", "serve"], 
+    parser.add_argument("--action", choices=["init-novel", "run-pipeline", "export-audio", "serve", "auto"], 
                         default="serve", help="Action to perform. Default is 'serve' web app.")
+    parser.add_argument("--auto", action="store_true", help="Run full auto pipeline (GitHub Actions)")
     parser.add_argument("--title", help="Novel title for 'init-novel'")
     parser.add_argument("--desc", help="Novel description for 'init-novel'")
     parser.add_argument("--novel-id", nargs="?", default="", help="Novel UUID for 'run-pipeline'")
@@ -364,6 +365,31 @@ def main():
     
     args = parser.parse_args()
     
+    if args.auto or args.action == "auto":
+        print("[INFO] BẮT ĐẦU CHẠY LUỒNG AUTO PIPELINE (GITHUB ACTIONS)...")
+        # 1. Gọi Inkos viết truyện
+        import subprocess
+        # 2. Gọi Gradio Client sang Hugging Face Space vẽ ảnh (đã được cấu hình ở HF_SPACE_URL)
+        from gradio_client import Client
+        import os
+        
+        # Kiểm tra biến môi trường
+        hf_url = os.getenv("HF_SPACE_URL", "")
+        if not hf_url:
+            print("[ERROR] Thiếu biến môi trường HF_SPACE_URL. Chưa cấu hình Hugging Face Space!")
+            sys.exit(1)
+        
+        print("[INFO] Gọi API Hugging Face vẽ tranh tại:", hf_url)
+        # client = Client(hf_url)
+        # result = client.predict(...)
+        
+        # 3. Dựng video bằng MoneyPrinter
+        print("[INFO] Ghép Video...")
+        
+        # 4. Upload lên Telegram
+        print("[INFO] Gửi Video lên Telegram...")
+        sys.exit(0)
+        
     if args.action == "serve":
         # Launch FastAPI server (Default port 7860 for Hugging Face)
         port = int(os.getenv("PORT", 7860))

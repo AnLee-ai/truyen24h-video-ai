@@ -1,0 +1,11 @@
+gradio
+spaces
+torch
+torchvision
+diffusers
+transformers
+accelerate
+peft
+safetensors
+opencv-python
+pillow

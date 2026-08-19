@@ -228,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Settings API logic
     async function fetchSettings() {
         try {
-            const res = await fetch('/api/settings/get');
+            const res = await fetch('/api/settings');
             const data = await res.json();
             if (data.status === 'success') {
                 for (const [key, val] of Object.entries(data.data)) {

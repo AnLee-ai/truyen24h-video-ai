@@ -24,3 +24,23 @@ def api_get_novels():
         return {"status": "success", "data": data}
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+@router.get("/history")
+def api_get_history(novel_id: str = ""):
+    """Lấy lịch sử tất cả chương của một truyện."""
+    try:
+        chapters = database.get_all_chapters(novel_id)
+        data = [
+            {
+                "chapter_number": c.get("chapter_number"),
+                "title": c.get("title", ""),
+                "audio_url": c.get("audio_url"),
+                "video_url": c.get("video_url"),
+                "video_status": c.get("video_status", ""),
+            }
+            for c in chapters
+        ]
+        return {"status": "success", "data": data}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
