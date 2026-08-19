@@ -653,9 +653,9 @@ def write_next_chapter(novel_id: str) -> dict:
         all_chapters = database.get_all_chapters(novel_id)
         chapter_record = next((c for c in all_chapters if c["chapter_number"] == next_ch_number), None)
         
-    # Lá»šP Báº¢O Vá»† Tá»I THÆ¯á»¢NG: Náº¿u váº«n chÆ°a cÃ³ chapter_record, tá»± sinh Blueprint trá»±c tiáº¿p ngay láº­p tá»©c!
+    # Lá»šP Báº¢O Vá»† Tá»I THÆ¯á»¢NG: Nếu vẫn chưa có chapter_record, tá»± sinh Blueprint trực tiếp ngay lập tức!
     if not chapter_record:
-        print(f"[INFO] Tá»± Ä‘á»™ng táº¡o Blueprint trá»±c tiáº¿p cho ChÆ°Æ¡ng {next_ch_number}...")
+        print(f"[INFO] Tự động tạo Blueprint trá»±c tiáº¿p cho ChÆ°Æ¡ng {next_ch_number}...")
         chapter_record = database.create_chapter(
             novel_id=novel_id,
             chapter_number=next_ch_number,
