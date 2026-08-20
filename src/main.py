@@ -1,6 +1,10 @@
 import argparse
 import sys
 import os
+
+# Fix module path so we can run `python src/main.py`
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import contextlib
 import uvicorn
 from fastapi import FastAPI
