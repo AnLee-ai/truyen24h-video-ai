@@ -8,6 +8,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Set working directory
 WORKDIR /app
 
+# Fix module path
+ENV PYTHONPATH=/app
+
 # Copy requirements and install
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
@@ -23,4 +26,4 @@ RUN mkdir -p output bgm data
 EXPOSE 7860
 
 # Run FastAPI server
-CMD ["python", "src/main.py", "--action", "serve"]
+CMD ["python", "-m", "src.main", "--action", "serve"]
