@@ -183,11 +183,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             if (data.status === 'success') {
                 const map = {
-                    'DEFAULT_VOICE': 'tts-voice-select',
-                    'GEMINI_API_KEY': 'api-gemini',
-                    'SUPABASE_URL': 'api-supabase-url',
-                    'SUPABASE_KEY': 'api-supabase-key',
-                    'TELEGRAM_BOT_TOKEN': 'api-telegram-token'
+                    'DEFAULT_VOICE': 'env_DEFAULT_VOICE',
+                    'GEMINI_API_KEY': 'env_GEMINI_API_KEY',
+                    'SUPABASE_URL': 'env_SUPABASE_URL',
+                    'SUPABASE_KEY': 'env_SUPABASE_KEY',
+                    'TELEGRAM_BOT_TOKEN': 'env_TELEGRAM_BOT_TOKEN',
+                    'GROQ_API_KEY': 'env_GROQ_API_KEY',
+                    'TELEGRAM_CHAT_ID': 'env_TELEGRAM_CHAT_ID',
+                    'DEFAULT_RATE': 'env_DEFAULT_RATE',
+                    'DEFAULT_PITCH': 'env_DEFAULT_PITCH'
                 };
                 for (const [key, id] of Object.entries(map)) {
                     const el = document.getElementById(id);
@@ -226,15 +230,19 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-api-save')?.addEventListener('click', (e) => {
         postSettings({
             'GEMINI_API_KEY': document.getElementById('env_GEMINI_API_KEY').value,
+            'GROQ_API_KEY': document.getElementById('env_GROQ_API_KEY') ? document.getElementById('env_GROQ_API_KEY').value : undefined,
             'SUPABASE_URL': document.getElementById('env_SUPABASE_URL').value,
             'SUPABASE_KEY': document.getElementById('env_SUPABASE_KEY').value,
-            'TELEGRAM_BOT_TOKEN': document.getElementById('env_TELEGRAM_BOT_TOKEN').value
+            'TELEGRAM_BOT_TOKEN': document.getElementById('env_TELEGRAM_BOT_TOKEN').value,
+            'TELEGRAM_CHAT_ID': document.getElementById('env_TELEGRAM_CHAT_ID') ? document.getElementById('env_TELEGRAM_CHAT_ID').value : undefined
         }, e.target);
     });
 
     document.getElementById('btn-tts-save')?.addEventListener('click', (e) => {
         postSettings({
-            'DEFAULT_VOICE': document.getElementById('env_DEFAULT_VOICE').value
+            'DEFAULT_VOICE': document.getElementById('env_DEFAULT_VOICE').value,
+            'DEFAULT_RATE': document.getElementById('env_DEFAULT_RATE') ? document.getElementById('env_DEFAULT_RATE').value : undefined,
+            'DEFAULT_PITCH': document.getElementById('env_DEFAULT_PITCH') ? document.getElementById('env_DEFAULT_PITCH').value : undefined
         }, e.target);
     });
 

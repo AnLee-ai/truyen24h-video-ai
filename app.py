@@ -39,7 +39,7 @@ def api_get_history(novel_id: str = ""):
     try:
         chapters = database.get_all_chapters(novel_id)
         # Sort by chapter_number desc
-        chapters = sorted(chapters, key=lambda x: int(x.get("chapter_number", 0)), reverse=True)
+        chapters = sorted(chapters, key=lambda x: int(float(x.get("chapter_number") or 0)), reverse=True)
         return JSONResponse(content={"status": "success", "data": chapters[:50]}, media_type="application/json; charset=utf-8")
     except Exception as e:
         return {"status": "error", "message": str(e)}
