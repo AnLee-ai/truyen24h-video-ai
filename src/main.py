@@ -33,6 +33,17 @@ if hasattr(sys.stdout, 'reconfigure'):
 
 # Initialize FastAPI App
 app = FastAPI(title="Truyện 24h Audio Engine", version="1.0.0")
+
+# Import and include routers
+try:
+    from src.api.routers import novels, pipelines, settings, tts
+    app.include_router(novels.router, prefix="/api")
+    app.include_router(pipelines.router, prefix="/api")
+    app.include_router(settings.router, prefix="/api")
+    app.include_router(tts.router, prefix="/api")
+except Exception as e:
+    print(f"[WARNING] Failed to load routers: {e}")
+
 templates = Jinja2Templates(directory="src/templates")
 app.mount("/static", StaticFiles(directory="templates"), name="static")
 
@@ -315,25 +326,6 @@ def _run_chapter_pipeline_impl(novel_id: str):
 # @app.get("/", response_class=HTMLResponse)
 # def index(request):
 #     return templates.TemplateResponse("index.html", {"request": request})
-
-@app.get("/api/history")
-def api_history(novel_id: str = ""):
-    """API cho Frontend Dashboard lấy lịch sử video"""
-    try:
-        chapters = database.get_all_chapters(novel_id)
-        data = [
-            {
-                "chapter_number": c.get("chapter_number"),
-                "title": c.get("title", ""),
-                "audio_url": c.get("audio_url"),
-                "video_url": c.get("video_url"),
-                "video_status": c.get("video_status", ""),
-            }
-            for c in chapters
-        ]
-        return {"status": "success", "data": data}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
 
 @app.post("/run-pipeline")
 def trigger_pipeline(novel_id: str):
