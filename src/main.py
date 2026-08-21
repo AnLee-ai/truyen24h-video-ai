@@ -375,7 +375,6 @@ def main():
         import subprocess
         # 2. Gọi Gradio Client sang Hugging Face Space vẽ ảnh (đã được cấu hình ở HF_SPACE_URL)
         from gradio_client import Client
-        import os
         
         # Kiểm tra biến môi trường
         hf_url = os.getenv("HF_SPACE_URL", "")
