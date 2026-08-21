@@ -1,14 +1,6 @@
 import os
-import sys
 from pathlib import Path
 from dotenv import load_dotenv
-
-# Fix Windows console UnicodeEncodeError for Vietnamese characters
-try:
-    if sys.stdout and sys.stdout.encoding and sys.stdout.encoding.lower() != 'utf-8':
-        sys.stdout.reconfigure(encoding='utf-8')
-except Exception:
-    pass
 
 # Load environment variables from .env file
 load_dotenv()

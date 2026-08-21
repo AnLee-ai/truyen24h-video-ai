@@ -22,11 +22,15 @@ class TaskManager:
             logger.info(f"WebSocket disconnected. Total clients: {len(self.websockets)}")
 
     async def broadcast(self, message: dict):
+        dead = []
         for ws in self.websockets:
             try:
                 await ws.send_json(message)
             except Exception as e:
                 logger.warning(f"Error broadcasting to WS: {e}")
+                dead.append(ws)
+        for ws in dead:
+            self.websockets.remove(ws)
 
     def is_task_running(self, task_id: str) -> bool:
         return task_id in self.active_tasks
@@ -57,9 +61,15 @@ class TaskManager:
         return True
 
     async def _worker(self):
-        import queue
-        while not self.queue.empty():
-            task_id, sync_func, args = await self.queue.get()
+        import queue as _queue
+        while True:
+            try:
+                task_id, sync_func, args = await asyncio.wait_for(self.queue.get(), timeout=30.0)
+            except asyncio.TimeoutError:
+                # No new tasks in 30s — check if still needed
+                if self.queue.empty():
+                    break
+                continue
             
             if task_id in self.cancelled_tasks:
                 self.cancelled_tasks.remove(task_id)
@@ -73,7 +83,7 @@ class TaskManager:
             await self.broadcast({"type": "status", "task_id": task_id, "status": "running"})
             logger.info(f"Worker started task {task_id}")
             
-            log_queue = queue.Queue()
+            log_queue = _queue.Queue()
             def log_callback(msg):
                 log_queue.put(msg)
                 
@@ -81,12 +91,16 @@ class TaskManager:
                 return task_id in self.cancelled_tasks
                 
             try:
-                # Provide log_callback to the kwargs of the sync_func
-                kwargs = {"log_callback": log_callback, "is_cancelled": is_cancelled}
+                # Only pass log_callback; is_cancelled is optional (accepted via **kwargs)
+                import inspect
+                sig = inspect.signature(sync_func)
+                extra_kwargs = {"log_callback": log_callback}
+                if "is_cancelled" in sig.parameters:
+                    extra_kwargs["is_cancelled"] = is_cancelled
                 
                 # Start the sync function in a thread
                 loop = asyncio.get_running_loop()
-                future = loop.run_in_executor(None, lambda: sync_func(*args, **kwargs))
+                future = loop.run_in_executor(None, lambda: sync_func(*args, **extra_kwargs))
                 
                 while not future.done() or not log_queue.empty():
                     try:

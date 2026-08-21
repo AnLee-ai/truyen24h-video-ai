@@ -1,10 +1,7 @@
 import argparse
+import json
 import sys
 import os
-
-# Fix module path so we can run `python src/main.py`
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 import contextlib
 import uvicorn
 from fastapi import FastAPI
@@ -33,17 +30,6 @@ if hasattr(sys.stdout, 'reconfigure'):
 
 # Initialize FastAPI App
 app = FastAPI(title="Truyện 24h Audio Engine", version="1.0.0")
-
-# Import and include routers
-try:
-    from src.api.routers import novels, pipelines, settings, tts
-    app.include_router(novels.router, prefix="/api")
-    app.include_router(pipelines.router, prefix="/api")
-    app.include_router(settings.router, prefix="/api")
-    app.include_router(tts.router, prefix="/api")
-except Exception as e:
-    print(f"[WARNING] Failed to load routers: {e}")
-
 templates = Jinja2Templates(directory="src/templates")
 app.mount("/static", StaticFiles(directory="templates"), name="static")
 
@@ -154,6 +140,9 @@ def _run_chapter_pipeline_impl(novel_id: str):
         else:
             # 1. Viết chương tiếp theo nếu tất cả các chương cũ đã có video đầy đủ
             chapter = writer.write_next_chapter(novel_id)
+            if not chapter or "id" not in chapter:
+                if log_callback: log_callback("[ERROR] Không thể viết chương mới.")
+                return
             chapter_id = chapter["id"]
             chapter_num = chapter["chapter_number"]
             chapter_title = chapter["title"]
@@ -181,10 +170,16 @@ def _run_chapter_pipeline_impl(novel_id: str):
                 
             # Convert chapter text to raw speech audio & subtitles
             raw_audio_path, srt_path = tts.generate_voice_and_subs(chapter_content, chapter_id)
+            if not raw_audio_path:
+                if log_callback: log_callback("[ERROR] TTS thất bại.")
+                return
             
             # Mix speech audio with background music
             final_audio_path = audio.mix_bgm_with_voice(raw_audio_path, chapter_id)
-            
+            if not final_audio_path:
+                if log_callback: log_callback("[ERROR] Mix audio thất bại.")
+                return
+                
             # Đo chính xác thời lượng thực tế của file Audio
             current_duration = video.get_audio_duration_seconds(final_audio_path)
             print(f"[INFO] ⏱️ Thời lượng Audio thực tế của Tập {chapter_num}: {current_duration:.1f} giây ({current_duration/60:.2f} phút).")
@@ -324,8 +319,8 @@ def _run_chapter_pipeline_impl(novel_id: str):
 # FastAPI endpoints
 # Bỏ route index cũ để sử dụng giao diện mới từ app.py
 # @app.get("/", response_class=HTMLResponse)
-# def index(request):
-#     return templates.TemplateResponse("index.html", {"request": request})
+# def index(request: Request):
+#     ...
 
 @app.post("/run-pipeline")
 def trigger_pipeline(novel_id: str):
@@ -370,9 +365,8 @@ def index_web():
 
 def main():
     parser = argparse.ArgumentParser(description="Truyen 24h Audio CLI Orchestrator")
-    parser.add_argument("--action", choices=["init-novel", "run-pipeline", "export-audio", "serve", "auto"], 
+    parser.add_argument("--action", choices=["init-novel", "run-pipeline", "export-audio", "serve"], 
                         default="serve", help="Action to perform. Default is 'serve' web app.")
-    parser.add_argument("--auto", action="store_true", help="Run full auto pipeline (GitHub Actions)")
     parser.add_argument("--title", help="Novel title for 'init-novel'")
     parser.add_argument("--desc", help="Novel description for 'init-novel'")
     parser.add_argument("--novel-id", nargs="?", default="", help="Novel UUID for 'run-pipeline'")
@@ -380,30 +374,6 @@ def main():
     
     args = parser.parse_args()
     
-    if args.auto or args.action == "auto":
-        print("[INFO] BẮT ĐẦU CHẠY LUỒNG AUTO PIPELINE (GITHUB ACTIONS)...")
-        # 1. Gọi Inkos viết truyện
-        import subprocess
-        # 2. Gọi Gradio Client sang Hugging Face Space vẽ ảnh (đã được cấu hình ở HF_SPACE_URL)
-        from gradio_client import Client
-        
-        # Kiểm tra biến môi trường
-        hf_url = os.getenv("HF_SPACE_URL", "")
-        if not hf_url:
-            print("[ERROR] Thiếu biến môi trường HF_SPACE_URL. Chưa cấu hình Hugging Face Space!")
-            sys.exit(1)
-        
-        print("[INFO] Gọi API Hugging Face vẽ tranh tại:", hf_url)
-        # client = Client(hf_url)
-        # result = client.predict(...)
-        
-        # 3. Dựng video bằng MoneyPrinter
-        print("[INFO] Ghép Video...")
-        
-        # 4. Upload lên Telegram
-        print("[INFO] Gửi Video lên Telegram...")
-        sys.exit(0)
-        
     if args.action == "serve":
         # Launch FastAPI server (Default port 7860 for Hugging Face)
         port = int(os.getenv("PORT", 7860))

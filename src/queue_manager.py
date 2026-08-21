@@ -12,6 +12,8 @@ class LightweightQueueManager:
         self.max_workers = max_workers
         self.job_queue = queue.Queue()
         self.active_jobs: Dict[str, Dict[str, Any]] = {}
+        import threading
+        self._lock = threading.Lock()
         self.workers = []
         self._start_workers()
 
@@ -34,33 +36,37 @@ class LightweightQueueManager:
         while True:
             job_id, func, args, kwargs = self.job_queue.get()
             try:
-                if job_id in self.active_jobs:
-                    self.active_jobs[job_id]["status"] = "processing"
-                    self.active_jobs[job_id]["start_time"] = time.time()
+                with self._lock:
+                    if job_id in self.active_jobs:
+                        self.active_jobs[job_id]["status"] = "processing"
+                        self.active_jobs[job_id]["start_time"] = time.time()
                 
                 print(f"[QUEUE] 🚀 Bắt đầu xử lý Job {job_id}")
                 func(*args, **kwargs)
                 
-                if job_id in self.active_jobs:
-                    self.active_jobs[job_id]["status"] = "completed"
+                with self._lock:
+                    if job_id in self.active_jobs:
+                        self.active_jobs[job_id]["status"] = "completed"
                 print(f"[QUEUE] ✅ Đã hoàn thành Job {job_id}")
             except Exception as e:
                 print(f"[QUEUE] ❌ Lỗi xử lý Job {job_id}: {e}")
-                if job_id in self.active_jobs:
-                    self.active_jobs[job_id]["status"] = "failed"
-                    self.active_jobs[job_id]["error"] = str(e)
+                with self._lock:
+                    if job_id in self.active_jobs:
+                        self.active_jobs[job_id]["status"] = "failed"
+                        self.active_jobs[job_id]["error"] = str(e)
             finally:
                 self.job_queue.task_done()
 
     def add_job(self, job_id: str, func: Callable, *args, **kwargs):
         """Adds a job to the queue."""
-        self._cleanup_old_jobs()
-        self.active_jobs[job_id] = {
-            "status": "queued",
-            "queued_at": time.time(),
-            "start_time": None,
-            "error": None
-        }
+        with self._lock:
+            self._cleanup_old_jobs()
+            self.active_jobs[job_id] = {
+                "status": "queued",
+                "queued_at": time.time(),
+                "start_time": None,
+                "error": None
+            }
         self.job_queue.put((job_id, func, args, kwargs))
         print(f"[QUEUE] 📥 Đã thêm Job {job_id} vào hàng đợi.")
 

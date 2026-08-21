@@ -292,7 +292,13 @@ async def _run_tts_async(text: str, voice: str, rate: str, pitch: str, audio_pat
         async with _tts_semaphore:
             return await _process_chunk(idx, c_text)
     tasks = [_throttled_chunk(idx, c_text) for idx, c_text in enumerate(chunks)]
-    chunk_results = await asyncio.gather(*tasks)
+    chunk_results = await asyncio.gather(*tasks, return_exceptions=True)
+    # Check for exceptions
+    for res in chunk_results:
+        if isinstance(res, Exception):
+            print(f"[ERROR] TTS Chunk failed: {res}")
+    # Filter out exceptions
+    chunk_results = [r for r in chunk_results if not isinstance(r, Exception)]
     chunk_results.sort(key=lambda x: x[0])  # Giữ đúng thứ tự câu chuyện
 
     chunk_audio_paths = []

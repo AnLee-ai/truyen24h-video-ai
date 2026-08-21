@@ -7,12 +7,19 @@ router = APIRouter()
 
 class SettingsUpdate(BaseModel):
     GEMINI_API_KEY: str = None
+    GROQ_API_KEY: str = None
     SUPABASE_URL: str = None
     SUPABASE_KEY: str = None
     TELEGRAM_BOT_TOKEN: str = None
     TELEGRAM_CHAT_ID: str = None
     DISCORD_WEBHOOK_URL: str = None
     DEFAULT_VOICE: str = None
+    DEFAULT_RATE: str = None
+    DEFAULT_PITCH: str = None
+    DEFAULT_RATE: str = None
+    DEFAULT_PITCH: str = None
+    DEFAULT_RATE: str = None
+    DEFAULT_PITCH: str = None
 
 @router.get("/settings")
 def api_get_settings():

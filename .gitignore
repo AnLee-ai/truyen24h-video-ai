@@ -1,13 +1,22 @@
-.env
-node_modules/
+# Python artifacts
 __pycache__/
-.venv/
+*.py[cod]
+*$py.class
 venv/
+.env
+
+# Output and temp files
 output/
-data/
-StoryDiffusion/
-mangstoon_ai/
-*.mp4
 *.mp3
-*.jpg
-*.png
+*.wav
+*.mp4
+*.srt
+*.vtt
+test_ssml.mp3
+.coverage
+.mypy_cache/
+.ruff_cache/
+
+# IDE configurations
+.vscode/
+.idea/

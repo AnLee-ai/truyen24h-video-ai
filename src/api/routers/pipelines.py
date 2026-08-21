@@ -97,8 +97,9 @@ async def api_run_pipeline(novel_id: str, request: Request):
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
+from fastapi import Request
 @router.get("/run_thumbnail")
-async def api_run_thumbnail(novel_id: str):
+async def api_run_thumbnail(novel_id: str, request: Request = None):
     async def event_generator():
         n_id = (novel_id or "").strip()
         if not n_id:

@@ -314,15 +314,15 @@ def record_completed_chapter_local(chapter_id: str, chapter_number: int = 0):
             db_data = {"audio_url": "completed", "video_status": "completed"}
             if chapter_id:
                 client.table("chapters").update(db_data).eq("id", chapter_id).execute()
-            if chapter_number > 0:
-                client.table("chapters").update(db_data).eq("chapter_number", chapter_number).execute()
+            if chapter_number > 0 and novel_id:
+                client.table("chapters").update(db_data).eq("novel_id", novel_id).eq("chapter_number", chapter_number).execute()
         except Exception:
             # Fallback an toàn: Chỉ update audio_url="completed" (Cột chắc chắn tồn tại 100%)
             safe_db_data = {"audio_url": "completed"}
             if chapter_id:
                 client.table("chapters").update(safe_db_data).eq("id", chapter_id).execute()
-            if chapter_number > 0:
-                client.table("chapters").update(safe_db_data).eq("chapter_number", chapter_number).execute()
+            if chapter_number > 0 and novel_id:
+                client.table("chapters").update(safe_db_data).eq("novel_id", novel_id).eq("chapter_number", chapter_number).execute()
     except Exception as db_err:
         print(f"[WARNING] Supabase sync fallback warning: {db_err}")
 
@@ -600,7 +600,7 @@ def upsert_world_lore(novel_id: str, keyword: str, description: str,
         "description": description
     }
     try:
-        existing = client.table("world_lore").select("id").eq("keyword", keyword).execute()
+        existing = client.table("world_lore").select("id").eq("novel_id", novel_id).eq("keyword", keyword).execute()
         if existing.data and len(existing.data) > 0:
             lore_id = existing.data[0]["id"]
             if len(existing.data) > 1:
@@ -658,7 +658,7 @@ def upsert_narrative_thread(novel_id: str, thread_name: str, description: str, s
         "status": status
     }
     try:
-        existing = client.table("narrative_threads").select("id").eq("thread_name", thread_name).execute()
+        existing = client.table("narrative_threads").select("id").eq("novel_id", novel_id).eq("thread_name", thread_name).execute()
         if existing.data and len(existing.data) > 0:
             thread_id = existing.data[0]["id"]
             if len(existing.data) > 1:

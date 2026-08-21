@@ -290,7 +290,10 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
                 response = requests.post(url, json=data, headers=headers, timeout=45)  # type: ignore[arg-type]
                 if response.status_code == 200:
                     resp_json = response.json()
-                    content = resp_json["choices"][0]["message"]["content"]
+                    try:
+                        content = resp_json["choices"][0]["message"]["content"]
+                    except (KeyError, IndexError, TypeError):
+                        continue
                     if content and len(content.strip().split()) > 10:
                         print(f"[SUCCESS] Groq Fallback Engine [{current_model}]: ÄÃ£ sinh ká»‹ch báº£n ({len(content.strip().split())} tá»«).")
                         return content.strip()
@@ -438,7 +441,8 @@ def get_embedding(text: str) -> list:
 def init_novel_pipeline(title: str, description: str) -> dict:
     print(f"[INFO] Initializing new novel: '{title}'...")
     novel = database.init_novel(title, description)
-    novel_id = novel["id"]
+    novel_id = novel.get("id") or "";
+    if not novel_id: raise ValueError("init_novel failed")
     print(f"[INFO] Created novel record in database. ID: {novel_id}")
     
     try:
@@ -642,39 +646,28 @@ def write_next_chapter(novel_id: str) -> dict:
     else:
         existing_nums = [int(c["chapter_number"]) for c in all_chapters if str(c.get("chapter_number", "")).isdigit()] + list(all_done_nums)
         next_ch_number = (max(existing_nums) + 1) if existing_nums else 1
-        
-    print(f"[INFO] Báº®T Äáº¦U QUY TRÃŒNH VIáº¾T CHÆ¯Æ NG Má»šI: ChÆ°Æ¡ng {next_ch_number} (ÄÃ£ hoÃ n thÃ nh cÃ¡c táº­p: {sorted(list(all_done_nums))})...")
-    
+
+    print(f"[INFO] BẮT ĐẦU QUY TRÌNH VIẾT CHƯƠNG MỚI: Chương {next_ch_number} (Đã hoàn thành các tập: {sorted(list(all_done_nums))})...")
     current_arc = get_current_arc(novel_id, next_ch_number)
     chapter_record = next((c for c in all_chapters if c["chapter_number"] == next_ch_number), None)
-    
     if not chapter_record:
         generate_arc_blueprints(novel_id, current_arc)
         all_chapters = database.get_all_chapters(novel_id)
         chapter_record = next((c for c in all_chapters if c["chapter_number"] == next_ch_number), None)
-        
-    # Lá»šP Báº¢O Vá»† Tá»I THÆ¯á»¢NG: Nếu vẫn chưa có chapter_record, tá»± sinh Blueprint trực tiếp ngay lập tức!
     if not chapter_record:
-        print(f"[INFO] Tự động tạo Blueprint trá»±c tiáº¿p cho ChÆ°Æ¡ng {next_ch_number}...")
-        chapter_record = database.create_chapter(
-            novel_id=novel_id,
-            chapter_number=next_ch_number,
-            title=f"BÃ­ Máº­t Táº­p {next_ch_number}",
-            content=f"BLUEPRINT: Diá»…n biáº¿n ká»‹ch tÃ­nh tiáº¿p theo cho chÆ°Æ¡ng {next_ch_number}."
-        )
-        
-    blueprint_text = chapter_record["content"]
+        chapter_record = database.create_chapter(novel_id=novel_id, chapter_number=next_ch_number, title=f"Chương {next_ch_number}", content=f"BLUEPRINT: Diễn biến tiếp theo.")
+    blueprint_text = (chapter_record or {}).get("content", "BLUEPRINT: default")
     
     chars = database.get_characters(novel_id)
     protagonist = next((c for c in chars if c.get("failure_flag") is not None), None)
     if not protagonist and chars:
         protagonist = chars[0]
         
-    protagonist_name = protagonist["name"] if protagonist else "Jack"
-    protagonist_power = protagonist["power_tier"] if protagonist else "Ordinary"
-    protagonist_stats = json.dumps(protagonist["combat_stats"]) if protagonist else "{}"
-    failure_flag = protagonist["failure_flag"] if protagonist else False
-    last_breakthrough_ch = protagonist["last_breakthrough_chapter"] if protagonist else 0
+    protagonist_name = protagonist.get("name", "Jack") if protagonist else "Jack"
+    protagonist_power = protagonist.get("power_tier", "Ordinary") if protagonist else "Ordinary"
+    protagonist_stats = json.dumps(protagonist.get("combat_stats", {})) if protagonist else "{}"
+    failure_flag = protagonist.get("failure_flag", False) if protagonist else False
+    last_breakthrough_ch = protagonist.get("last_breakthrough_chapter", 0) if protagonist else 0
     
     lores = database.get_world_lore(novel_id)
     world_lore_text = "\n".join([f"- {lore['keyword']}: {lore['description']}" for lore in lores])
