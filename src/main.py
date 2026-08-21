@@ -313,8 +313,27 @@ def _run_chapter_pipeline_impl(novel_id: str):
 # FastAPI endpoints
 # Bỏ route index cũ để sử dụng giao diện mới từ app.py
 # @app.get("/", response_class=HTMLResponse)
-# def index(request: Request):
-#     ...
+# def index(request):
+#     return templates.TemplateResponse("index.html", {"request": request})
+
+@app.get("/api/history")
+def api_history(novel_id: str = ""):
+    """API cho Frontend Dashboard lấy lịch sử video"""
+    try:
+        chapters = database.get_all_chapters(novel_id)
+        data = [
+            {
+                "chapter_number": c.get("chapter_number"),
+                "title": c.get("title", ""),
+                "audio_url": c.get("audio_url"),
+                "video_url": c.get("video_url"),
+                "video_status": c.get("video_status", ""),
+            }
+            for c in chapters
+        ]
+        return {"status": "success", "data": data}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 @app.post("/run-pipeline")
 def trigger_pipeline(novel_id: str):
