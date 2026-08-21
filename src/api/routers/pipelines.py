@@ -9,7 +9,6 @@ import queue
 import threading
 from pydantic import BaseModel
 
-from src.main import run_chapter_pipeline
 from src import database
 from src.queue_manager import job_queue
 from src.thumbnail_agent.pipeline import run_thumbnail_pipeline
@@ -19,7 +18,7 @@ router = APIRouter()
 active_pipelines = set()
 pipeline_lock = threading.Lock()
 
-class NovelRequest(BaseModel):
+class PipelineRequest(BaseModel):
     novel_id: str
 
 @router.get("/cancel_pipeline")
@@ -59,6 +58,7 @@ async def api_run_pipeline(novel_id: str, request: Request):
                 log_queue.put(msg)
                 
             try:
+                from src.main import run_chapter_pipeline
                 thread = threading.Thread(
                     target=run_chapter_pipeline, 
                     args=(n_id,), 

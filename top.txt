@@ -1,0 +1,19 @@
+﻿from fastapi import APIRouter, Request
+from fastapi.responses import StreamingResponse
+import uuid
+import json
+import asyncio
+import html
+import time
+import queue
+import threading
+from pydantic import BaseModel
+
+from src import database
+from src.queue_manager import job_queue
+from src.thumbnail_agent.pipeline import run_thumbnail_pipeline
+
+router = APIRouter()
+
+active_pipelines = set()
+pipeline_lock = threading.Lock()
