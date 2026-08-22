@@ -66,7 +66,7 @@ def generate_comic(script_text):
     except Exception as e:
         return None, f"Lỗi GPU: {str(e)}"
 
-with gr.Blocks(theme=gr.themes.Soft()) as demo:
+with gr.Blocks() as demo:
     gr.Markdown("# 🎨 Mangstoon Story AI - High Performance ZeroGPU (API Ready)")
     gr.Markdown("Hệ thống sinh ảnh AI truyện tranh. Tự động tải repository khi khởi động.")
     
@@ -81,4 +81,5 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
     
     btn.click(fn=generate_comic, inputs=inp, outputs=[out_gallery, out_log])
 
-demo.queue(max_size=20).launch(show_api=True)
+demo.queue(max_size=20).launch()
+
