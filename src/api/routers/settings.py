@@ -21,7 +21,7 @@ class SettingsUpdate(BaseModel):
     DEFAULT_RATE: str = None
     DEFAULT_PITCH: str = None
 
-@router.get("/settings")
+@router.get("/settings/get")
 def api_get_settings():
     """Đọc cấu hình từ file .env (Masked để bảo mật)"""
     env_path = ".env"
