@@ -42,6 +42,10 @@ def cached(ttl_seconds: int = 3600):
             # Run the function
             result = func(*args, **kwargs)
 
+            # Do not cache empty or failed results
+            if not result:
+                return result
+
             # Save to cache
             try:
                 with open(cache_path, "w", encoding="utf-8") as f:

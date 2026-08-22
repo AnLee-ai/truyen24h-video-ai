@@ -1,11 +1,7 @@
-gradio
-spaces
+﻿gradio
 torch
 torchvision
 diffusers
 transformers
 accelerate
-peft
 safetensors
-opencv-python
-pillow

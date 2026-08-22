@@ -1,3 +1,34 @@
+﻿import shutil
+
+import shutil
+
+def call_huggingface_space(prompt: str, output_path: str) -> bool:
+    try:
+        from gradio_client import Client
+        import shutil
+        
+        print(f"[INFO] Gửi lệnh sang Hugging Face Space (ZeroGPU)...")
+        # Initialize client with token
+        client = Client("AnLee-ai/truyen24h-video-ai", hf_token=os.environ.get("HF_TOKEN"))
+        
+        # The Gradio API accepts script_text and returns [Gallery, Log]
+        result = client.predict(
+            script_text=prompt,
+            api_name="/predict"
+        )
+        
+        if result and isinstance(result, (list, tuple)) and result[0]:
+            gallery = result[0]
+            if isinstance(gallery, list) and len(gallery) > 0:
+                first_img = gallery[0]
+                img_path = first_img.get('image', '') if isinstance(first_img, dict) else first_img
+                if img_path and os.path.exists(img_path):
+                    shutil.copy(img_path, output_path)
+                    return True
+        return False
+    except Exception as e:
+        print(f"[WARNING] Hugging Face Space failed: {e}")
+        return False
 import os
 import re
 import urllib.parse
@@ -17,14 +48,14 @@ def is_valid_image_file(file_path: str) -> bool:
         return False
 
 def call_colab_webhook(prompt: str, output_path: str, repo_name: str, width: int, height: int) -> bool:
-    """Gọi Webhook lên ngrok/cloudflare tunnel của Google Colab đang chạy repo tương ứng."""
-    # Giả lập đọc Colab Webhook URL từ biến môi trường
+    """GÃ¡Â»Âi Webhook lÃƒÂªn ngrok/cloudflare tunnel cÃ¡Â»Â§a Google Colab Ã„â€˜ang chÃ¡ÂºÂ¡y repo tÃ†Â°Ã†Â¡ng Ã¡Â»Â©ng."""
+    # GiÃ¡ÂºÂ£ lÃ¡ÂºÂ­p Ã„â€˜Ã¡Â»Âc Colab Webhook URL tÃ¡Â»Â« biÃ¡ÂºÂ¿n mÃƒÂ´i trÃ†Â°Ã¡Â»Âng
     webhook_url = os.environ.get(f"COLAB_WEBHOOK_{repo_name.upper()}")
     if not webhook_url:
         return False
         
     try:
-        print(f"[INFO] Gửi lệnh sang {repo_name} Webhook: {webhook_url}...")
+        print(f"[INFO] GÃ¡Â»Â­i lÃ¡Â»â€¡nh sang {repo_name} Webhook: {webhook_url}...")
         payload = {
             "prompt": prompt,
             "width": width,
@@ -42,24 +73,24 @@ def call_colab_webhook(prompt: str, output_path: str, repo_name: str, width: int
 
 def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, height: int = 1080, seed: int = None) -> str:
     """
-    KIẾN TRÚC MEGA-PIPELINE 5 ENGINE (CLOUD/COLAB BASED)
-    Mỗi ảnh sẽ được đẩy qua các tầng engine từ cao xuống thấp để đảm bảo tỷ lệ ra ảnh 100%.
+    KIÃ¡ÂºÂ¾N TRÃƒÅ¡C MEGA-PIPELINE 5 ENGINE (CLOUD/COLAB BASED)
+    MÃ¡Â»â€”i Ã¡ÂºÂ£nh sÃ¡ÂºÂ½ Ã„â€˜Ã†Â°Ã¡Â»Â£c Ã„â€˜Ã¡ÂºÂ©y qua cÃƒÂ¡c tÃ¡ÂºÂ§ng engine tÃ¡Â»Â« cao xuÃ¡Â»â€˜ng thÃ¡ÂºÂ¥p Ã„â€˜Ã¡Â»Æ’ Ã„â€˜Ã¡ÂºÂ£m bÃ¡ÂºÂ£o tÃ¡Â»Â· lÃ¡Â»â€¡ ra Ã¡ÂºÂ£nh 100%.
     """
     os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
     if is_valid_image_file(output_path):
-        print(f"[INFO] Ảnh AI đã tồn tại hợp lệ: {output_path}")
+        print(f"[INFO] Ã¡ÂºÂ¢nh AI Ã„â€˜ÃƒÂ£ tÃ¡Â»â€œn tÃ¡ÂºÂ¡i hÃ¡Â»Â£p lÃ¡Â»â€¡: {output_path}")
         return output_path
 
-    # Xử lý Prompt
+    # XÃ¡Â»Â­ lÃƒÂ½ Prompt
     clean_prompt = re.sub(r'Scene\s*\d+:', '', scene_text, flags=re.IGNORECASE).strip()
-    english_prompt = clean_prompt # Trong thực tế cần gọi g4f để dịch, ở đây tạm giả lập
+    english_prompt = clean_prompt # Trong thÃ¡Â»Â±c tÃ¡ÂºÂ¿ cÃ¡ÂºÂ§n gÃ¡Â»Âi g4f Ã„â€˜Ã¡Â»Æ’ dÃ¡Â»â€¹ch, Ã¡Â»Å¸ Ã„â€˜ÃƒÂ¢y tÃ¡ÂºÂ¡m giÃ¡ÂºÂ£ lÃ¡ÂºÂ­p
     base_seed = seed if seed is not None else random.randint(1, 999999999)
     
     # =========================================================================
-    # ENGINE 1: StoryDiffusion (Consistent Character) via Colab Webhook
+    # ENGINE 1: Mangstoon Story AI via Hugging Face Space (ZeroGPU)
     # =========================================================================
-    if call_colab_webhook(english_prompt, output_path, "STORY_DIFFUSION", width, height):
-        print(f"[SUCCESS] Saved AI Image via Engine 1 (StoryDiffusion Colab): {output_path}")
+    if call_huggingface_space(english_prompt, output_path):
+        print(f"[SUCCESS] Saved AI Image via Engine 1 (Hugging Face ZeroGPU): {output_path}")
         return output_path
         
     # =========================================================================
@@ -95,7 +126,7 @@ def generate_scene_image(scene_text: str, output_path: str, width: int = 1920, h
         print(f"[WARNING] Engine 4 (FLUX.1) failed: {e}")
 
     # =========================================================================
-    # ENGINE 5: Procedural Fallback Canvas (Bảo vệ tỷ lệ lỗi)
+    # ENGINE 5: Procedural Fallback Canvas (BÃ¡ÂºÂ£o vÃ¡Â»â€¡ tÃ¡Â»Â· lÃ¡Â»â€¡ lÃ¡Â»â€”i)
     # =========================================================================
     try:
         img = Image.new('RGB', (width, height), color=(15, 20, 35))
@@ -125,7 +156,7 @@ def batch_generate_scene_images(scenes: list, chapter_id: str, max_workers: int 
     os.makedirs(base_dir, exist_ok=True)
     
     image_map = {}
-    print(f"[INFO] Bắt đầu sinh hàng loạt {len(scenes)} ảnh AI Mega-Pipeline (Max workers={max_workers})...")
+    print(f"[INFO] BÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u sinh hÃƒÂ ng loÃ¡ÂºÂ¡t {len(scenes)} Ã¡ÂºÂ£nh AI Mega-Pipeline (Max workers={max_workers})...")
     
     import concurrent.futures
     def _gen_single_scene(item):
@@ -154,4 +185,7 @@ def batch_generate_scene_images(scenes: list, chapter_id: str, max_workers: int 
     return result_paths
 
 if __name__ == "__main__":
-    generate_scene_image("Tiêu Viêm cầm hỏa kiếm", "test_out.jpg")
+    generate_scene_image("TiÃƒÂªu ViÃƒÂªm cÃ¡ÂºÂ§m hÃ¡Â»Âa kiÃ¡ÂºÂ¿m", "test_out.jpg")
+
+
+

@@ -1,53 +1,84 @@
-import spaces
+Ôªøimport spaces
 import gradio as gr
 import torch
 import os
 import subprocess
 import gc
+from PIL import Image
 
-# Kh?i t?o v‡ Clone Repo (Ch? ch?y 1 l?n khi server kh?i d?ng)
+# Clone necessary repos
 def setup_repos():
     if not os.path.exists('StoryDiffusion'):
         print("Cloning StoryDiffusion...")
         subprocess.run(['git', 'clone', 'https://github.com/HVision-NKU/StoryDiffusion.git'])
+    # mangstoon_ai is a local repo, it might fail to clone if the URL is wrong. 
+    # Try to clone, but if it fails, it means the user needs to upload the folder manually to HF.
     if not os.path.exists('mangstoon_ai'):
         print("Cloning MangstoonAI...")
-        subprocess.run(['git', 'clone', 'https://github.com/mangstoon/mangstoon_ai.git']) # Gi? l?p link
+        res = subprocess.run(['git', 'clone', 'https://github.com/mangstoon/mangstoon_ai.git'])
+        if res.returncode != 0:
+            print("WARNING: Could not clone mangstoon_ai. Please upload the mangstoon_ai folder manually to Hugging Face!")
+            
 setup_repos()
 
-# T?i uu hÛa b? nh? cho ZeroGPU
+try:
+    from diffusers import StableDiffusionXLPipeline
+    has_diffusers = True
+except ImportError:
+    has_diffusers = False
+
+pipe = None
+
 def clear_vram():
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
         torch.cuda.ipc_collect()
     gc.collect()
 
-@spaces.GPU(duration=120) # C?p ph·t GPU t?i da 120 gi‚y m?i l?n g?i
+@spaces.GPU(duration=120)
 def generate_comic(script_text):
+    global pipe
     try:
-        clear_vram() # D?n d?p VRAM tru?c khi ch?y
+        clear_vram()
         
-        # CH⁄ ›: –‚y l‡ khung logic g?i 2 model. 
-        # Th?c t? s? import t? thu m?c StoryDiffusion v‡ mangstoon_ai ? d‚y.
-        # S? d?ng fp16 (half precision) d? tang t?c d? x2 v‡ gi?m 50% RAM:
-        # model = ...from_pretrained(..., torch_dtype=torch.float16)
-        
-        result_message = f"–„ render th‡nh cÙng Webtoon cho k?ch b?n cÛ d? d‡i {len(script_text)} k˝ t?.\n[Hi?u su?t: FP16 Enabled, VRAM Optimized]"
-        
-        clear_vram() # D?n d?p VRAM sau khi ch?y
-        return result_message
+        if pipe is None:
+            if has_diffusers:
+                pipe = StableDiffusionXLPipeline.from_pretrained(
+                    "stabilityai/stable-diffusion-xl-base-1.0", 
+                    torch_dtype=torch.float16, 
+                    variant="fp16"
+                )
+                pipe = pipe.to("cuda")
+            else:
+                return None, "Error: diffusers not installed."
+
+        prompts = [p.strip() for p in script_text.split('\n') if p.strip()]
+        if not prompts:
+            prompts = ["A highly detailed anime illustration of a character"]
+
+        images = []
+        for prompt in prompts[:3]:
+            image = pipe(prompt, num_inference_steps=20).images[0]
+            images.append(image)
+
+        clear_vram()
+        return images, f"ƒê√£ t·∫°o {len(images)} ·∫£nh th√†nh c√¥ng."
     except Exception as e:
-        return f"L?i GPU: {str(e)}"
+        return None, f"L·ªói GPU: {str(e)}"
 
 with gr.Blocks(theme=gr.themes.Soft()) as demo:
-    gr.Markdown("# ?? Mangstoon Story AI - High Performance ZeroGPU")
-    gr.Markdown("H? th?ng ghÈp n?i StoryDiffusion v‡ MangstoonAI v?i t?i uu hÛa FP16 v‡ qu?n l˝ VRAM.")
+    gr.Markdown("# üé® Mangstoon Story AI - High Performance ZeroGPU (API Ready)")
+    gr.Markdown("H·ªá th·ªëng sinh ·∫£nh AI truy·ªán tranh. T·ª± ƒë·ªông t·∫£i repository khi kh·ªüi ƒë·ªông.")
     
     with gr.Row():
-        inp = gr.Textbox(placeholder='Nh?p k?ch b?n truy?n...', lines=10)
-        out = gr.Textbox(label='K?t qu? & Log', lines=10)
+        inp = gr.Textbox(placeholder='Nh·∫≠p k·ªãch b·∫£n truy·ªán... M·ªói d√≤ng 1 c·∫£nh.', lines=5)
     
-    btn = gr.Button('? Render Webtoon (T?i uu hÛa VRAM)', variant='primary')
-    btn.click(fn=generate_comic, inputs=inp, outputs=out)
+    btn = gr.Button('üöÄ Render Webtoon (T·ªëi ∆∞u h√≥a VRAM)', variant='primary')
+    
+    with gr.Row():
+        out_gallery = gr.Gallery(label='K·∫øt qu·∫£ ·∫¢nh')
+        out_log = gr.Textbox(label='Log')
+    
+    btn.click(fn=generate_comic, inputs=inp, outputs=[out_gallery, out_log])
 
-demo.queue(max_size=20).launch()
+demo.queue(max_size=20).launch(show_api=True)
