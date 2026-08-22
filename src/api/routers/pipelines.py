@@ -120,7 +120,8 @@ async def api_run_thumbnail(novel_id: str, request: Request = None):
         
         job_queue.add_job(job_id, run_thumbnail_pipeline, video_path, title)
         
-        yield f"data: {json.dumps({'msg': f'[INFO] Bắt đầu 9-Agent Pipeline cho \'{title}\''})}\n\n"
+        msg_text = f"[INFO] Bắt đầu 9-Agent Pipeline cho '{title}'"
+        yield f"data: {json.dumps({'msg': msg_text})}\n\n"
         yield f"data: {json.dumps({'msg': f'[INFO] Video Path: {video_path}'})}\n\n"
         yield f"data: {json.dumps({'msg': f'[INFO] Job ID: {job_id}'})}\n\n"
         yield f"data: {json.dumps({'msg': '[INFO] Đang chạy nền... Vui lòng chờ...'})}\n\n"
