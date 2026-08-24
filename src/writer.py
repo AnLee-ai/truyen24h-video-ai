@@ -214,7 +214,7 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
     # =========================================================================
     # Ã„ÂÃ¡Â»ËœNG CÃ†Â  Ã†Â¯U TIÃƒÅ N 1: InkOS Gemini 2.0 Flash Engine (Google API vÃ¡Â»â€ºi Key Rotator)
     # =========================================================================
-    gemini_models = ["gemini-2.0-flash", "gemini-2.0-flash-lite"]
+    gemini_models = ["gemini-3.6-flash", "gemini-3.5-flash-lite"]
     for attempt in range(min(retries, 4)):
         g_key = key_rotator.get_gemini_key() or config.GEMINI_API_KEY
         if not g_key:
@@ -263,7 +263,7 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
     # =========================================================================
     # ÄÆ¯á»œNG CÆ  Dá»° PHÃ’NG 2: Local Mangstoon_AI Engine (Thay vÃ¬ Groq)
     # =========================================================================
-    local_mangstoon = call_mangstoon_ai(prompt)
+    local_mangstoon = None
     if local_mangstoon and len(local_mangstoon.strip().split()) > 10:
         print("[SUCCESS] Local Mangstoon_AI succeeded!")
         return local_mangstoon.strip()
@@ -341,7 +341,7 @@ def call_openrouter_free_llm(prompt: str) -> str:
         headers["Authorization"] = f"Bearer {or_key}"
     
     free_models = [
-        "google/gemini-2.0-flash-exp:free",
+        "google/gemini-3.6-flash-exp:free",
         "meta-llama/llama-3.3-70b-instruct:free",
         "deepseek/deepseek-r1:free",
         "qwen/qwen-2.5-coder-32b-instruct:free",
@@ -968,5 +968,7 @@ def sync_story_bible(novel_id: str, chapter: dict, current_chars: list):
         
     except Exception as e:
         print(f"[ERROR] Story bible sync failed: {e}. Raw JSON: {extract_json}")
+
+
 
 

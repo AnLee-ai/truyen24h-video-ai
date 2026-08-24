@@ -1,4 +1,4 @@
-import os
+﻿import os
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -33,7 +33,7 @@ TELEGRAM_CHAT_ID = _clean_env("TELEGRAM_CHAT_ID")
 
 # Model configurations
 # Using gemini-flash-latest as the primary fast and free model
-GEMINI_MODEL_WRITER = "gemini-2.0-flash"  # Enforce stable 2.0 model to prevent 404 and 20 reqs limit
+GEMINI_MODEL_WRITER = "gemini-3.6-flash"  # Enforce stable 2.0 model to prevent 404 and 20 reqs limit
 GEMINI_MODEL_EMBED = os.getenv("GEMINI_MODEL_EMBED", "text-embedding-004")
 GROQ_MODEL_WRITER = os.getenv("GROQ_MODEL_WRITER", "llama-3.3-70b-versatile")
 
@@ -62,3 +62,4 @@ def validate_config():
         print("Please configure them in your .env file.")
         return False
     return True
+

@@ -11,14 +11,13 @@ def setup_repos():
     if not os.path.exists('StoryDiffusion'):
         print("Cloning StoryDiffusion...")
         subprocess.run(['git', 'clone', 'https://github.com/HVision-NKU/StoryDiffusion.git'])
-    # mangstoon_ai is a local repo, it might fail to clone if the URL is wrong. 
-    # Try to clone, but if it fails, it means the user needs to upload the folder manually to HF.
-    if not os.path.exists('mangstoon_ai'):
-        print("Cloning MangstoonAI...")
-        res = subprocess.run(['git', 'clone', 'https://github.com/mangstoon/mangstoon_ai.git'])
-        if res.returncode != 0:
-            print("WARNING: Could not clone mangstoon_ai. Please upload the mangstoon_ai folder manually to Hugging Face!")
-            
+        
+    if not os.path.exists('inkos'):
+        print("Cloning Inkos...")
+        subprocess.run(['git', 'clone', 'https://github.com/Narcooo/inkos.git'])
+        print("Installing pnpm and building Inkos...")
+        subprocess.run('npm install -g pnpm', shell=True)
+        subprocess.run('cd inkos && pnpm install && pnpm run build', shell=True)
 setup_repos()
 
 try:
@@ -40,7 +39,6 @@ def generate_comic(script_text):
     global pipe
     try:
         clear_vram()
-        
         if pipe is None:
             if has_diffusers:
                 pipe = StableDiffusionXLPipeline.from_pretrained(
@@ -66,20 +64,33 @@ def generate_comic(script_text):
     except Exception as e:
         return None, f"Lỗi GPU: {str(e)}"
 
+# Inkos Text Generator Function
+def generate_story(prompt):
+    try:
+        # Run inkos via Node.js
+        cmd = f'node inkos/packages/cli/dist/index.js interact --message "{prompt}"'
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, env=os.environ.copy())
+        if result.returncode != 0:
+            return f"Lỗi Inkos: {result.stderr}"
+        return result.stdout.strip()
+    except Exception as e:
+        return f"Lỗi hệ thống Inkos: {str(e)}"
+
 with gr.Blocks() as demo:
-    gr.Markdown("# 🎨 Mangstoon Story AI - High Performance ZeroGPU (API Ready)")
-    gr.Markdown("Hệ thống sinh ảnh AI truyện tranh. Tự động tải repository khi khởi động.")
+    gr.Markdown("# 🎨 Mangstoon & Inkos AI - ZeroGPU API")
     
-    with gr.Row():
-        inp = gr.Textbox(placeholder='Nhập kịch bản truyện... Mỗi dòng 1 cảnh.', lines=5)
-    
-    btn = gr.Button('🚀 Render Webtoon (Tối ưu hóa VRAM)', variant='primary')
-    
-    with gr.Row():
-        out_gallery = gr.Gallery(label='Kết quả Ảnh')
-        out_log = gr.Textbox(label='Log')
-    
-    btn.click(fn=generate_comic, inputs=inp, outputs=[out_gallery, out_log])
+    with gr.Tab("Tạo Ảnh (StoryDiffusion)"):
+        img_inp = gr.Textbox(placeholder='Nhập kịch bản vẽ ảnh...', lines=5)
+        img_btn = gr.Button('🚀 Vẽ Ảnh', variant='primary')
+        with gr.Row():
+            img_out_gallery = gr.Gallery(label='Kết quả Ảnh')
+            img_out_log = gr.Textbox(label='Log')
+        img_btn.click(fn=generate_comic, inputs=img_inp, outputs=[img_out_gallery, img_out_log], api_name="predict")
+
+    with gr.Tab("Tạo Kịch Bản (Inkos)"):
+        txt_inp = gr.Textbox(placeholder='Nhập yêu cầu viết truyện...', lines=5)
+        txt_btn = gr.Button('✍️ Viết Kịch Bản', variant='primary')
+        txt_out = gr.Textbox(label='Kết quả Inkos', lines=10)
+        txt_btn.click(fn=generate_story, inputs=txt_inp, outputs=txt_out, api_name="generate_story")
 
 demo.queue(max_size=20).launch()
-

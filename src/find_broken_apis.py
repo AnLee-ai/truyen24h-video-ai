@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import requests
 from src import config, key_rotator
 
@@ -7,7 +7,7 @@ def check_gemini_key(key: str) -> tuple[bool, str]:
     if not key:
         return False, "Empty Key"
     try:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={key}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={key}"
         headers = {"Content-Type": "application/json"}
         data = {"contents": [{"parts": [{"text": "hi"}]}]}
         res = requests.post(url, json=data, headers=headers, timeout=10)
@@ -44,75 +44,76 @@ def run_api_audit():
         pass
 
     print("=" * 70)
-    print("🔍 AUDIT & DIAGNOSTIC: KIỂM TRA TOÀN BỘ CÁC KHÓA API HỆ THỐNG")
+    print("ðŸ” AUDIT & DIAGNOSTIC: KIá»‚M TRA TOÃ€N Bá»˜ CÃC KHÃ“A API Há»† THá»NG")
     print("=" * 70)
     
     # 1. Audit Gemini Keys
     gemini_keys = key_rotator.gemini_rotator.keys
-    print(f"\n📌 [1] KIỂM TRA GEMINI API KEYS (Tổng cộng: {len(gemini_keys)} khóa):")
+    print(f"\nðŸ“Œ [1] KIá»‚M TRA GEMINI API KEYS (Tá»•ng cá»™ng: {len(gemini_keys)} khÃ³a):")
     if not gemini_keys:
-        print("  ❌ Không tìm thấy khóa GEMINI_API_KEY / GEMINI_API_KEYS nào trong môi trường!")
+        print("  âŒ KhÃ´ng tÃ¬m tháº¥y khÃ³a GEMINI_API_KEY / GEMINI_API_KEYS nÃ o trong mÃ´i trÆ°á»ng!")
     else:
         for idx, k in enumerate(gemini_keys):
             mask = f"...{k[-6:]}" if len(k) >= 6 else k
             valid, msg = check_gemini_key(k)
-            icon = "✅ OK" if valid else "❌ ERRROR 401"
+            icon = "âœ… OK" if valid else "âŒ ERRROR 401"
             print(f"  - Key #{idx+1} [{mask:15s}]: {icon} | Status: {msg}")
 
     # 2. Audit Groq Keys
     groq_keys = key_rotator.groq_rotator.keys
-    print(f"\n📌 [2] KIỂM TRA GROQ API KEYS (Tổng cộng: {len(groq_keys)} khóa):")
+    print(f"\nðŸ“Œ [2] KIá»‚M TRA GROQ API KEYS (Tá»•ng cá»™ng: {len(groq_keys)} khÃ³a):")
     if not groq_keys:
-        print("  ⚠️ Không cấu hình khóa GROQ_API_KEY / GROQ_API_KEYS (Hệ thống dùng Gemini).")
+        print("  âš ï¸ KhÃ´ng cáº¥u hÃ¬nh khÃ³a GROQ_API_KEY / GROQ_API_KEYS (Há»‡ thá»‘ng dÃ¹ng Gemini).")
     else:
         for idx, k in enumerate(groq_keys):
             mask = f"...{k[-6:]}" if len(k) >= 6 else k
             valid, msg = check_groq_key(k)
-            icon = "✅ OK" if valid else "❌ ERROR 401"
+            icon = "âœ… OK" if valid else "âŒ ERROR 401"
             print(f"  - Key #{idx+1} [{mask:15s}]: {icon} | Status: {msg}")
 
     # 3. Audit Supabase
-    print("\n📌 [3] KIỂM TRA KẾT NỐI SUPABASE DATABASE:")
+    print("\nðŸ“Œ [3] KIá»‚M TRA Káº¾T Ná»I SUPABASE DATABASE:")
     if config.SUPABASE_URL and config.SUPABASE_KEY:
         try:
             r = requests.get(f"{config.SUPABASE_URL}/rest/v1/", headers={"apikey": config.SUPABASE_KEY}, timeout=10)
             if r.status_code in (200, 404):
-                print("  ✅ Supabase URL & Key: HOẠT ĐỘNG TỐT (200 OK)")
+                print("  âœ… Supabase URL & Key: HOáº T Äá»˜NG Tá»T (200 OK)")
             else:
-                print(f"  ❌ Supabase Lỗi: Status {r.status_code} - {r.text[:80]}")
+                print(f"  âŒ Supabase Lá»—i: Status {r.status_code} - {r.text[:80]}")
         except Exception as e:
-            print(f"  ❌ Supabase Lỗi kết nối: {e}")
+            print(f"  âŒ Supabase Lá»—i káº¿t ná»‘i: {e}")
     else:
-        print("  ❌ Thiếu SUPABASE_URL hoặc SUPABASE_KEY!")
+        print("  âŒ Thiáº¿u SUPABASE_URL hoáº·c SUPABASE_KEY!")
 
     # 4. Audit Telegram Bot API
-    print("\n📌 [4] KIỂM TRA TELEGRAM BOT API & CHANNEL:")
+    print("\nðŸ“Œ [4] KIá»‚M TRA TELEGRAM BOT API & CHANNEL:")
     if config.TELEGRAM_BOT_TOKEN and config.TELEGRAM_CHAT_ID:
         try:
             url = f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}/getMe"
             r = requests.get(url, timeout=10)
             if r.status_code == 200:
                 bot_name = r.json().get("result", {}).get("username", "Unknown")
-                print(f"  ✅ Telegram Bot: HOẠT ĐỘNG TỐT (@{bot_name}) | Channel: {config.TELEGRAM_CHAT_ID}")
+                print(f"  âœ… Telegram Bot: HOáº T Äá»˜NG Tá»T (@{bot_name}) | Channel: {config.TELEGRAM_CHAT_ID}")
             else:
-                print(f"  ❌ Telegram Bot Token lỗi: Status {r.status_code} - {r.text[:80]}")
+                print(f"  âŒ Telegram Bot Token lá»—i: Status {r.status_code} - {r.text[:80]}")
         except Exception as e:
-            print(f"  ❌ Telegram Lỗi kết nối: {e}")
+            print(f"  âŒ Telegram Lá»—i káº¿t ná»‘i: {e}")
     else:
-        print("  ❌ Thiếu TELEGRAM_BOT_TOKEN hoặc TELEGRAM_CHAT_ID!")
+        print("  âŒ Thiáº¿u TELEGRAM_BOT_TOKEN hoáº·c TELEGRAM_CHAT_ID!")
 
     # 5. Audit Pollinations Free Image API
-    print("\n📌 [5] KIỂM TRA POLLINATIONS FREE IMAGE API:")
+    print("\nðŸ“Œ [5] KIá»‚M TRA POLLINATIONS FREE IMAGE API:")
     try:
         r = requests.get("https://image.pollinations.ai/prompt/test", timeout=10)
         if r.status_code == 200:
-            print("  ✅ Pollinations Image API: HOẠT ĐỘNG TỐT (200 OK)")
+            print("  âœ… Pollinations Image API: HOáº T Äá»˜NG Tá»T (200 OK)")
         else:
-            print(f"  ⚠️ Pollinations Image API Cảnh báo: Status {r.status_code}")
+            print(f"  âš ï¸ Pollinations Image API Cáº£nh bÃ¡o: Status {r.status_code}")
     except Exception as e:
-        print(f"  ❌ Pollinations Lỗi kết nối: {e}")
+        print(f"  âŒ Pollinations Lá»—i káº¿t ná»‘i: {e}")
 
     print("=" * 70)
 
 if __name__ == "__main__":
     run_api_audit()
+
