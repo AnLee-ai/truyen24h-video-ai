@@ -1,4 +1,5 @@
-﻿import json
+﻿import os
+import json
 import time
 import re
 import sys
@@ -989,6 +990,7 @@ def sync_story_bible(novel_id: str, chapter: dict, current_chars: list):
         
     except Exception as e:
         print(f"[ERROR] Story bible sync failed: {e}. Raw JSON: {extract_json}")
+
 
 
 
