@@ -281,7 +281,7 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
                 time.sleep(1.0)
 
     # =========================================================================
-    # Ã„ÂÃ†Â¯Ã¡Â»Å“NG CÃ†Â  DÃ¡Â»Â° PHÃƒâ€™NG 2: Local Mangstoon_AI Engine (Thay vÃƒÂ¬ Groq)
+    # ĐÃ†Â¯Ã¡Â»Å“NG CÃ†Â  DÃ¡Â»Â° PHÃƒâ€™NG 2: Local Mangstoon_AI Engine (Thay vÃƒÂ¬ Groq)
     # =========================================================================
     local_mangstoon = call_mangstoon_ai(prompt)
     if local_mangstoon and len(local_mangstoon.strip().split()) > 10:
@@ -289,7 +289,7 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
         return local_mangstoon.strip()
 
     # =========================================================================
-    # Ã„ÂÃ†Â¯Ã¡Â»Å“NG CÃ†Â  DÃ¡Â»Â° PHÃƒâ€™NG 3: Groq Multi-Model Engine (DÃ¡Â»Â± phÃƒÂ²ng cÃ¡ÂºÂ¥p 3)
+    # ĐÃ†Â¯Ã¡Â»Å“NG CÃ†Â  DÃ¡Â»Â° PHÃƒâ€™NG 3: Groq Multi-Model Engine (DÃ¡Â»Â± phÃƒÂ²ng cÃ¡ÂºÂ¥p 3)
     # =========================================================================
     groq_key = key_rotator.get_groq_key() or config.GROQ_API_KEY
     if groq_key:
@@ -678,7 +678,7 @@ def write_next_chapter(novel_id: str) -> dict:
         existing_nums = [int(c["chapter_number"]) for c in all_chapters if str(c.get("chapter_number", "")).isdigit()] + list(all_done_nums)
         next_ch_number = (max(existing_nums) + 1) if existing_nums else 1
 
-    print(f"[INFO] BÃ¡ÂºÂ®T Ã„ÂÃ¡ÂºÂ¦U QUY TRÃƒÅ’NH VIÃ¡ÂºÂ¾T CHÃ†Â¯Ã†Â NG MÃ¡Â»Å¡I: ChÃ†Â°Ã†Â¡ng {next_ch_number} (Ã„ÂÃƒÂ£ hoÃƒÂ n thÃƒÂ nh cÃƒÂ¡c tÃ¡ÂºÂ­p: {sorted(list(all_done_nums))})...")
+    print(f"[INFO] BẮT ĐẦU QUY TRÌNH VIẾT CHƯƠNG MỚI: ChÃ†Â°Ã†Â¡ng {next_ch_number} (ĐÃƒÂ£ hoÃƒÂ n thÃƒÂ nh cÃƒÂ¡c tÃ¡ÂºÂ­p: {sorted(list(all_done_nums))})...")
     current_arc = get_current_arc(novel_id, next_ch_number)
     chapter_record = next((c for c in all_chapters if c["chapter_number"] == next_ch_number), None)
     if not chapter_record:
@@ -815,7 +815,7 @@ def write_next_chapter(novel_id: str) -> dict:
                     cleaned_next, _ = verify_and_sanitize_chapter_content(part_next)
                     # TrÃƒÂ¡nh nÃ¡Â»â€˜i chuÃ¡Â»â€”i lÃ¡ÂºÂ·p lÃ¡ÂºÂ¡i vÃƒÂ´ tÃ¡ÂºÂ­n
                     if cleaned_next in final_content:
-                        print("[WARNING] Ã„ÂÃƒÂ£ phÃƒÂ¡t hiÃ¡Â»â€¡n Ã„â€˜oÃ¡ÂºÂ¡n nÃ¡Â»â€˜i tiÃ¡ÂºÂ¿p bÃ¡Â»â€¹ lÃ¡ÂºÂ·p lÃ¡ÂºÂ¡i, ngÃ¡ÂºÂ¯t vÃƒÂ²ng lÃ¡ÂºÂ·p expansion.")
+                        print("[WARNING] ĐÃƒÂ£ phÃƒÂ¡t hiÃ¡Â»â€¡n đoÃ¡ÂºÂ¡n nÃ¡Â»â€˜i tiÃ¡ÂºÂ¿p bÃ¡Â»â€¹ lÃ¡ÂºÂ·p lÃ¡ÂºÂ¡i, ngÃ¡ÂºÂ¯t vÃƒÂ²ng lÃ¡ÂºÂ·p expansion.")
                         break
                     final_content = final_content + "\n\n" + cleaned_next
                     word_count = len(final_content.split())
