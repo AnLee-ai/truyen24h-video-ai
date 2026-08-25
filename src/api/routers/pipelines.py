@@ -81,12 +81,13 @@ async def api_run_pipeline(novel_id: str, request: Request):
                     yield f"data: {json.dumps({'msg': '[WARN] Tiến trình đã bị hủy bởi người dùng.', 'done': True})}\n\n"
                     break
                 try:
-                    msg = log_queue.get(timeout=0.1)
+                    msg = log_queue.get(timeout=1.0)
                     if "[ERROR]" in msg:
                         has_error = True
                     yield f"data: {json.dumps({'msg': msg})}\n\n"
                 except queue.Empty:
-                    await asyncio.sleep(0.1) # Yield control
+                    yield ": heartbeat\n\n"
+                    await asyncio.sleep(0.1)
                     
             if has_error:
                 yield f"data: {json.dumps({'msg': '[ERROR] Tiến trình kết thúc với lỗi.', 'done': True})}\n\n"
@@ -135,6 +136,7 @@ async def api_run_thumbnail(novel_id: str, request: Request = None):
                 err = status.get('error', 'Unknown')
                 yield f"data: {json.dumps({'msg': f'[ERROR] Lỗi: {err}', 'done': True})}\n\n"
                 break
+            yield ": heartbeat\n\n"
             await asyncio.sleep(1.0)
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
