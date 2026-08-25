@@ -206,6 +206,25 @@ def translate_to_vietnamese_with_gemini(text: str) -> str:
     return text
 
 @cached(ttl_seconds=86400)
+from gradio_client import Client
+
+def call_inkos_cloud(prompt: str) -> str:
+    print("[INFO] Gửi yêu cầu sáng tác tới Inkos (Hugging Face Cloud)...")
+    try:
+        hf_token = os.environ.get("HF_TOKEN")
+        client = Client("AnLee-ai/truyen24h-video-ai", hf_token=hf_token)
+        result = client.predict(
+            prompt=prompt,
+            api_name="/generate_story"
+        )
+        if "Lỗi" in result:
+            print(f"[WARNING] Inkos trả về lỗi: {result}")
+            return ""
+        return str(result)
+    except Exception as e:
+        print(f"[ERROR] Lỗi gọi Inkos Cloud: {e}")
+        return ""
+
 def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
     """
     Ã†Â¯U TIÃƒÅ N 100% HÃƒâ‚¬NG Ã„ÂÃ¡ÂºÂ¦U: InkOS Multi-Agent Engine (Google Gemini 2.0 Flash API vÃ¡Â»â€ºi Key Rotator).
@@ -732,7 +751,9 @@ def write_next_chapter(novel_id: str) -> dict:
         final_content = ""
         while draft_attempt < 3:
             draft_attempt += 1
-            final_content = call_gemini(current_prompt)
+            final_content = call_inkos_cloud(current_prompt)
+            if not final_content or len(final_content.strip()) < 10:
+                final_content = call_gemini(current_prompt)
             word_count = len(final_content.split()) if final_content else 0
             print(f"[INFO] Generated draft length: {word_count} words.")
             
@@ -968,6 +989,8 @@ def sync_story_bible(novel_id: str, chapter: dict, current_chars: list):
         
     except Exception as e:
         print(f"[ERROR] Story bible sync failed: {e}. Raw JSON: {extract_json}")
+
+
 
 
 
