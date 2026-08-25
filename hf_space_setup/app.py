@@ -6,18 +6,33 @@ import subprocess
 import gc
 from PIL import Image
 
-# Clone necessary repos
+# Install Node.js locally inside the Space (Bypassing apt-get)
+NODE_VERSION = "v20.12.2"
+NODE_DIR = f"/home/user/app/node-{NODE_VERSION}-linux-x64"
+
 def setup_repos():
-    if not os.path.exists('StoryDiffusion'):
-        print("Cloning StoryDiffusion...")
-        subprocess.run(['git', 'clone', 'https://github.com/HVision-NKU/StoryDiffusion.git'])
-        
+    # 1. Download and setup Node.js if not exists
+    if not os.path.exists(NODE_DIR):
+        print("Downloading Node.js...")
+        subprocess.run(f"curl -fsSLO https://nodejs.org/dist/{NODE_VERSION}/node-{NODE_VERSION}-linux-x64.tar.xz", shell=True)
+        subprocess.run(f"tar -xf node-{NODE_VERSION}-linux-x64.tar.xz", shell=True)
+    
+    # 2. Add Node.js to PATH
+    os.environ["PATH"] = f"{NODE_DIR}/bin:" + os.environ.get("PATH", "")
+    
+    # 3. Setup inkos
     if not os.path.exists('inkos'):
         print("Cloning Inkos...")
         subprocess.run(['git', 'clone', 'https://github.com/Narcooo/inkos.git'])
         print("Installing pnpm and building Inkos...")
         subprocess.run('npm install -g pnpm', shell=True)
         subprocess.run('cd inkos && pnpm install && pnpm run build', shell=True)
+        
+    # 4. Setup StoryDiffusion
+    if not os.path.exists('StoryDiffusion'):
+        print("Cloning StoryDiffusion...")
+        subprocess.run(['git', 'clone', 'https://github.com/HVision-NKU/StoryDiffusion.git'])
+
 setup_repos()
 
 try:
