@@ -1,6 +1,6 @@
-import os
+﻿import os
 from gradio_client import Client
-﻿import json
+import json
 import time
 import re
 import sys
@@ -57,13 +57,13 @@ def safe_loads(text: str, default=None):
     try:
         return json.loads(cleaned)
     except Exception:
-        # ThÃ¡Â»Â­ lÃƒÂ m sÃ¡ÂºÂ¡ch dÃ¡ÂºÂ¥u phÃ¡ÂºÂ©y thÃ¡Â»Â«a Ã¡Â»Å¸ cuÃ¡Â»â€˜i (trailing commas)
+        # ThÃƒÂ¡Ã‚Â»Ã‚Â­ lÃƒÆ’Ã‚Â m sÃƒÂ¡Ã‚ÂºÃ‚Â¡ch dÃƒÂ¡Ã‚ÂºÃ‚Â¥u phÃƒÂ¡Ã‚ÂºÃ‚Â©y thÃƒÂ¡Ã‚Â»Ã‚Â«a ÃƒÂ¡Ã‚Â»Ã…Â¸ cuÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi (trailing commas)
         cleaned_no_comma = re.sub(r",\s*([\}\]])", r"\1", cleaned)
         try:
             return json.loads(cleaned_no_comma)
         except Exception:
             pass
-        # ThÃ¡Â»Â­ trÃƒÂ­ch xuÃ¡ÂºÂ¥t khÃ¡Â»â€˜i {...} hoÃ¡ÂºÂ·c [...] bÃ¡ÂºÂ±ng Regex
+        # ThÃƒÂ¡Ã‚Â»Ã‚Â­ trÃƒÆ’Ã‚Â­ch xuÃƒÂ¡Ã‚ÂºÃ‚Â¥t khÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi {...} hoÃƒÂ¡Ã‚ÂºÃ‚Â·c [...] bÃƒÂ¡Ã‚ÂºÃ‚Â±ng Regex
         json_block = re.search(r"(\{[\s\S]*\}|\[[\s\S]*\])", cleaned)
         if json_block:
             try:
@@ -83,7 +83,7 @@ def remove_repetitive_sentences(text: str) -> str:
         if not para.strip():
             cleaned_paragraphs.append("")
             continue
-        sentences = re.split(r'(?<=[.?!Ã¢â‚¬Â¦])\s+(?=[a-zA-ZÃƒÂ ÃƒÂ¡ÃƒÂ¢ÃƒÂ£ÃƒÂ¨ÃƒÂ©ÃƒÂªÃƒÂ¬ÃƒÂ­ÃƒÂ²ÃƒÂ³ÃƒÂ´ÃƒÂµÃƒÂ¹ÃƒÂºÃƒÂ½Ã„â€˜Ãƒâ‚¬ÃƒÂÃƒâ€šÃƒÆ’ÃƒË†Ãƒâ€°ÃƒÅ ÃƒÅ’ÃƒÂÃƒâ€™Ãƒâ€œÃƒâ€Ãƒâ€¢Ãƒâ„¢ÃƒÅ¡ÃƒÂÃ„Â0-9"\'Ã‚Â«Ã¢â‚¬Å“])', para)
+        sentences = re.split(r'(?<=[.?!ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦])\s+(?=[a-zA-ZÃƒÆ’Ã‚Â ÃƒÆ’Ã‚Â¡ÃƒÆ’Ã‚Â¢ÃƒÆ’Ã‚Â£ÃƒÆ’Ã‚Â¨ÃƒÆ’Ã‚Â©ÃƒÆ’Ã‚ÂªÃƒÆ’Ã‚Â¬ÃƒÆ’Ã‚Â­ÃƒÆ’Ã‚Â²ÃƒÆ’Ã‚Â³ÃƒÆ’Ã‚Â´ÃƒÆ’Ã‚ÂµÃƒÆ’Ã‚Â¹ÃƒÆ’Ã‚ÂºÃƒÆ’Ã‚Â½Ãƒâ€žÃ¢â‚¬ËœÃƒÆ’Ã¢â€šÂ¬ÃƒÆ’Ã‚ÂÃƒÆ’Ã¢â‚¬Å¡ÃƒÆ’Ã†â€™ÃƒÆ’Ã‹â€ ÃƒÆ’Ã¢â‚¬Â°ÃƒÆ’Ã…Â ÃƒÆ’Ã…â€™ÃƒÆ’Ã‚ÂÃƒÆ’Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å“ÃƒÆ’Ã¢â‚¬ÂÃƒÆ’Ã¢â‚¬Â¢ÃƒÆ’Ã¢â€žÂ¢ÃƒÆ’Ã…Â¡ÃƒÆ’Ã‚ÂÃƒâ€žÃ‚Â0-9"\'Ãƒâ€šÃ‚Â«ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ])', para)
         cleaned_sentences: list[str] = []
         for sentence in sentences:
             s_strip = sentence.strip()
@@ -112,30 +112,30 @@ def remove_repetitive_sentences(text: str) -> str:
     return "\n".join(final_paragraphs)
 
 def clean_chapter_content(text: str) -> str:
-    """Clean draft content, stripping markdown and prefix headers like 'Dáº«n lÆ°á»£c:', 'ChÆ°Æ¡ng X:', etc."""
+    """Clean draft content, stripping markdown and prefix headers like 'DÃ¡ÂºÂ«n lÃ†Â°Ã¡Â»Â£c:', 'ChÃ†Â°Ã†Â¡ng X:', etc."""
     cleaned = text.strip()
-    pattern = r"(?im)^\s*[*_]*\s*(?:Dáº«n lÆ°á»£c|Giá»›i thiá»‡u|Pháº§n dáº«n lÆ°á»£c|TÃ³m táº¯t bá»‘i cáº£nh|Prologue|Introduction|Giá»›i thiá»‡u bá»‘i cáº£nh)\s*[:ï¼š\-â€“â€”]*\s*[*_]*\s*[:ï¼š\-â€“â€”]*\s*"
+    pattern = r"(?im)^\s*[*_]*\s*(?:DÃ¡ÂºÂ«n lÃ†Â°Ã¡Â»Â£c|GiÃ¡Â»â€ºi thiÃ¡Â»â€¡u|PhÃ¡ÂºÂ§n dÃ¡ÂºÂ«n lÃ†Â°Ã¡Â»Â£c|TÃƒÂ³m tÃ¡ÂºÂ¯t bÃ¡Â»â€˜i cÃ¡ÂºÂ£nh|Prologue|Introduction|GiÃ¡Â»â€ºi thiÃ¡Â»â€¡u bÃ¡Â»â€˜i cÃ¡ÂºÂ£nh)\s*[:Ã¯Â¼Å¡\-Ã¢â‚¬â€œÃ¢â‚¬â€]*\s*[*_]*\s*[:Ã¯Â¼Å¡\-Ã¢â‚¬â€œÃ¢â‚¬â€]*\s*"
     cleaned = re.sub(pattern, "", cleaned).strip()
     cleaned = remove_repetitive_sentences(cleaned)
     return cleaned
 
 def expand_chapter_content(content: str, target_words: int = 3200) -> str:
-    """NÃ¡Â»â€˜i dÃƒÂ i kÃ¡Â»â€¹ch bÃ¡ÂºÂ£n chÃ†Â°Ã†Â¡ng truyÃ¡Â»â€¡n nÃ¡ÂºÂ¿u chÃ†Â°a Ã„â€˜Ã¡Â»Â§ Ã„â€˜Ã¡Â»â„¢ dÃƒÂ i >10 phÃƒÂºt audio (600 giÃƒÂ¢y)."""
+    """NÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi dÃƒÆ’Ã‚Â i kÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ch bÃƒÂ¡Ã‚ÂºÃ‚Â£n chÃƒâ€ Ã‚Â°Ãƒâ€ Ã‚Â¡ng truyÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n nÃƒÂ¡Ã‚ÂºÃ‚Â¿u chÃƒâ€ Ã‚Â°a Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã‚Â§ Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ dÃƒÆ’Ã‚Â i >10 phÃƒÆ’Ã‚Âºt audio (600 giÃƒÆ’Ã‚Â¢y)."""
     current_words = len(content.split()) if content else 0
     if current_words >= target_words:
         return content
         
-    print(f"[INFO] Ã¢Å¡Â¡ CHÃ¡ÂºÂ¾ Ã„ÂÃ¡Â»Ëœ LÃƒâ‚¬M LÃ¡ÂºÂ I (>10 PHÃƒÅ¡T): Ã„ÂÃ¡Â»â„¢ dÃƒÂ i hiÃ¡Â»â€¡n tÃ¡ÂºÂ¡i {current_words} tÃ¡Â»Â« (<{target_words} tÃ¡Â»Â«). Ã„Âang gÃ¡Â»Âi AI viÃ¡ÂºÂ¿t nÃ¡Â»â€˜i tiÃ¡ÂºÂ¿p phÃƒÂ¢n cÃ¡ÂºÂ£nh kÃ¡Â»â€¹ch tÃƒÂ­nh...")
+    print(f"[INFO] ÃƒÂ¢Ã…Â¡Ã‚Â¡ CHÃƒÂ¡Ã‚ÂºÃ‚Â¾ Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚Â»Ã‹Å“ LÃƒÆ’Ã¢â€šÂ¬M LÃƒÂ¡Ã‚ÂºÃ‚Â I (>10 PHÃƒÆ’Ã…Â¡T): Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ dÃƒÆ’Ã‚Â i hiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n tÃƒÂ¡Ã‚ÂºÃ‚Â¡i {current_words} tÃƒÂ¡Ã‚Â»Ã‚Â« (<{target_words} tÃƒÂ¡Ã‚Â»Ã‚Â«). Ãƒâ€žÃ‚Âang gÃƒÂ¡Ã‚Â»Ã‚Âi AI viÃƒÂ¡Ã‚ÂºÃ‚Â¿t nÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi tiÃƒÂ¡Ã‚ÂºÃ‚Â¿p phÃƒÆ’Ã‚Â¢n cÃƒÂ¡Ã‚ÂºÃ‚Â£nh kÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ch tÃƒÆ’Ã‚Â­nh...")
     
     continuation_prompt = (
-        f"DÃ†Â°Ã¡Â»â€ºi Ã„â€˜ÃƒÂ¢y lÃƒÂ  phÃ¡ÂºÂ§n trÃ†Â°Ã¡Â»â€ºc cÃ¡Â»Â§a chÃ†Â°Ã†Â¡ng truyÃ¡Â»â€¡n (tÃ¡Â»â€¢ng {current_words} tÃ¡Â»Â«):\n\n"
+        f"DÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi Ãƒâ€žÃ¢â‚¬ËœÃƒÆ’Ã‚Â¢y lÃƒÆ’Ã‚Â  phÃƒÂ¡Ã‚ÂºÃ‚Â§n trÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºc cÃƒÂ¡Ã‚Â»Ã‚Â§a chÃƒâ€ Ã‚Â°Ãƒâ€ Ã‚Â¡ng truyÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n (tÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¢ng {current_words} tÃƒÂ¡Ã‚Â»Ã‚Â«):\n\n"
         f"{content[-1500:]}\n\n"
-        f"YÃƒÅ U CÃ¡ÂºÂ¦U BÃ¡ÂºÂ®T BUÃ¡Â»ËœC (Ãƒâ€°P THÃ¡Â»Å“I LÃ†Â¯Ã¡Â»Â¢NG KÃƒâ€°O DÃƒâ‚¬I >10 PHÃƒÅ¡T AUDIO):\n"
-        f"HÃƒÂ£y viÃ¡ÂºÂ¿t tiÃ¡ÂºÂ¿p phÃƒÂ¢n cÃ¡ÂºÂ£nh diÃ¡Â»â€¦n biÃ¡ÂºÂ¿n kÃ¡Â»â€¹ch tÃƒÂ­nh tiÃ¡ÂºÂ¿p theo cÃ¡Â»Â§a cÃƒÂ¢u chuyÃ¡Â»â€¡n trÃƒÂªn (tÃ¡Â»â€˜i thiÃ¡Â»Æ’u 1500 - 2000 tÃ¡Â»Â« nÃ¡Â»Â¯a).\n"
-        f"1. ViÃ¡ÂºÂ¿t chi tiÃ¡ÂºÂ¿t cuÃ¡Â»â„¢c Ã„â€˜Ã¡Â»â€˜i thoÃ¡ÂºÂ¡i gay gÃ¡ÂºÂ¯t, bÃ¡Â»â„¢c phÃƒÂ¡t cÃ¡ÂºÂ£m xÃƒÂºc giÃ¡Â»Â¯a cÃƒÂ¡c nhÃƒÂ¢n vÃ¡ÂºÂ­t chÃƒÂ­nh.\n"
-        f"2. MiÃƒÂªu tÃ¡ÂºÂ£ chi tiÃ¡ÂºÂ¿t chiÃƒÂªu thÃ¡Â»Â©c, giao phong kÃ¡Â»â€¹ch tÃƒÂ­nh vÃƒÂ  suy nghÃ„Â© nÃ¡Â»â„¢i tÃƒÂ¢m dÃ¡Â»â€œn dÃ¡ÂºÂ­p.\n"
-        f"3. KÃ¡ÂºÂ¿t thÃƒÂºc bÃ¡ÂºÂ±ng mÃ¡Â»â„¢t nÃƒÂºt thÃ¡ÂºÂ¯t cliffhanger kÃ¡Â»â€¹ch tÃƒÂ­nh.\n"
-        f"ViÃ¡ÂºÂ¿t thÃ¡ÂºÂ³ng vÃƒÂ o cÃƒÂ¢u chuyÃ¡Â»â€¡n 100% bÃ¡ÂºÂ±ng TiÃ¡ÂºÂ¿ng ViÃ¡Â»â€¡t mÃ†Â°Ã¡Â»Â£t mÃƒÂ , khÃƒÂ´ng lÃ¡ÂºÂ·p lÃ¡ÂºÂ¡i Ã„â€˜oÃ¡ÂºÂ¡n cÃ…Â©."
+        f"YÃƒÆ’Ã…Â U CÃƒÂ¡Ã‚ÂºÃ‚Â¦U BÃƒÂ¡Ã‚ÂºÃ‚Â®T BUÃƒÂ¡Ã‚Â»Ã‹Å“C (ÃƒÆ’Ã¢â‚¬Â°P THÃƒÂ¡Ã‚Â»Ã…â€œI LÃƒâ€ Ã‚Â¯ÃƒÂ¡Ã‚Â»Ã‚Â¢NG KÃƒÆ’Ã¢â‚¬Â°O DÃƒÆ’Ã¢â€šÂ¬I >10 PHÃƒÆ’Ã…Â¡T AUDIO):\n"
+        f"HÃƒÆ’Ã‚Â£y viÃƒÂ¡Ã‚ÂºÃ‚Â¿t tiÃƒÂ¡Ã‚ÂºÃ‚Â¿p phÃƒÆ’Ã‚Â¢n cÃƒÂ¡Ã‚ÂºÃ‚Â£nh diÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¦n biÃƒÂ¡Ã‚ÂºÃ‚Â¿n kÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ch tÃƒÆ’Ã‚Â­nh tiÃƒÂ¡Ã‚ÂºÃ‚Â¿p theo cÃƒÂ¡Ã‚Â»Ã‚Â§a cÃƒÆ’Ã‚Â¢u chuyÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n trÃƒÆ’Ã‚Âªn (tÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi thiÃƒÂ¡Ã‚Â»Ã†â€™u 1500 - 2000 tÃƒÂ¡Ã‚Â»Ã‚Â« nÃƒÂ¡Ã‚Â»Ã‚Â¯a).\n"
+        f"1. ViÃƒÂ¡Ã‚ÂºÃ‚Â¿t chi tiÃƒÂ¡Ã‚ÂºÃ‚Â¿t cuÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢c Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi thoÃƒÂ¡Ã‚ÂºÃ‚Â¡i gay gÃƒÂ¡Ã‚ÂºÃ‚Â¯t, bÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢c phÃƒÆ’Ã‚Â¡t cÃƒÂ¡Ã‚ÂºÃ‚Â£m xÃƒÆ’Ã‚Âºc giÃƒÂ¡Ã‚Â»Ã‚Â¯a cÃƒÆ’Ã‚Â¡c nhÃƒÆ’Ã‚Â¢n vÃƒÂ¡Ã‚ÂºÃ‚Â­t chÃƒÆ’Ã‚Â­nh.\n"
+        f"2. MiÃƒÆ’Ã‚Âªu tÃƒÂ¡Ã‚ÂºÃ‚Â£ chi tiÃƒÂ¡Ã‚ÂºÃ‚Â¿t chiÃƒÆ’Ã‚Âªu thÃƒÂ¡Ã‚Â»Ã‚Â©c, giao phong kÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ch tÃƒÆ’Ã‚Â­nh vÃƒÆ’Ã‚Â  suy nghÃƒâ€žÃ‚Â© nÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢i tÃƒÆ’Ã‚Â¢m dÃƒÂ¡Ã‚Â»Ã¢â‚¬Å“n dÃƒÂ¡Ã‚ÂºÃ‚Â­p.\n"
+        f"3. KÃƒÂ¡Ã‚ÂºÃ‚Â¿t thÃƒÆ’Ã‚Âºc bÃƒÂ¡Ã‚ÂºÃ‚Â±ng mÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢t nÃƒÆ’Ã‚Âºt thÃƒÂ¡Ã‚ÂºÃ‚Â¯t cliffhanger kÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ch tÃƒÆ’Ã‚Â­nh.\n"
+        f"ViÃƒÂ¡Ã‚ÂºÃ‚Â¿t thÃƒÂ¡Ã‚ÂºÃ‚Â³ng vÃƒÆ’Ã‚Â o cÃƒÆ’Ã‚Â¢u chuyÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n 100% bÃƒÂ¡Ã‚ÂºÃ‚Â±ng TiÃƒÂ¡Ã‚ÂºÃ‚Â¿ng ViÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡t mÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã‚Â£t mÃƒÆ’Ã‚Â , khÃƒÆ’Ã‚Â´ng lÃƒÂ¡Ã‚ÂºÃ‚Â·p lÃƒÂ¡Ã‚ÂºÃ‚Â¡i Ãƒâ€žÃ¢â‚¬ËœoÃƒÂ¡Ã‚ÂºÃ‚Â¡n cÃƒâ€¦Ã‚Â©."
     )
     
     for _expand_attempt in range(3):
@@ -145,7 +145,7 @@ def expand_chapter_content(content: str, target_words: int = 3200) -> str:
             if cleaned_next.lower() in content.lower():
                 continue
             content = content + "\n\n" + cleaned_next
-            print(f"[SUCCESS] Ã„ ÃƒÂ£ nÃ¡Â»â€˜i dÃƒÂ i chÃ†Â°Ã†Â¡ng truyÃ¡Â»â€¡n! TÃ¡Â»â€¢ng sÃ¡Â»â€˜ tÃ¡Â»Â« mÃ¡Â»â€ºi: {len(content.split())} tÃ¡Â»Â«.")
+            print(f"[SUCCESS] Ãƒâ€ž ÃƒÆ’Ã‚Â£ nÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi dÃƒÆ’Ã‚Â i chÃƒâ€ Ã‚Â°Ãƒâ€ Ã‚Â¡ng truyÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n! TÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¢ng sÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœ tÃƒÂ¡Ã‚Â»Ã‚Â« mÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi: {len(content.split())} tÃƒÂ¡Ã‚Â»Ã‚Â«.")
             if len(content.split()) >= target_words:
                 break
     return content
@@ -154,7 +154,7 @@ LEGACY_INVALID_NAMES = {}
 
 def verify_and_sanitize_chapter_content(text: str, novel_id: str = "") -> tuple:
     """
-    BÃ¡Â»Ëœ KIÃ¡Â»â€šM TRA TÃ¡Â»Â° Ã„ Ã¡Â»ËœNG BÃ¡ÂºÂ¢O VÃ¡Â»â€  CHÃ†Â¯Ã†Â NG TRUYÃ¡Â»â€ N (Automated Chapter Auditor).
+    BÃƒÂ¡Ã‚Â»Ã‹Å“ KIÃƒÂ¡Ã‚Â»Ã¢â‚¬Å¡M TRA TÃƒÂ¡Ã‚Â»Ã‚Â° Ãƒâ€ž ÃƒÂ¡Ã‚Â»Ã‹Å“NG BÃƒÂ¡Ã‚ÂºÃ‚Â¢O VÃƒÂ¡Ã‚Â»Ã¢â‚¬Â  CHÃƒâ€ Ã‚Â¯Ãƒâ€ Ã‚Â NG TRUYÃƒÂ¡Ã‚Â»Ã¢â‚¬Â N (Automated Chapter Auditor).
     """
     if not text:
         return text, False
@@ -168,7 +168,7 @@ def verify_and_sanitize_chapter_content(text: str, novel_id: str = "") -> tuple:
             sanitized_text = re.sub(rf"\b{re.escape(old_n)}\b", new_n, sanitized_text)
             
     if found_invalid:
-        print(f"[WARNING] Ã¢Å¡Â Ã¯Â¸Â PHÃƒÂT HIÃ¡Â»â€ N LÃ¡Â»â€“I TÃƒÅ N NHÃƒâ€šN VÃ¡ÂºÂ¬T CÃ…Â¨: {found_invalid}! Ã„ÂÃƒÂ£ tÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng thay thÃ¡ÂºÂ¿ chuÃ¡ÂºÂ©n thÃƒÂ nh nhÃƒÂ¢n vÃ¡ÂºÂ­t bÃ¡Â»â„¢ truyÃ¡Â»â€¡n hiÃ¡Â»â€¡n tÃ¡ÂºÂ¡i.")
+        print(f"[WARNING] ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â PHÃƒÆ’Ã‚ÂT HIÃƒÂ¡Ã‚Â»Ã¢â‚¬Â N LÃƒÂ¡Ã‚Â»Ã¢â‚¬â€œI TÃƒÆ’Ã…Â N NHÃƒÆ’Ã¢â‚¬Å¡N VÃƒÂ¡Ã‚ÂºÃ‚Â¬T CÃƒâ€¦Ã‚Â¨: {found_invalid}! Ãƒâ€žÃ‚ÂÃƒÆ’Ã‚Â£ tÃƒÂ¡Ã‚Â»Ã‚Â± Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ng thay thÃƒÂ¡Ã‚ÂºÃ‚Â¿ chuÃƒÂ¡Ã‚ÂºÃ‚Â©n thÃƒÆ’Ã‚Â nh nhÃƒÆ’Ã‚Â¢n vÃƒÂ¡Ã‚ÂºÃ‚Â­t bÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ truyÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n hiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n tÃƒÂ¡Ã‚ÂºÃ‚Â¡i.")
         return sanitized_text, True
         
     return text, False
@@ -177,39 +177,39 @@ def verify_and_sanitize_chapter_content(text: str, novel_id: str = "") -> tuple:
 
 @cached(ttl_seconds=86400)
 def translate_to_vietnamese_with_gemini(text: str) -> str:
-    """TÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng kiÃ¡Â»Æ’m tra vÃƒÂ  dÃ¡Â»â€¹ch toÃƒÂ n bÃ¡Â»â„¢ kÃ¡Â»â€¹ch bÃ¡ÂºÂ£n tiÃ¡Â»Æ’u thuyÃ¡ÂºÂ¿t tÃ¡Â»Â« tiÃ¡ÂºÂ¿ng Trung/tiÃ¡ÂºÂ¿ng Anh sang tiÃ¡ÂºÂ¿ng ViÃ¡Â»â€¡t chuÃ¡ÂºÂ©n mÃ†Â°Ã¡Â»Â£t mÃƒÂ  100% qua Gemini API."""
+    """TÃƒÂ¡Ã‚Â»Ã‚Â± Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ng kiÃƒÂ¡Ã‚Â»Ã†â€™m tra vÃƒÆ’Ã‚Â  dÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ch toÃƒÆ’Ã‚Â n bÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ kÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ch bÃƒÂ¡Ã‚ÂºÃ‚Â£n tiÃƒÂ¡Ã‚Â»Ã†â€™u thuyÃƒÂ¡Ã‚ÂºÃ‚Â¿t tÃƒÂ¡Ã‚Â»Ã‚Â« tiÃƒÂ¡Ã‚ÂºÃ‚Â¿ng Trung/tiÃƒÂ¡Ã‚ÂºÃ‚Â¿ng Anh sang tiÃƒÂ¡Ã‚ÂºÃ‚Â¿ng ViÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡t chuÃƒÂ¡Ã‚ÂºÃ‚Â©n mÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã‚Â£t mÃƒÆ’Ã‚Â  100% qua Gemini API."""
     if not text or not text.strip():
         return text
         
-    # TÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng rÃƒÂ  soÃƒÂ¡t vÃƒÂ  khÃ¡Â»Â­ tÃƒÂªn nhÃƒÂ¢n vÃ¡ÂºÂ­t cÃ…Â© rÃƒÂ¡c
+    # TÃƒÂ¡Ã‚Â»Ã‚Â± Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ng rÃƒÆ’Ã‚Â  soÃƒÆ’Ã‚Â¡t vÃƒÆ’Ã‚Â  khÃƒÂ¡Ã‚Â»Ã‚Â­ tÃƒÆ’Ã‚Âªn nhÃƒÆ’Ã‚Â¢n vÃƒÂ¡Ã‚ÂºÃ‚Â­t cÃƒâ€¦Ã‚Â© rÃƒÆ’Ã‚Â¡c
     text, _ = verify_and_sanitize_chapter_content(text)
     
     has_chinese = bool(re.search(r"[\u4e00-\u9fff]", text))
     if not has_chinese:
         return text
         
-    print(f"[INFO] BÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u rÃƒÂ  soÃƒÂ¡t ngÃƒÂ´n ngÃ¡Â»Â¯ kÃ¡Â»â€¹ch bÃ¡ÂºÂ£n (Has Chinese: {has_chinese})...")
-    print("[INFO] KÃƒÂ­ch hoÃ¡ÂºÂ¡t Ã„ÂÃ¡Â»â„¢ng CÃ†Â¡ DÃ¡Â»â€¹ch ThuÃ¡ÂºÂ­t Gemini API: DÃ¡Â»â€¹ch/TÃ¡Â»â€˜i Ã†Â°u toÃƒÂ n bÃ¡Â»â„¢ kÃ¡Â»â€¹ch bÃ¡ÂºÂ£n tiÃ¡Â»Æ’u thuyÃ¡ÂºÂ¿t sang TiÃ¡ÂºÂ¿ng ViÃ¡Â»â€¡t mÃ†Â°Ã¡Â»Â£t mÃƒÂ ...")
+    print(f"[INFO] BÃƒÂ¡Ã‚ÂºÃ‚Â¯t Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚ÂºÃ‚Â§u rÃƒÆ’Ã‚Â  soÃƒÆ’Ã‚Â¡t ngÃƒÆ’Ã‚Â´n ngÃƒÂ¡Ã‚Â»Ã‚Â¯ kÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ch bÃƒÂ¡Ã‚ÂºÃ‚Â£n (Has Chinese: {has_chinese})...")
+    print("[INFO] KÃƒÆ’Ã‚Â­ch hoÃƒÂ¡Ã‚ÂºÃ‚Â¡t Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ng CÃƒâ€ Ã‚Â¡ DÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ch ThuÃƒÂ¡Ã‚ÂºÃ‚Â­t Gemini API: DÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ch/TÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi Ãƒâ€ Ã‚Â°u toÃƒÆ’Ã‚Â n bÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ kÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ch bÃƒÂ¡Ã‚ÂºÃ‚Â£n tiÃƒÂ¡Ã‚Â»Ã†â€™u thuyÃƒÂ¡Ã‚ÂºÃ‚Â¿t sang TiÃƒÂ¡Ã‚ÂºÃ‚Â¿ng ViÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡t mÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã‚Â£t mÃƒÆ’Ã‚Â ...")
     translate_prompt = (
-        "BÃ¡ÂºÂ¡n lÃƒÂ  dÃ¡Â»â€¹ch giÃ¡ÂºÂ£ tiÃ¡Â»Æ’u thuyÃ¡ÂºÂ¿t webtoon hÃƒÂ ng Ã„â€˜Ã¡ÂºÂ§u. HÃƒÂ£y dÃ¡Â»â€¹ch/chuyÃ¡Â»Æ’n ngÃ¡Â»Â¯ toÃƒÂ n bÃ¡Â»â„¢ chÃ†Â°Ã†Â¡ng tiÃ¡Â»Æ’u thuyÃ¡ÂºÂ¿t sau Ã„â€˜ÃƒÂ¢y sang tiÃ¡ÂºÂ¿ng ViÃ¡Â»â€¡t tÃ¡Â»Â± nhiÃƒÂªn, giÃƒÂ u cÃ¡ÂºÂ£m xÃƒÂºc vÃƒÂ  hÃ¡ÂºÂ¥p dÃ¡ÂºÂ«n.\n"
-        "YÃƒÅ U CÃ¡ÂºÂ¦U DÃ¡Â»Å CH THUÃ¡ÂºÂ¬T BÃ¡ÂºÂ®T BUÃ¡Â»ËœC:\n"
-        "1. DÃ¡Â»â€¹ch 100% sang tiÃ¡ÂºÂ¿ng ViÃ¡Â»â€¡t thuÃ¡ÂºÂ§n tÃƒÂºy, mÃ†Â°Ã¡Â»Â£t mÃƒÂ , vÃ„Æ’n phong tiÃ¡Â»Æ’u thuyÃ¡ÂºÂ¿t hÃƒÂ nh Ã„â€˜Ã¡Â»â„¢ng/huyÃ¡Â»Ân Ã¡ÂºÂ£o kÃ¡Â»â€¹ch tÃƒÂ­nh.\n"
-        "2. GiÃ¡Â»Â¯ nguyÃƒÂªn 100% Ã„â€˜Ã¡Â»â„¢ dÃƒÂ i vÃ„Æ’n bÃ¡ÂºÂ£n, lÃ¡Â»Âi thoÃ¡ÂºÂ¡i trong ngoÃ¡ÂºÂ·c kÃƒÂ©p (\"...\"), vÃƒÂ  cÃ¡ÂºÂ¥u trÃƒÂºc cÃƒÂ¢u chuyÃ¡Â»â€¡n. TUYÃ¡Â»â€ T Ã„ÂÃ¡Â»ÂI KHÃƒâ€NG tÃƒÂ³m tÃ¡ÂºÂ¯t hay bÃ¡Â»Â sÃƒÂ³t chi tiÃ¡ÂºÂ¿t nÃƒÂ o.\n"
-        "3. GiÃ¡Â»Â¯ nguyÃƒÂªn 100% tÃƒÂªn nhÃƒÂ¢n vÃ¡ÂºÂ­t chuÃ¡ÂºÂ©n tÃ¡Â»Â« nguyÃƒÂªn bÃ¡ÂºÂ£n. CÃ¡ÂºÂ¥m tÃ¡Â»Â± Ã„â€˜Ã¡Â»â€¢i sang tÃƒÂªn khÃƒÂ¡c.\n"
-        "4. ChÃ¡Â»â€° xuÃ¡ÂºÂ¥t ra duy nhÃ¡ÂºÂ¥t vÃ„Æ’n bÃ¡ÂºÂ£n truyÃ¡Â»â€¡n Ã„â€˜ÃƒÂ£ dÃ¡Â»â€¹ch sang tiÃ¡ÂºÂ¿ng ViÃ¡Â»â€¡t, khÃƒÂ´ng kÃƒÂ¨m lÃ¡Â»Âi dÃ¡ÂºÂ«n hay giÃ¡ÂºÂ£i thÃƒÂ­ch.\n\n"
-        f"VÃ„â€šN BÃ¡ÂºÂ¢N CÃ¡ÂºÂ¦N DÃ¡Â»Å CH:\n{text}"
+        "BÃƒÂ¡Ã‚ÂºÃ‚Â¡n lÃƒÆ’Ã‚Â  dÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ch giÃƒÂ¡Ã‚ÂºÃ‚Â£ tiÃƒÂ¡Ã‚Â»Ã†â€™u thuyÃƒÂ¡Ã‚ÂºÃ‚Â¿t webtoon hÃƒÆ’Ã‚Â ng Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚ÂºÃ‚Â§u. HÃƒÆ’Ã‚Â£y dÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ch/chuyÃƒÂ¡Ã‚Â»Ã†â€™n ngÃƒÂ¡Ã‚Â»Ã‚Â¯ toÃƒÆ’Ã‚Â n bÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ chÃƒâ€ Ã‚Â°Ãƒâ€ Ã‚Â¡ng tiÃƒÂ¡Ã‚Â»Ã†â€™u thuyÃƒÂ¡Ã‚ÂºÃ‚Â¿t sau Ãƒâ€žÃ¢â‚¬ËœÃƒÆ’Ã‚Â¢y sang tiÃƒÂ¡Ã‚ÂºÃ‚Â¿ng ViÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡t tÃƒÂ¡Ã‚Â»Ã‚Â± nhiÃƒÆ’Ã‚Âªn, giÃƒÆ’Ã‚Â u cÃƒÂ¡Ã‚ÂºÃ‚Â£m xÃƒÆ’Ã‚Âºc vÃƒÆ’Ã‚Â  hÃƒÂ¡Ã‚ÂºÃ‚Â¥p dÃƒÂ¡Ã‚ÂºÃ‚Â«n.\n"
+        "YÃƒÆ’Ã…Â U CÃƒÂ¡Ã‚ÂºÃ‚Â¦U DÃƒÂ¡Ã‚Â»Ã…Â CH THUÃƒÂ¡Ã‚ÂºÃ‚Â¬T BÃƒÂ¡Ã‚ÂºÃ‚Â®T BUÃƒÂ¡Ã‚Â»Ã‹Å“C:\n"
+        "1. DÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ch 100% sang tiÃƒÂ¡Ã‚ÂºÃ‚Â¿ng ViÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡t thuÃƒÂ¡Ã‚ÂºÃ‚Â§n tÃƒÆ’Ã‚Âºy, mÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã‚Â£t mÃƒÆ’Ã‚Â , vÃƒâ€žÃ†â€™n phong tiÃƒÂ¡Ã‚Â»Ã†â€™u thuyÃƒÂ¡Ã‚ÂºÃ‚Â¿t hÃƒÆ’Ã‚Â nh Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ng/huyÃƒÂ¡Ã‚Â»Ã‚Ân ÃƒÂ¡Ã‚ÂºÃ‚Â£o kÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ch tÃƒÆ’Ã‚Â­nh.\n"
+        "2. GiÃƒÂ¡Ã‚Â»Ã‚Â¯ nguyÃƒÆ’Ã‚Âªn 100% Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ dÃƒÆ’Ã‚Â i vÃƒâ€žÃ†â€™n bÃƒÂ¡Ã‚ÂºÃ‚Â£n, lÃƒÂ¡Ã‚Â»Ã‚Âi thoÃƒÂ¡Ã‚ÂºÃ‚Â¡i trong ngoÃƒÂ¡Ã‚ÂºÃ‚Â·c kÃƒÆ’Ã‚Â©p (\"...\"), vÃƒÆ’Ã‚Â  cÃƒÂ¡Ã‚ÂºÃ‚Â¥u trÃƒÆ’Ã‚Âºc cÃƒÆ’Ã‚Â¢u chuyÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n. TUYÃƒÂ¡Ã‚Â»Ã¢â‚¬Â T Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚Â»Ã‚ÂI KHÃƒÆ’Ã¢â‚¬ÂNG tÃƒÆ’Ã‚Â³m tÃƒÂ¡Ã‚ÂºÃ‚Â¯t hay bÃƒÂ¡Ã‚Â»Ã‚Â sÃƒÆ’Ã‚Â³t chi tiÃƒÂ¡Ã‚ÂºÃ‚Â¿t nÃƒÆ’Ã‚Â o.\n"
+        "3. GiÃƒÂ¡Ã‚Â»Ã‚Â¯ nguyÃƒÆ’Ã‚Âªn 100% tÃƒÆ’Ã‚Âªn nhÃƒÆ’Ã‚Â¢n vÃƒÂ¡Ã‚ÂºÃ‚Â­t chuÃƒÂ¡Ã‚ÂºÃ‚Â©n tÃƒÂ¡Ã‚Â»Ã‚Â« nguyÃƒÆ’Ã‚Âªn bÃƒÂ¡Ã‚ÂºÃ‚Â£n. CÃƒÂ¡Ã‚ÂºÃ‚Â¥m tÃƒÂ¡Ã‚Â»Ã‚Â± Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¢i sang tÃƒÆ’Ã‚Âªn khÃƒÆ’Ã‚Â¡c.\n"
+        "4. ChÃƒÂ¡Ã‚Â»Ã¢â‚¬Â° xuÃƒÂ¡Ã‚ÂºÃ‚Â¥t ra duy nhÃƒÂ¡Ã‚ÂºÃ‚Â¥t vÃƒâ€žÃ†â€™n bÃƒÂ¡Ã‚ÂºÃ‚Â£n truyÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n Ãƒâ€žÃ¢â‚¬ËœÃƒÆ’Ã‚Â£ dÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ch sang tiÃƒÂ¡Ã‚ÂºÃ‚Â¿ng ViÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡t, khÃƒÆ’Ã‚Â´ng kÃƒÆ’Ã‚Â¨m lÃƒÂ¡Ã‚Â»Ã‚Âi dÃƒÂ¡Ã‚ÂºÃ‚Â«n hay giÃƒÂ¡Ã‚ÂºÃ‚Â£i thÃƒÆ’Ã‚Â­ch.\n\n"
+        f"VÃƒâ€žÃ¢â‚¬Å¡N BÃƒÂ¡Ã‚ÂºÃ‚Â¢N CÃƒÂ¡Ã‚ÂºÃ‚Â¦N DÃƒÂ¡Ã‚Â»Ã…Â CH:\n{text}"
     )
     translated_res = call_gemini(translate_prompt)
     if translated_res and len(translated_res.split()) > 200:
         cleaned_res = clean_chapter_content(translated_res)
         cleaned_res, _ = verify_and_sanitize_chapter_content(cleaned_res)
-        print(f"[SUCCESS] Ã„ÂÃƒÂ£ hoÃƒÂ n thÃƒÂ nh dÃ¡Â»â€¹ch kÃ¡Â»â€¹ch bÃ¡ÂºÂ£n sang TiÃ¡ÂºÂ¿ng ViÃ¡Â»â€¡t qua Gemini API! Ã„ÂÃ¡Â»â„¢ dÃƒÂ i: {len(cleaned_res.split())} tÃ¡Â»Â«.")
+        print(f"[SUCCESS] Ãƒâ€žÃ‚ÂÃƒÆ’Ã‚Â£ hoÃƒÆ’Ã‚Â n thÃƒÆ’Ã‚Â nh dÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ch kÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ch bÃƒÂ¡Ã‚ÂºÃ‚Â£n sang TiÃƒÂ¡Ã‚ÂºÃ‚Â¿ng ViÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡t qua Gemini API! Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ dÃƒÆ’Ã‚Â i: {len(cleaned_res.split())} tÃƒÂ¡Ã‚Â»Ã‚Â«.")
         return cleaned_res
     return text
 
 
 def call_inkos_cloud(prompt: str) -> str:
-    print("[INFO] Gửi yêu cầu sáng tác tới Inkos (Hugging Face Cloud)...")
+    print("[INFO] Gá»­i yÃªu cáº§u sÃ¡ng tÃ¡c tá»›i Inkos (Hugging Face Cloud)...")
     try:
         hf_token = os.environ.get("HF_TOKEN")
         client = Client("AnLee-ai/truyen24h-video-ai", hf_token=hf_token)
@@ -217,22 +217,22 @@ def call_inkos_cloud(prompt: str) -> str:
             prompt=prompt,
             api_name="/generate_story"
         )
-        if "Lỗi" in result:
-            print(f"[WARNING] Inkos trả về lỗi: {result}")
+        if "Lá»—i" in result:
+            print(f"[WARNING] Inkos tráº£ vá» lá»—i: {result}")
             return ""
         return str(result)
     except Exception as e:
-        print(f"[ERROR] Lỗi gọi Inkos Cloud: {e}")
+        print(f"[ERROR] Lá»—i gá»i Inkos Cloud: {e}")
         return ""
 
 @cached(ttl_seconds=86400)
 def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
     """
-    Ã†Â¯U TIÃƒÅ N 100% HÃƒâ‚¬NG Ã„ÂÃ¡ÂºÂ¦U: InkOS Multi-Agent Engine (Google Gemini 2.0 Flash API vÃ¡Â»â€ºi Key Rotator).
-    ChÃ¡Â»â€° khi Gemini hÃ¡ÂºÂ¿t Key mÃ¡Â»â€ºi chuyÃ¡Â»Æ’n sang Groq / OpenRouter dÃ¡Â»Â± phÃƒÂ²ng.
+    Ãƒâ€ Ã‚Â¯U TIÃƒÆ’Ã…Â N 100% HÃƒÆ’Ã¢â€šÂ¬NG Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚ÂºÃ‚Â¦U: InkOS Multi-Agent Engine (Google Gemini 2.0 Flash API vÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi Key Rotator).
+    ChÃƒÂ¡Ã‚Â»Ã¢â‚¬Â° khi Gemini hÃƒÂ¡Ã‚ÂºÃ‚Â¿t Key mÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi chuyÃƒÂ¡Ã‚Â»Ã†â€™n sang Groq / OpenRouter dÃƒÂ¡Ã‚Â»Ã‚Â± phÃƒÆ’Ã‚Â²ng.
     """
     # =========================================================================
-    # Ã„ÂÃ¡Â»ËœNG CÃ†Â  Ã†Â¯U TIÃƒÅ N 1: InkOS Gemini 2.0 Flash Engine (Google API vÃ¡Â»â€ºi Key Rotator)
+    # Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚Â»Ã‹Å“NG CÃƒâ€ Ã‚Â  Ãƒâ€ Ã‚Â¯U TIÃƒÆ’Ã…Â N 1: InkOS Gemini 2.0 Flash Engine (Google API vÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi Key Rotator)
     # =========================================================================
     gemini_models = ["gemini-3.6-flash", "gemini-3.5-flash-lite"]
     for attempt in range(min(retries, 4)):
@@ -262,7 +262,7 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
                 response = model.generate_content(prompt)
 
             if response.text and len(response.text.strip().split()) > 10:
-                print(f"[SUCCESS] Ã¢Å¡Â¡ InkOS Writer Agent [{current_g_model}]: TÃ¡ÂºÂ¡o kÃ¡Â»â€¹ch bÃ¡ÂºÂ£n mÃ†Â°Ã¡Â»Â£t mÃƒÂ  thÃƒÂ nh cÃƒÂ´ng! ({len(response.text.strip().split())} tÃ¡Â»Â«).")
+                print(f"[SUCCESS] ÃƒÂ¢Ã…Â¡Ã‚Â¡ InkOS Writer Agent [{current_g_model}]: TÃƒÂ¡Ã‚ÂºÃ‚Â¡o kÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ch bÃƒÂ¡Ã‚ÂºÃ‚Â£n mÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã‚Â£t mÃƒÆ’Ã‚Â  thÃƒÆ’Ã‚Â nh cÃƒÆ’Ã‚Â´ng! ({len(response.text.strip().split())} tÃƒÂ¡Ã‚Â»Ã‚Â«).")
                 return response.text.strip()
         except Exception as e:
             err_str = str(e)
@@ -281,7 +281,7 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
                 time.sleep(1.0)
 
     # =========================================================================
-    # ÄÆ¯á»œNG CÆ  Dá»° PHÃ’NG 2: Local Mangstoon_AI Engine (Thay vÃ¬ Groq)
+    # Ã„ÂÃ†Â¯Ã¡Â»Å“NG CÃ†Â  DÃ¡Â»Â° PHÃƒâ€™NG 2: Local Mangstoon_AI Engine (Thay vÃƒÂ¬ Groq)
     # =========================================================================
     local_mangstoon = call_mangstoon_ai(prompt)
     if local_mangstoon and len(local_mangstoon.strip().split()) > 10:
@@ -289,7 +289,7 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
         return local_mangstoon.strip()
 
     # =========================================================================
-    # ÄÆ¯á»œNG CÆ  Dá»° PHÃ’NG 3: Groq Multi-Model Engine (Dá»± phÃ²ng cáº¥p 3)
+    # Ã„ÂÃ†Â¯Ã¡Â»Å“NG CÃ†Â  DÃ¡Â»Â° PHÃƒâ€™NG 3: Groq Multi-Model Engine (DÃ¡Â»Â± phÃƒÂ²ng cÃ¡ÂºÂ¥p 3)
     # =========================================================================
     groq_key = key_rotator.get_groq_key() or config.GROQ_API_KEY
     if groq_key:
@@ -326,7 +326,7 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
                     except (KeyError, IndexError, TypeError):
                         continue
                     if content and len(content.strip().split()) > 10:
-                        print(f"[SUCCESS] Groq Fallback Engine [{current_model}]: Ã„ÂÃƒÂ£ sinh kÃ¡Â»â€¹ch bÃ¡ÂºÂ£n ({len(content.strip().split())} tÃ¡Â»Â«).")
+                        print(f"[SUCCESS] Groq Fallback Engine [{current_model}]: Ãƒâ€žÃ‚ÂÃƒÆ’Ã‚Â£ sinh kÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ch bÃƒÂ¡Ã‚ÂºÃ‚Â£n ({len(content.strip().split())} tÃƒÂ¡Ã‚Â»Ã‚Â«).")
                         return content.strip()
                 elif response.status_code == 429:
                     time.sleep(1.5)
@@ -415,7 +415,7 @@ def call_pollinations_free_llm(prompt: str) -> str:
             print(f"[WARNING] Pollinations Free LLM ({model_name}) failed: {e}")
             continue
         
-    # Backup GET request rÃƒÂºt gÃ¡Â»Ân prompt
+    # Backup GET request rÃƒÆ’Ã‚Âºt gÃƒÂ¡Ã‚Â»Ã‚Ân prompt
     try:
         import urllib.parse
         import urllib.request
@@ -512,12 +512,12 @@ def generate_arc_blueprints(novel_id: str, arc: dict) -> list:
     arc_title = arc.get("title")
     start_ch = arc.get("start_chapter")
     end_ch = arc.get("end_chapter")
-    arc_summary = arc.get("summary", "TiÃ¡ÂºÂ¿p tÃ¡Â»Â¥c diÃ¡Â»â€¦n biÃ¡ÂºÂ¿n cÃ¡Â»Â§a bÃ¡Â»â€˜i cÃ¡ÂºÂ£nh hÃ¡Â»Âc viÃ¡Â»â€¡n.")
+    arc_summary = arc.get("summary", "TiÃƒÂ¡Ã‚ÂºÃ‚Â¿p tÃƒÂ¡Ã‚Â»Ã‚Â¥c diÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¦n biÃƒÂ¡Ã‚ÂºÃ‚Â¿n cÃƒÂ¡Ã‚Â»Ã‚Â§a bÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi cÃƒÂ¡Ã‚ÂºÃ‚Â£nh hÃƒÂ¡Ã‚Â»Ã‚Âc viÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n.")
     
     print(f"[INFO] Generating blueprints for Arc {arc_num}: '{arc_title}' (Chapters {start_ch} - {end_ch})...")
     
     novel = database.get_novel(novel_id)
-    novel_title = novel.get("title", "TruyÃ¡Â»â€¡n mÃ¡Â»â€ºi")
+    novel_title = novel.get("title", "TruyÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n mÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi")
     novel_description = novel.get("description", "")
     
     existing_chapters = database.get_all_chapters(novel_id)
@@ -544,7 +544,7 @@ def generate_arc_blueprints(novel_id: str, arc: dict) -> list:
             if isinstance(blueprints_raw, list):
                 blueprints = blueprints_raw
             elif isinstance(blueprints_raw, dict):
-                # GiÃ¡ÂºÂ£i nÃƒÂ©n nÃ¡ÂºÂ¿u LLM bÃ¡Â»Âc trong dict {"blueprints": [...]} hoÃ¡ÂºÂ·c {"chapters": [...]}
+                # GiÃƒÂ¡Ã‚ÂºÃ‚Â£i nÃƒÆ’Ã‚Â©n nÃƒÂ¡Ã‚ÂºÃ‚Â¿u LLM bÃƒÂ¡Ã‚Â»Ã‚Âc trong dict {"blueprints": [...]} hoÃƒÂ¡Ã‚ÂºÃ‚Â·c {"chapters": [...]}
                 blueprints = blueprints_raw.get("blueprints") or blueprints_raw.get("chapters") or blueprints_raw.get("arcs") or []
                 if not isinstance(blueprints, list):
                     raise ValueError("Extracted blueprints from dict is not a list")
@@ -577,24 +577,24 @@ def generate_arc_blueprints(novel_id: str, arc: dict) -> list:
             end_num = start_num + 24
         
         EPIC_TITLES = [
-            "TrÃƒÂ¹ng Sinh VÃ¡ÂºÂ¡n CÃ¡Â»â€¢, ThÃƒÂ´n PhÃ¡Â»â€¡ VÃƒÂ´ TÃ¡ÂºÂ­n",
-            "ThÃ¡Â»Â©c TÃ¡Â»â€°nh ThÃ¡ÂºÂ§n ThÃ¡Â»Æ’, NÃƒÂ©n Ãƒâ€°p ThÃ¡ÂºÂ§n Ma",
-            "HuyÃ¡ÂºÂ¿t MÃ¡ÂºÂ¡ch ThÃƒÂ´n ThiÃƒÂªn, TrÃ¡ÂºÂ¥n TÃƒÂ¡m PhÃ†Â°Ã†Â¡ng",
-            "QuyÃ¡Â»Ân TrÃ¡ÂºÂ¥n SÃ†Â¡n HÃƒÂ , Uy ChÃ¡ÂºÂ¥n ChÃ†Â° ThiÃƒÂªn",
-            "VÃƒÂ´ Ã„ÂÃ¡Â»â€¹ch TrÃƒÂ¹ng Sinh, HÃ¡Â»â€”n Ã„ÂÃ¡Â»â„¢n LuyÃ¡Â»â€¡n KhÃƒÂ­",
-            "NghÃ¡Â»â€¹ch ThiÃƒÂªn Ã„ÂÃ¡Â»â„¢c TÃƒÂ´n, LuyÃ¡Â»â€¡n HÃƒÂ³a ThÃ¡ÂºÂ§n ThÃ¡ÂºÂ¡ch",
-            "ThÃƒÂ´n PhÃ¡Â»â€¡ NguyÃƒÂªn KhÃƒÂ­, PhÃƒÂ¡ Tam CÃ¡ÂºÂ£nh",
-            "VÃ¡ÂºÂ¡n GiÃ¡Â»â€ºi QuÃ¡Â»Â³ BÃƒÂ¡i, TiÃƒÂªu ViÃƒÂªm XuÃ¡ÂºÂ¥t ThÃ¡ÂºÂ¿",
-            "ThÃƒÂ´n PhÃ¡Â»â€¡ Ma NhÃ¡ÂºÂ«n, Khai MÃ¡Â»Å¸ ThÃ¡ÂºÂ§n ThÃƒÂ´ng",
-            "VÃƒÂ´ Song KiÃ¡ÂºÂ¿m KhÃƒÂ­, TrÃ¡ÂºÂ£m DiÃ¡Â»â€¡t CÃ†Â°Ã¡Â»Âng Ã„ÂÃ¡Â»â€¹ch",
-            "HÃ¡Â»â€¡ ThÃ¡Â»â€˜ng ThÃ¡ÂºÂ§n CÃ¡ÂºÂ¥p, ThÃƒÂ´n PhÃ¡Â»â€¡ VÃ¡ÂºÂ¡n VÃ¡ÂºÂ­t",
-            "BÃƒÂ¡ ThÃ¡ÂºÂ§n XuÃ¡ÂºÂ¥t ThÃ¡ÂºÂ¿, NgÃ„Æ’n CÃ¡ÂºÂ£n VÃ¡ÂºÂ¡n QuÃƒÂ¢n",
-            "ThÃƒÂ´n PhÃ¡Â»â€¡ VÃ„Â©nh HÃ¡ÂºÂ±ng, XÃƒÂ¢y DÃ¡Â»Â±ng Ã„ÂÃ¡ÂºÂ¿ CÃ†Â¡",
-            "ThÃƒÂ´n ThiÃƒÂªn LuyÃ¡Â»â€¡n Ã„ÂÃ¡Â»â€¹a, Ã„ÂÃ¡Â»â„¢c TÃƒÂ´n VÃ¡ÂºÂ¡n CÃ¡Â»â€¢",
-            "TuyÃ¡Â»â€¡t ThÃ¡ÂºÂ¿ VÃƒÂ´ Ã„ÂÃ¡Â»â€¹ch, Phong Ã¡ÂºÂ¤n ThÃ¡ÂºÂ§n HoÃƒÂ ng",
-            "KhÃƒÂ­ PhÃƒÂ¡ch NgÃƒÂºt TrÃ¡Â»Âi, ThÃƒÂ´n PhÃ¡Â»â€¡ Long MÃ¡ÂºÂ¡ch",
-            "VÃ¡ÂºÂ¡n CÃ¡Â»â€¢ Ma Cung, Ã„ÂÃ¡ÂºÂ¡i ChiÃ¡ÂºÂ¿n ChÃ†Â° ThiÃƒÂªn",
-            "BÃƒÂ¡ ChÃ¡Â»Â§ HuyÃ¡Â»Ân ThoÃ¡ÂºÂ¡i, LuyÃ¡Â»â€¡n HÃƒÂ³a VÃ¡ÂºÂ¡n GiÃ¡Â»â€ºi"
+            "TrÃƒÆ’Ã‚Â¹ng Sinh VÃƒÂ¡Ã‚ÂºÃ‚Â¡n CÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¢, ThÃƒÆ’Ã‚Â´n PhÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡ VÃƒÆ’Ã‚Â´ TÃƒÂ¡Ã‚ÂºÃ‚Â­n",
+            "ThÃƒÂ¡Ã‚Â»Ã‚Â©c TÃƒÂ¡Ã‚Â»Ã¢â‚¬Â°nh ThÃƒÂ¡Ã‚ÂºÃ‚Â§n ThÃƒÂ¡Ã‚Â»Ã†â€™, NÃƒÆ’Ã‚Â©n ÃƒÆ’Ã¢â‚¬Â°p ThÃƒÂ¡Ã‚ÂºÃ‚Â§n Ma",
+            "HuyÃƒÂ¡Ã‚ÂºÃ‚Â¿t MÃƒÂ¡Ã‚ÂºÃ‚Â¡ch ThÃƒÆ’Ã‚Â´n ThiÃƒÆ’Ã‚Âªn, TrÃƒÂ¡Ã‚ÂºÃ‚Â¥n TÃƒÆ’Ã‚Â¡m PhÃƒâ€ Ã‚Â°Ãƒâ€ Ã‚Â¡ng",
+            "QuyÃƒÂ¡Ã‚Â»Ã‚Ân TrÃƒÂ¡Ã‚ÂºÃ‚Â¥n SÃƒâ€ Ã‚Â¡n HÃƒÆ’Ã‚Â , Uy ChÃƒÂ¡Ã‚ÂºÃ‚Â¥n ChÃƒâ€ Ã‚Â° ThiÃƒÆ’Ã‚Âªn",
+            "VÃƒÆ’Ã‚Â´ Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ch TrÃƒÆ’Ã‚Â¹ng Sinh, HÃƒÂ¡Ã‚Â»Ã¢â‚¬â€n Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢n LuyÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n KhÃƒÆ’Ã‚Â­",
+            "NghÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ch ThiÃƒÆ’Ã‚Âªn Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢c TÃƒÆ’Ã‚Â´n, LuyÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n HÃƒÆ’Ã‚Â³a ThÃƒÂ¡Ã‚ÂºÃ‚Â§n ThÃƒÂ¡Ã‚ÂºÃ‚Â¡ch",
+            "ThÃƒÆ’Ã‚Â´n PhÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡ NguyÃƒÆ’Ã‚Âªn KhÃƒÆ’Ã‚Â­, PhÃƒÆ’Ã‚Â¡ Tam CÃƒÂ¡Ã‚ÂºÃ‚Â£nh",
+            "VÃƒÂ¡Ã‚ÂºÃ‚Â¡n GiÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi QuÃƒÂ¡Ã‚Â»Ã‚Â³ BÃƒÆ’Ã‚Â¡i, TiÃƒÆ’Ã‚Âªu ViÃƒÆ’Ã‚Âªm XuÃƒÂ¡Ã‚ÂºÃ‚Â¥t ThÃƒÂ¡Ã‚ÂºÃ‚Â¿",
+            "ThÃƒÆ’Ã‚Â´n PhÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡ Ma NhÃƒÂ¡Ã‚ÂºÃ‚Â«n, Khai MÃƒÂ¡Ã‚Â»Ã…Â¸ ThÃƒÂ¡Ã‚ÂºÃ‚Â§n ThÃƒÆ’Ã‚Â´ng",
+            "VÃƒÆ’Ã‚Â´ Song KiÃƒÂ¡Ã‚ÂºÃ‚Â¿m KhÃƒÆ’Ã‚Â­, TrÃƒÂ¡Ã‚ÂºÃ‚Â£m DiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡t CÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã‚Âng Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ch",
+            "HÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡ ThÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœng ThÃƒÂ¡Ã‚ÂºÃ‚Â§n CÃƒÂ¡Ã‚ÂºÃ‚Â¥p, ThÃƒÆ’Ã‚Â´n PhÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡ VÃƒÂ¡Ã‚ÂºÃ‚Â¡n VÃƒÂ¡Ã‚ÂºÃ‚Â­t",
+            "BÃƒÆ’Ã‚Â¡ ThÃƒÂ¡Ã‚ÂºÃ‚Â§n XuÃƒÂ¡Ã‚ÂºÃ‚Â¥t ThÃƒÂ¡Ã‚ÂºÃ‚Â¿, NgÃƒâ€žÃ†â€™n CÃƒÂ¡Ã‚ÂºÃ‚Â£n VÃƒÂ¡Ã‚ÂºÃ‚Â¡n QuÃƒÆ’Ã‚Â¢n",
+            "ThÃƒÆ’Ã‚Â´n PhÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡ VÃƒâ€žÃ‚Â©nh HÃƒÂ¡Ã‚ÂºÃ‚Â±ng, XÃƒÆ’Ã‚Â¢y DÃƒÂ¡Ã‚Â»Ã‚Â±ng Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚ÂºÃ‚Â¿ CÃƒâ€ Ã‚Â¡",
+            "ThÃƒÆ’Ã‚Â´n ThiÃƒÆ’Ã‚Âªn LuyÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹a, Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢c TÃƒÆ’Ã‚Â´n VÃƒÂ¡Ã‚ÂºÃ‚Â¡n CÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¢",
+            "TuyÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡t ThÃƒÂ¡Ã‚ÂºÃ‚Â¿ VÃƒÆ’Ã‚Â´ Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ch, Phong ÃƒÂ¡Ã‚ÂºÃ‚Â¤n ThÃƒÂ¡Ã‚ÂºÃ‚Â§n HoÃƒÆ’Ã‚Â ng",
+            "KhÃƒÆ’Ã‚Â­ PhÃƒÆ’Ã‚Â¡ch NgÃƒÆ’Ã‚Âºt TrÃƒÂ¡Ã‚Â»Ã‚Âi, ThÃƒÆ’Ã‚Â´n PhÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡ Long MÃƒÂ¡Ã‚ÂºÃ‚Â¡ch",
+            "VÃƒÂ¡Ã‚ÂºÃ‚Â¡n CÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¢ Ma Cung, Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚ÂºÃ‚Â¡i ChiÃƒÂ¡Ã‚ÂºÃ‚Â¿n ChÃƒâ€ Ã‚Â° ThiÃƒÆ’Ã‚Âªn",
+            "BÃƒÆ’Ã‚Â¡ ChÃƒÂ¡Ã‚Â»Ã‚Â§ HuyÃƒÂ¡Ã‚Â»Ã‚Ân ThoÃƒÂ¡Ã‚ÂºÃ‚Â¡i, LuyÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n HÃƒÆ’Ã‚Â³a VÃƒÂ¡Ã‚ÂºÃ‚Â¡n GiÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi"
         ]
         
         parsed_numbers = {int(b.get("chapter_number", 0)) for b in blueprints if isinstance(b, dict)}
@@ -603,10 +603,10 @@ def generate_arc_blueprints(novel_id: str, arc: dict) -> list:
                 epic_t = EPIC_TITLES[(ch_i - 1) % len(EPIC_TITLES)]
                 blueprints.append({
                     "chapter_number": ch_i,
-                    "chapter_title": f"{epic_t} (TÃ¡ÂºÂ­p {ch_i})",
-                    "blueprint": f"DiÃ¡Â»â€¦n biÃ¡ÂºÂ¿n kÃ¡Â»â€¹ch tÃƒÂ­nh tiÃ¡ÂºÂ¿p theo cÃ¡Â»Â§a cÃƒÂ¢u chuyÃ¡Â»â€¡n Ã¡Â»Å¸ chÃ†Â°Ã†Â¡ng {ch_i}.",
+                    "chapter_title": f"{epic_t} (TÃƒÂ¡Ã‚ÂºÃ‚Â­p {ch_i})",
+                    "blueprint": f"DiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¦n biÃƒÂ¡Ã‚ÂºÃ‚Â¿n kÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ch tÃƒÆ’Ã‚Â­nh tiÃƒÂ¡Ã‚ÂºÃ‚Â¿p theo cÃƒÂ¡Ã‚Â»Ã‚Â§a cÃƒÆ’Ã‚Â¢u chuyÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n ÃƒÂ¡Ã‚Â»Ã…Â¸ chÃƒâ€ Ã‚Â°Ãƒâ€ Ã‚Â¡ng {ch_i}.",
                     "characters_present": [],
-                    "narrative_goal": "PhÃƒÂ¡t triÃ¡Â»Æ’n cÃ¡Â»â€˜t truyÃ¡Â»â€¡n"
+                    "narrative_goal": "PhÃƒÆ’Ã‚Â¡t triÃƒÂ¡Ã‚Â»Ã†â€™n cÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœt truyÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n"
                 })
 
         existing_chapter_numbers = {c["chapter_number"] for c in existing_chapters}
@@ -615,10 +615,10 @@ def generate_arc_blueprints(novel_id: str, arc: dict) -> list:
             if not isinstance(ch_data, dict):
                 continue
             ch_num = int(ch_data.get("chapter_number", 1))
-            ch_title = ch_data.get("chapter_title") or f"ChÃ†Â°Ã†Â¡ng {ch_num}"
-            blueprint_text = ch_data.get("blueprint") or "TiÃ¡ÂºÂ¿p tÃ¡Â»Â¥c diÃ¡Â»â€¦n biÃ¡ÂºÂ¿n cÃƒÂ¢u chuyÃ¡Â»â€¡n."
+            ch_title = ch_data.get("chapter_title") or f"ChÃƒâ€ Ã‚Â°Ãƒâ€ Ã‚Â¡ng {ch_num}"
+            blueprint_text = ch_data.get("blueprint") or "TiÃƒÂ¡Ã‚ÂºÃ‚Â¿p tÃƒÂ¡Ã‚Â»Ã‚Â¥c diÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¦n biÃƒÂ¡Ã‚ÂºÃ‚Â¿n cÃƒÆ’Ã‚Â¢u chuyÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n."
             
-            # ChÃ¡Â»â€° tÃ¡ÂºÂ¡o blueprint nÃ¡ÂºÂ¿u chÃ†Â°Ã†Â¡ng chÃ†Â°a tÃ¡Â»â€œn tÃ¡ÂºÂ¡i trong CSDL
+            # ChÃƒÂ¡Ã‚Â»Ã¢â‚¬Â° tÃƒÂ¡Ã‚ÂºÃ‚Â¡o blueprint nÃƒÂ¡Ã‚ÂºÃ‚Â¿u chÃƒâ€ Ã‚Â°Ãƒâ€ Ã‚Â¡ng chÃƒâ€ Ã‚Â°a tÃƒÂ¡Ã‚Â»Ã¢â‚¬Å“n tÃƒÂ¡Ã‚ÂºÃ‚Â¡i trong CSDL
             if ch_num not in existing_chapter_numbers:
                 ch_record = database.create_chapter(
                     novel_id=novel_id,
@@ -657,13 +657,13 @@ def get_current_arc(novel_id: str, chapter_number: int) -> dict:
     }
 
 def write_next_chapter(novel_id: str) -> dict:
-    # LÃ¡ÂºÂ¥y tÃ¡ÂºÂ­p hÃ¡Â»Â£p 100% tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ cÃƒÂ¡c sÃ¡Â»â€˜ chÃ†Â°Ã†Â¡ng Ã„â€˜ÃƒÂ£ xong tÃ¡Â»Â« Supabase + data/ + output/ + RAM
+    # LÃƒÂ¡Ã‚ÂºÃ‚Â¥y tÃƒÂ¡Ã‚ÂºÃ‚Â­p hÃƒÂ¡Ã‚Â»Ã‚Â£p 100% tÃƒÂ¡Ã‚ÂºÃ‚Â¥t cÃƒÂ¡Ã‚ÂºÃ‚Â£ cÃƒÆ’Ã‚Â¡c sÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœ chÃƒâ€ Ã‚Â°Ãƒâ€ Ã‚Â¡ng Ãƒâ€žÃ¢â‚¬ËœÃƒÆ’Ã‚Â£ xong tÃƒÂ¡Ã‚Â»Ã‚Â« Supabase + data/ + output/ + RAM
     completed_set = database.get_completed_chapters_set(novel_id)
     all_done_nums = {int(x) for x in completed_set if str(x).isdigit()}
 
     all_chapters = database.get_all_chapters(novel_id)
     
-    # LÃ¡Â»Âc cÃƒÂ¡c chÃ†Â°Ã†Â¡ng chÃ†Â°a viÃ¡ÂºÂ¿t xong kÃ¡Â»â€¹ch bÃ¡ÂºÂ£n (< 1200 tÃ¡Â»Â« hoÃ¡ÂºÂ·c cÃƒÂ²n lÃƒÂ  BLUEPRINT)
+    # LÃƒÂ¡Ã‚Â»Ã‚Âc cÃƒÆ’Ã‚Â¡c chÃƒâ€ Ã‚Â°Ãƒâ€ Ã‚Â¡ng chÃƒâ€ Ã‚Â°a viÃƒÂ¡Ã‚ÂºÃ‚Â¿t xong kÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ch bÃƒÂ¡Ã‚ÂºÃ‚Â£n (< 1200 tÃƒÂ¡Ã‚Â»Ã‚Â« hoÃƒÂ¡Ã‚ÂºÃ‚Â·c cÃƒÆ’Ã‚Â²n lÃƒÆ’Ã‚Â  BLUEPRINT)
     unwritten_chapters = [
         c for c in all_chapters 
         if isinstance(c.get("chapter_number"), (int, str)) and str(c.get("chapter_number")).isdigit()
@@ -678,7 +678,7 @@ def write_next_chapter(novel_id: str) -> dict:
         existing_nums = [int(c["chapter_number"]) for c in all_chapters if str(c.get("chapter_number", "")).isdigit()] + list(all_done_nums)
         next_ch_number = (max(existing_nums) + 1) if existing_nums else 1
 
-    print(f"[INFO] Báº®T Äáº¦U QUY TRÃŒNH VIáº¾T CHÆ¯Æ NG Má»šI: ChÆ°Æ¡ng {next_ch_number} (ÄÃ£ hoÃ n thÃ nh cÃ¡c táº­p: {sorted(list(all_done_nums))})...")
+    print(f"[INFO] BÃ¡ÂºÂ®T Ã„ÂÃ¡ÂºÂ¦U QUY TRÃƒÅ’NH VIÃ¡ÂºÂ¾T CHÃ†Â¯Ã†Â NG MÃ¡Â»Å¡I: ChÃ†Â°Ã†Â¡ng {next_ch_number} (Ã„ÂÃƒÂ£ hoÃƒÂ n thÃƒÂ nh cÃƒÂ¡c tÃ¡ÂºÂ­p: {sorted(list(all_done_nums))})...")
     current_arc = get_current_arc(novel_id, next_ch_number)
     chapter_record = next((c for c in all_chapters if c["chapter_number"] == next_ch_number), None)
     if not chapter_record:
@@ -686,7 +686,7 @@ def write_next_chapter(novel_id: str) -> dict:
         all_chapters = database.get_all_chapters(novel_id)
         chapter_record = next((c for c in all_chapters if c["chapter_number"] == next_ch_number), None)
     if not chapter_record:
-        chapter_record = database.create_chapter(novel_id=novel_id, chapter_number=next_ch_number, title=f"ChÆ°Æ¡ng {next_ch_number}", content=f"BLUEPRINT: Diá»…n biáº¿n tiáº¿p theo.")
+        chapter_record = database.create_chapter(novel_id=novel_id, chapter_number=next_ch_number, title=f"ChÃ†Â°Ã†Â¡ng {next_ch_number}", content=f"BLUEPRINT: DiÃ¡Â»â€¦n biÃ¡ÂºÂ¿n tiÃ¡ÂºÂ¿p theo.")
     blueprint_text = (chapter_record or {}).get("content", "BLUEPRINT: default")
     
     chars = database.get_characters(novel_id)
@@ -709,10 +709,10 @@ def write_next_chapter(novel_id: str) -> dict:
     
     previous_chapters = [c for c in all_chapters if c["chapter_number"] < next_ch_number and not c["content"].startswith("BLUEPRINT:")]
     working_memory_text = ""
-    # TÃ„Æ’ng tham chiÃ¡ÂºÂ¿u tÃ¡Â»Â« 2-3 chÃ†Â°Ã†Â¡ng lÃƒÂªn 7 chÃ†Â°Ã†Â¡ng gÃ¡ÂºÂ§n nhÃ¡ÂºÂ¥t (5 - 10 chÃ†Â°Ã†Â¡ng) Ã„â€˜Ã¡Â»Æ’ Ã„â€˜Ã¡ÂºÂ£m bÃ¡ÂºÂ£o mÃ¡ÂºÂ¡ch truyÃ¡Â»â€¡n cÃ¡Â»Â±c kÃ¡Â»Â³ nhÃ¡ÂºÂ¥t quÃƒÂ¡n
+    # TÃƒâ€žÃ†â€™ng tham chiÃƒÂ¡Ã‚ÂºÃ‚Â¿u tÃƒÂ¡Ã‚Â»Ã‚Â« 2-3 chÃƒâ€ Ã‚Â°Ãƒâ€ Ã‚Â¡ng lÃƒÆ’Ã‚Âªn 7 chÃƒâ€ Ã‚Â°Ãƒâ€ Ã‚Â¡ng gÃƒÂ¡Ã‚ÂºÃ‚Â§n nhÃƒÂ¡Ã‚ÂºÃ‚Â¥t (5 - 10 chÃƒâ€ Ã‚Â°Ãƒâ€ Ã‚Â¡ng) Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚ÂºÃ‚Â£m bÃƒÂ¡Ã‚ÂºÃ‚Â£o mÃƒÂ¡Ã‚ÂºÃ‚Â¡ch truyÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n cÃƒÂ¡Ã‚Â»Ã‚Â±c kÃƒÂ¡Ã‚Â»Ã‚Â³ nhÃƒÂ¡Ã‚ÂºÃ‚Â¥t quÃƒÆ’Ã‚Â¡n
     for ch in previous_chapters[-7:]:
         ch_snippet = ch['content'][:600] + "\n...\n" + ch['content'][-600:] if len(ch['content']) > 1200 else ch['content']
-        working_memory_text += f"\n--- ChÃ†Â°Ã†Â¡ng {ch['chapter_number']}: {ch['title']} ---\n{ch_snippet}\n"
+        working_memory_text += f"\n--- ChÃƒâ€ Ã‚Â°Ãƒâ€ Ã‚Â¡ng {ch['chapter_number']}: {ch['title']} ---\n{ch_snippet}\n"
         
     attempt = 0
     max_attempts = 3
@@ -721,7 +721,7 @@ def write_next_chapter(novel_id: str) -> dict:
     prompt = prompts.WRITING_PROMPT.format(
         chapter_number=next_ch_number,
         chapter_title=chapter_record["title"],
-        title="TruyÃ¡Â»â€¡n 24h Audio",
+        title="TruyÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n 24h Audio",
         blueprint=blueprint_text,
         world_lore=world_lore_text,
         characters=json.dumps(chars, ensure_ascii=False, indent=2),
@@ -735,11 +735,11 @@ def write_next_chapter(novel_id: str) -> dict:
     
     if next_ch_number == 1:
         prologue_instruction = (
-            f"- PhÃ¡ÂºÂ§n mÃ¡Â»Å¸ Ã„â€˜Ã¡ÂºÂ§u (Prologue): BÃ¡ÂºÂ®T BUÃ¡Â»ËœC mÃ¡Â»Å¸ Ã„â€˜Ã¡ÂºÂ§u chÃ†Â°Ã†Â¡ng bÃ¡ÂºÂ±ng mÃ¡Â»â„¢t phÃƒÂ¢n cÃ¡ÂºÂ£nh cuÃ¡Â»â€˜n hÃƒÂºt (khoÃ¡ÂºÂ£ng 300 - 500 tÃ¡Â»Â«) miÃƒÂªu tÃ¡ÂºÂ£ bÃ¡Â»â€˜i cÃ¡ÂºÂ£nh thÃ¡ÂºÂ¿ giÃ¡Â»â€ºi linh hÃ¡Â»â€œn, hÃ¡Â»â€¡ thÃ¡Â»â€˜ng Tinh ThÃ¡ÂºÂ§n Ã¡ÂºÂ¤n vÃƒÂ  bÃƒÂ­ mÃ¡ÂºÂ­t chiÃ¡ÂºÂ¿c hÃ¡Â»â„¢p Ã„â€˜Ã¡Â»â€œng Ã„ÂÃƒÂ´ng SÃ†Â¡n.\n"
-            f"- **CÃ¡ÂºÂ¢NH BÃƒÂO QUAN TRÃ¡Â»Å’NG VÃ¡Â»â‚¬ NHÃƒâ€šN VÃ¡ÂºÂ¬T**: Trong phÃ¡ÂºÂ§n mÃ¡Â»Å¸ Ã„â€˜Ã¡ÂºÂ§u nÃƒÂ y, CHÃ¡Â»Ë† TÃ¡ÂºÂ¬P TRUNG duy nhÃ¡ÂºÂ¥t vÃƒÂ o nhÃƒÂ¢n vÃ¡ÂºÂ­t chÃƒÂ­nh ({protagonist_name}). "
-            f"TUYÃ¡Â»â€ T Ã„ÂÃ¡Â»ÂI KHÃƒâ€NG liÃ¡Â»â€¡t kÃƒÂª hay giÃ¡Â»â€ºi thiÃ¡Â»â€¡u trÃƒÂ n lan cÃƒÂ¡c nhÃƒÂ¢n vÃ¡ÂºÂ­t phÃ¡Â»Â¥. CÃƒÂ¡c nhÃƒÂ¢n vÃ¡ÂºÂ­t phÃ¡Â»Â¥ sÃ¡ÂºÂ½ chÃ¡Â»â€° xuÃ¡ÂºÂ¥t hiÃ¡Â»â€¡n tÃ¡Â»Â± nhiÃƒÂªn khi cÃƒÂ³ tÃƒÂ¬nh huÃ¡Â»â€˜ng Ã„â€˜Ã¡Â»â€˜i thoÃ¡ÂºÂ¡i trong cÃƒÂ¢u chuyÃ¡Â»â€¡n.\n"
-            f"- **CÃ¡ÂºÂ¢NH BÃƒÂO QUAN TRÃ¡Â»Å’NG VÃ¡Â»â‚¬ TIÃƒÅ U Ã„ÂÃ¡Â»â‚¬**: TUYÃ¡Â»â€ T Ã„ÂÃ¡Â»ÂI KHÃƒâ€NG VIÃ¡ÂºÂ¾T CHÃ¡Â»Â® 'DÃ¡ÂºÂ«n lÃ†Â°Ã¡Â»Â£c', 'DÃ¡ÂºÂ«n lÃ†Â°Ã¡Â»Â£c:', 'GiÃ¡Â»â€ºi thiÃ¡Â»â€¡u:', hay 'Prologue:'. "
-            f"HÃƒÂ£y nhÃ¡ÂºÂ­p vai viÃ¡ÂºÂ¿t thÃ¡ÂºÂ³ng vÃƒÂ o nÃ¡Â»â„¢i dung truyÃ¡Â»â€¡n mÃ¡Â»â„¢t cÃƒÂ¡ch tÃ¡Â»Â± nhiÃƒÂªn nhÃ¡ÂºÂ¥t."
+            f"- PhÃƒÂ¡Ã‚ÂºÃ‚Â§n mÃƒÂ¡Ã‚Â»Ã…Â¸ Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚ÂºÃ‚Â§u (Prologue): BÃƒÂ¡Ã‚ÂºÃ‚Â®T BUÃƒÂ¡Ã‚Â»Ã‹Å“C mÃƒÂ¡Ã‚Â»Ã…Â¸ Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚ÂºÃ‚Â§u chÃƒâ€ Ã‚Â°Ãƒâ€ Ã‚Â¡ng bÃƒÂ¡Ã‚ÂºÃ‚Â±ng mÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢t phÃƒÆ’Ã‚Â¢n cÃƒÂ¡Ã‚ÂºÃ‚Â£nh cuÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœn hÃƒÆ’Ã‚Âºt (khoÃƒÂ¡Ã‚ÂºÃ‚Â£ng 300 - 500 tÃƒÂ¡Ã‚Â»Ã‚Â«) miÃƒÆ’Ã‚Âªu tÃƒÂ¡Ã‚ÂºÃ‚Â£ bÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi cÃƒÂ¡Ã‚ÂºÃ‚Â£nh thÃƒÂ¡Ã‚ÂºÃ‚Â¿ giÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi linh hÃƒÂ¡Ã‚Â»Ã¢â‚¬Å“n, hÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡ thÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœng Tinh ThÃƒÂ¡Ã‚ÂºÃ‚Â§n ÃƒÂ¡Ã‚ÂºÃ‚Â¤n vÃƒÆ’Ã‚Â  bÃƒÆ’Ã‚Â­ mÃƒÂ¡Ã‚ÂºÃ‚Â­t chiÃƒÂ¡Ã‚ÂºÃ‚Â¿c hÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢p Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Å“ng Ãƒâ€žÃ‚ÂÃƒÆ’Ã‚Â´ng SÃƒâ€ Ã‚Â¡n.\n"
+            f"- **CÃƒÂ¡Ã‚ÂºÃ‚Â¢NH BÃƒÆ’Ã‚ÂO QUAN TRÃƒÂ¡Ã‚Â»Ã…â€™NG VÃƒÂ¡Ã‚Â»Ã¢â€šÂ¬ NHÃƒÆ’Ã¢â‚¬Å¡N VÃƒÂ¡Ã‚ÂºÃ‚Â¬T**: Trong phÃƒÂ¡Ã‚ÂºÃ‚Â§n mÃƒÂ¡Ã‚Â»Ã…Â¸ Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚ÂºÃ‚Â§u nÃƒÆ’Ã‚Â y, CHÃƒÂ¡Ã‚Â»Ã‹â€  TÃƒÂ¡Ã‚ÂºÃ‚Â¬P TRUNG duy nhÃƒÂ¡Ã‚ÂºÃ‚Â¥t vÃƒÆ’Ã‚Â o nhÃƒÆ’Ã‚Â¢n vÃƒÂ¡Ã‚ÂºÃ‚Â­t chÃƒÆ’Ã‚Â­nh ({protagonist_name}). "
+            f"TUYÃƒÂ¡Ã‚Â»Ã¢â‚¬Â T Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚Â»Ã‚ÂI KHÃƒÆ’Ã¢â‚¬ÂNG liÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡t kÃƒÆ’Ã‚Âª hay giÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi thiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡u trÃƒÆ’Ã‚Â n lan cÃƒÆ’Ã‚Â¡c nhÃƒÆ’Ã‚Â¢n vÃƒÂ¡Ã‚ÂºÃ‚Â­t phÃƒÂ¡Ã‚Â»Ã‚Â¥. CÃƒÆ’Ã‚Â¡c nhÃƒÆ’Ã‚Â¢n vÃƒÂ¡Ã‚ÂºÃ‚Â­t phÃƒÂ¡Ã‚Â»Ã‚Â¥ sÃƒÂ¡Ã‚ÂºÃ‚Â½ chÃƒÂ¡Ã‚Â»Ã¢â‚¬Â° xuÃƒÂ¡Ã‚ÂºÃ‚Â¥t hiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n tÃƒÂ¡Ã‚Â»Ã‚Â± nhiÃƒÆ’Ã‚Âªn khi cÃƒÆ’Ã‚Â³ tÃƒÆ’Ã‚Â¬nh huÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœng Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi thoÃƒÂ¡Ã‚ÂºÃ‚Â¡i trong cÃƒÆ’Ã‚Â¢u chuyÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n.\n"
+            f"- **CÃƒÂ¡Ã‚ÂºÃ‚Â¢NH BÃƒÆ’Ã‚ÂO QUAN TRÃƒÂ¡Ã‚Â»Ã…â€™NG VÃƒÂ¡Ã‚Â»Ã¢â€šÂ¬ TIÃƒÆ’Ã…Â U Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚Â»Ã¢â€šÂ¬**: TUYÃƒÂ¡Ã‚Â»Ã¢â‚¬Â T Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚Â»Ã‚ÂI KHÃƒÆ’Ã¢â‚¬ÂNG VIÃƒÂ¡Ã‚ÂºÃ‚Â¾T CHÃƒÂ¡Ã‚Â»Ã‚Â® 'DÃƒÂ¡Ã‚ÂºÃ‚Â«n lÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã‚Â£c', 'DÃƒÂ¡Ã‚ÂºÃ‚Â«n lÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã‚Â£c:', 'GiÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi thiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡u:', hay 'Prologue:'. "
+            f"HÃƒÆ’Ã‚Â£y nhÃƒÂ¡Ã‚ÂºÃ‚Â­p vai viÃƒÂ¡Ã‚ÂºÃ‚Â¿t thÃƒÂ¡Ã‚ÂºÃ‚Â³ng vÃƒÆ’Ã‚Â o nÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢i dung truyÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n mÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢t cÃƒÆ’Ã‚Â¡ch tÃƒÂ¡Ã‚Â»Ã‚Â± nhiÃƒÆ’Ã‚Âªn nhÃƒÂ¡Ã‚ÂºÃ‚Â¥t."
         )
         prompt = prompt.replace("Constraints:", f"Constraints:\n{prologue_instruction}")
     
@@ -753,8 +753,8 @@ def write_next_chapter(novel_id: str) -> dict:
         while draft_attempt < 3:
             draft_attempt += 1
             final_content = call_inkos_cloud(current_prompt)
-                if not final_content or len(final_content.strip()) < 10:
-                    final_content = call_gemini(current_prompt)
+            if not final_content or len(final_content.strip()) < 10:
+                final_content = call_gemini(current_prompt)
             word_count = len(final_content.split()) if final_content else 0
             print(f"[INFO] Generated draft length: {word_count} words.")
             
@@ -764,7 +764,7 @@ def write_next_chapter(novel_id: str) -> dict:
                 current_prompt = prompt[:2500] if len(prompt) > 2500 else prompt
                 continue
                 
-            ends_abruptly = not final_content.strip().endswith((".", "?", "!", '"', "Ã¢â‚¬Â", "Ã‚Â»", "*"))
+            ends_abruptly = not final_content.strip().endswith((".", "?", "!", '"', "ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â", "Ãƒâ€šÃ‚Â»", "*"))
             
             if ends_abruptly and word_count >= 2500:
                 last_punct = max(
@@ -778,21 +778,21 @@ def write_next_chapter(novel_id: str) -> dict:
                     print(f"[INFO] Automatically trimmed unfinished trailing sentence. Clean word count: {word_count} words.")
                     ends_abruptly = False
 
-            # VÃƒâ€™NG LÃ¡ÂºÂ¶P Ãƒâ€°P BÃ¡ÂºÂ®T BUÃ¡Â»ËœC Ã„ÂÃ¡ÂºÂ T >2800 TÃ¡Â»Âª (Guaranteed 2800+ Words Multi-Pass Expansion Loop for 12-18 min Audio)
+            # VÃƒÆ’Ã¢â‚¬â„¢NG LÃƒÂ¡Ã‚ÂºÃ‚Â¶P ÃƒÆ’Ã¢â‚¬Â°P BÃƒÂ¡Ã‚ÂºÃ‚Â®T BUÃƒÂ¡Ã‚Â»Ã‹Å“C Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚ÂºÃ‚Â T >2800 TÃƒÂ¡Ã‚Â»Ã‚Âª (Guaranteed 2800+ Words Multi-Pass Expansion Loop for 12-18 min Audio)
             if word_count >= 2800 and not ends_abruptly:
-                # INKOS MULTI-AGENT AUDITOR PASS: KhÃ¡Â»Â­ AI clichÃƒÂ© & BÃ¡ÂºÂ£o toÃƒÂ n 100% Ã„â€˜Ã¡Â»â„¢ dÃƒÂ i vÃ„Æ’n bÃ¡ÂºÂ£n
+                # INKOS MULTI-AGENT AUDITOR PASS: KhÃƒÂ¡Ã‚Â»Ã‚Â­ AI clichÃƒÆ’Ã‚Â© & BÃƒÂ¡Ã‚ÂºÃ‚Â£o toÃƒÆ’Ã‚Â n 100% Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ dÃƒÆ’Ã‚Â i vÃƒâ€žÃ†â€™n bÃƒÂ¡Ã‚ÂºÃ‚Â£n
                 try:
-                    print("[INFO] Quality Assurance Agent: BÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u rÃƒÂ  soÃƒÂ¡t 37 tiÃƒÂªu chuÃ¡ÂºÂ©n chÃ¡ÂºÂ¥t lÃ†Â°Ã¡Â»Â£ng & KhÃ¡Â»Â­ AI clichÃƒÂ©...")
+                    print("[INFO] Quality Assurance Agent: BÃƒÂ¡Ã‚ÂºÃ‚Â¯t Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚ÂºÃ‚Â§u rÃƒÆ’Ã‚Â  soÃƒÆ’Ã‚Â¡t 37 tiÃƒÆ’Ã‚Âªu chuÃƒÂ¡Ã‚ÂºÃ‚Â©n chÃƒÂ¡Ã‚ÂºÃ‚Â¥t lÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã‚Â£ng & KhÃƒÂ¡Ã‚Â»Ã‚Â­ AI clichÃƒÆ’Ã‚Â©...")
                     audit_prompt = prompts.INKOS_AUDITOR_PROMPT.format(chapter_content=final_content[:6000])
                     audited_res = call_gemini(audit_prompt)
                     if audited_res and len(audited_res.split()) >= len(final_content.split()) * 0.9:
                         final_content = clean_chapter_content(audited_res)
                         word_count = len(final_content.split())
-                        print(f"[SUCCESS] Quality Assurance Agent hoÃƒÂ n thÃƒÂ nh khÃ¡Â»Â­ AI clichÃƒÂ©. TÃ¡Â»â€¢ng sÃ¡Â»â€˜ tÃ¡Â»Â« tinh chÃ¡ÂºÂ¿: {word_count} tÃ¡Â»Â«.")
+                        print(f"[SUCCESS] Quality Assurance Agent hoÃƒÆ’Ã‚Â n thÃƒÆ’Ã‚Â nh khÃƒÂ¡Ã‚Â»Ã‚Â­ AI clichÃƒÆ’Ã‚Â©. TÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¢ng sÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœ tÃƒÂ¡Ã‚Â»Ã‚Â« tinh chÃƒÂ¡Ã‚ÂºÃ‚Â¿: {word_count} tÃƒÂ¡Ã‚Â»Ã‚Â«.")
                     else:
                         final_content = clean_chapter_content(final_content)
                         word_count = len(final_content.split())
-                        print(f"[INFO] GiÃ¡Â»Â¯ nguyÃƒÂªn Ã„â€˜Ã¡Â»â„¢ dÃƒÂ i vÃ„Æ’n bÃ¡ÂºÂ£n Ã„â€˜Ã¡ÂºÂ§y Ã„â€˜Ã¡Â»Â§: {word_count} tÃ¡Â»Â« (TrÃƒÂ¡nh bÃ¡Â»â€¹ rÃƒÂºt ngÃ¡ÂºÂ¯n).")
+                        print(f"[INFO] GiÃƒÂ¡Ã‚Â»Ã‚Â¯ nguyÃƒÆ’Ã‚Âªn Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ dÃƒÆ’Ã‚Â i vÃƒâ€žÃ†â€™n bÃƒÂ¡Ã‚ÂºÃ‚Â£n Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚ÂºÃ‚Â§y Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã‚Â§: {word_count} tÃƒÂ¡Ã‚Â»Ã‚Â« (TrÃƒÆ’Ã‚Â¡nh bÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ rÃƒÆ’Ã‚Âºt ngÃƒÂ¡Ã‚ÂºÃ‚Â¯n).")
                 except Exception as audit_err:
                     print(f"[WARNING] Quality Assurance Agent pass warning: {audit_err}")
                 break
@@ -800,26 +800,26 @@ def write_next_chapter(novel_id: str) -> dict:
             expand_cycles = 0
             while word_count < 2800 and expand_cycles < 6:
                 expand_cycles += 1
-                print(f"[INFO] (LÃ†Â°Ã¡Â»Â£t nÃ¡Â»â€˜i tiÃ¡ÂºÂ¿p {expand_cycles}/6) ChÃ†Â°Ã†Â¡ng hiÃ¡Â»â€¡n tÃ¡ÂºÂ¡i Ã„â€˜Ã¡ÂºÂ¡t {word_count} tÃ¡Â»Â« (<2800 tÃ¡Â»Â«). TÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng kÃƒÂ­ch hoÃ¡ÂºÂ¡t AI ViÃ¡ÂºÂ¿t NÃ¡Â»â€˜i TiÃ¡ÂºÂ¿p...")
+                print(f"[INFO] (LÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã‚Â£t nÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi tiÃƒÂ¡Ã‚ÂºÃ‚Â¿p {expand_cycles}/6) ChÃƒâ€ Ã‚Â°Ãƒâ€ Ã‚Â¡ng hiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n tÃƒÂ¡Ã‚ÂºÃ‚Â¡i Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚ÂºÃ‚Â¡t {word_count} tÃƒÂ¡Ã‚Â»Ã‚Â« (<2800 tÃƒÂ¡Ã‚Â»Ã‚Â«). TÃƒÂ¡Ã‚Â»Ã‚Â± Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ng kÃƒÆ’Ã‚Â­ch hoÃƒÂ¡Ã‚ÂºÃ‚Â¡t AI ViÃƒÂ¡Ã‚ÂºÃ‚Â¿t NÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi TiÃƒÂ¡Ã‚ÂºÃ‚Â¿p...")
                 
                 continuation_prompt = (
-                    f"DÃ†Â°Ã¡Â»â€ºi Ã„â€˜ÃƒÂ¢y lÃƒÂ  phÃ¡ÂºÂ§n trÃ†Â°Ã¡Â»â€ºc cÃ¡Â»Â§a ChÃ†Â°Ã†Â¡ng {next_ch_number} (tÃ¡Â»â€¢ng {word_count} tÃ¡Â»Â«):\n\n"
+                    f"DÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi Ãƒâ€žÃ¢â‚¬ËœÃƒÆ’Ã‚Â¢y lÃƒÆ’Ã‚Â  phÃƒÂ¡Ã‚ÂºÃ‚Â§n trÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºc cÃƒÂ¡Ã‚Â»Ã‚Â§a ChÃƒâ€ Ã‚Â°Ãƒâ€ Ã‚Â¡ng {next_ch_number} (tÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¢ng {word_count} tÃƒÂ¡Ã‚Â»Ã‚Â«):\n\n"
                     f"{final_content[-1200:]}\n\n"
-                    f"YÃƒÅ U CÃ¡ÂºÂ¦U BÃ¡ÂºÂ®T BUÃ¡Â»ËœC: HÃƒÂ£y viÃ¡ÂºÂ¿t tiÃ¡ÂºÂ¿p Ã„â€˜oÃ¡ÂºÂ¡n nÃ¡Â»â€˜i theo cÃƒÂ¢u chuyÃ¡Â»â€¡n trÃƒÂªn (tÃ¡Â»â€˜i thiÃ¡Â»Æ’u 1200 - 1800 tÃ¡Â»Â« nÃ¡Â»Â¯a). "
-                    f"MiÃƒÂªu tÃ¡ÂºÂ£ diÃ¡Â»â€¦n biÃ¡ÂºÂ¿n tiÃ¡ÂºÂ¿p theo, Ã„â€˜Ã¡Â»â€˜i thoÃ¡ÂºÂ¡i sÃƒÂ¢u sÃ¡ÂºÂ¯c, cÃ¡ÂºÂ£m xÃƒÂºc nhÃƒÂ¢n vÃ¡ÂºÂ­t vÃƒÂ  kÃ¡ÂºÂ¿t thÃƒÂºc bÃ¡ÂºÂ±ng mÃ¡Â»â„¢t nÃƒÂºt thÃ¡ÂºÂ¯t kÃ¡Â»â€¹ch tÃƒÂ­nh. "
-                    f"ViÃ¡ÂºÂ¿t thÃ¡ÂºÂ³ng vÃƒÂ o nÃ¡Â»â„¢i dung truyÃ¡Â»â€¡n, khÃƒÂ´ng lÃ¡ÂºÂ·p lÃ¡ÂºÂ¡i Ã„â€˜oÃ¡ÂºÂ¡n cÃ…Â©."
+                    f"YÃƒÆ’Ã…Â U CÃƒÂ¡Ã‚ÂºÃ‚Â¦U BÃƒÂ¡Ã‚ÂºÃ‚Â®T BUÃƒÂ¡Ã‚Â»Ã‹Å“C: HÃƒÆ’Ã‚Â£y viÃƒÂ¡Ã‚ÂºÃ‚Â¿t tiÃƒÂ¡Ã‚ÂºÃ‚Â¿p Ãƒâ€žÃ¢â‚¬ËœoÃƒÂ¡Ã‚ÂºÃ‚Â¡n nÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi theo cÃƒÆ’Ã‚Â¢u chuyÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n trÃƒÆ’Ã‚Âªn (tÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi thiÃƒÂ¡Ã‚Â»Ã†â€™u 1200 - 1800 tÃƒÂ¡Ã‚Â»Ã‚Â« nÃƒÂ¡Ã‚Â»Ã‚Â¯a). "
+                    f"MiÃƒÆ’Ã‚Âªu tÃƒÂ¡Ã‚ÂºÃ‚Â£ diÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¦n biÃƒÂ¡Ã‚ÂºÃ‚Â¿n tiÃƒÂ¡Ã‚ÂºÃ‚Â¿p theo, Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi thoÃƒÂ¡Ã‚ÂºÃ‚Â¡i sÃƒÆ’Ã‚Â¢u sÃƒÂ¡Ã‚ÂºÃ‚Â¯c, cÃƒÂ¡Ã‚ÂºÃ‚Â£m xÃƒÆ’Ã‚Âºc nhÃƒÆ’Ã‚Â¢n vÃƒÂ¡Ã‚ÂºÃ‚Â­t vÃƒÆ’Ã‚Â  kÃƒÂ¡Ã‚ÂºÃ‚Â¿t thÃƒÆ’Ã‚Âºc bÃƒÂ¡Ã‚ÂºÃ‚Â±ng mÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢t nÃƒÆ’Ã‚Âºt thÃƒÂ¡Ã‚ÂºÃ‚Â¯t kÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ch tÃƒÆ’Ã‚Â­nh. "
+                    f"ViÃƒÂ¡Ã‚ÂºÃ‚Â¿t thÃƒÂ¡Ã‚ÂºÃ‚Â³ng vÃƒÆ’Ã‚Â o nÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢i dung truyÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n, khÃƒÆ’Ã‚Â´ng lÃƒÂ¡Ã‚ÂºÃ‚Â·p lÃƒÂ¡Ã‚ÂºÃ‚Â¡i Ãƒâ€žÃ¢â‚¬ËœoÃƒÂ¡Ã‚ÂºÃ‚Â¡n cÃƒâ€¦Ã‚Â©."
                 )
                 
                 part_next = call_gemini(continuation_prompt)
                 if part_next and len(part_next.split()) > 100:
                     cleaned_next, _ = verify_and_sanitize_chapter_content(part_next)
-                    # TrÃ¡nh ná»‘i chuá»—i láº·p láº¡i vÃ´ táº­n
+                    # TrÃƒÂ¡nh nÃ¡Â»â€˜i chuÃ¡Â»â€”i lÃ¡ÂºÂ·p lÃ¡ÂºÂ¡i vÃƒÂ´ tÃ¡ÂºÂ­n
                     if cleaned_next in final_content:
-                        print("[WARNING] ÄÃ£ phÃ¡t hiá»‡n Ä‘oáº¡n ná»‘i tiáº¿p bá»‹ láº·p láº¡i, ngáº¯t vÃ²ng láº·p expansion.")
+                        print("[WARNING] Ã„ÂÃƒÂ£ phÃƒÂ¡t hiÃ¡Â»â€¡n Ã„â€˜oÃ¡ÂºÂ¡n nÃ¡Â»â€˜i tiÃ¡ÂºÂ¿p bÃ¡Â»â€¹ lÃ¡ÂºÂ·p lÃ¡ÂºÂ¡i, ngÃ¡ÂºÂ¯t vÃƒÂ²ng lÃ¡ÂºÂ·p expansion.")
                         break
                     final_content = final_content + "\n\n" + cleaned_next
                     word_count = len(final_content.split())
-                    print(f"[SUCCESS] Ã„ÂÃƒÂ£ nÃ¡Â»â€˜i tiÃ¡ÂºÂ¿p thÃƒÂ nh cÃƒÂ´ng! TÃ¡Â»â€¢ng Ã„â€˜Ã¡Â»â„¢ dÃƒÂ i chÃ†Â°Ã†Â¡ng hiÃ¡Â»â€¡n tÃ¡ÂºÂ¡i: {word_count} tÃ¡Â»Â«.")
+                    print(f"[SUCCESS] Ãƒâ€žÃ‚ÂÃƒÆ’Ã‚Â£ nÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi tiÃƒÂ¡Ã‚ÂºÃ‚Â¿p thÃƒÆ’Ã‚Â nh cÃƒÆ’Ã‚Â´ng! TÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¢ng Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ dÃƒÆ’Ã‚Â i chÃƒâ€ Ã‚Â°Ãƒâ€ Ã‚Â¡ng hiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n tÃƒÂ¡Ã‚ÂºÃ‚Â¡i: {word_count} tÃƒÂ¡Ã‚Â»Ã‚Â«.")
                     if word_count >= 2800:
                         break
                 else:
@@ -831,19 +831,19 @@ def write_next_chapter(novel_id: str) -> dict:
             if ends_abruptly:
                 print(f"[WARNING] Draft ends abruptly (no punctuation at the end). Requesting completion (Attempt {draft_attempt}/3)...")
                 current_prompt = prompt + (
-                    "\n\n**CÃ¡ÂºÂ¢NH BÃƒÂO CÃ¡Â»Â°C KÃ¡Â»Â² QUAN TRÃ¡Â»Å’NG**: BÃ¡ÂºÂ£n thÃ¡ÂºÂ£o trÃ†Â°Ã¡Â»â€ºc cÃ¡Â»Â§a bÃ¡ÂºÂ¡n bÃ¡Â»â€¹ cÃ¡ÂºÂ¯t cÃ¡Â»Â¥t Ã„â€˜Ã¡Â»â„¢t ngÃ¡Â»â„¢t Ã¡Â»Å¸ cuÃ¡Â»â€˜i (chÃ†Â°a hÃ¡ÂºÂ¿t cÃƒÂ¢u, chÃ†Â°a cÃƒÂ³ dÃ¡ÂºÂ¥u chÃ¡ÂºÂ¥m cÃƒÂ¢u kÃ¡ÂºÂ¿t thÃƒÂºc). "
-                    "BÃ¡ÂºÂ¡n BÃ¡ÂºÂ®T BUÃ¡Â»ËœC phÃ¡ÂºÂ£i viÃ¡ÂºÂ¿t trÃ¡Â»Ân vÃ¡ÂºÂ¹n cÃƒÂ¢u chuyÃ¡Â»â€¡n, mÃ¡Â»Å¸ rÃ¡Â»â„¢ng chi tiÃ¡ÂºÂ¿t cÃƒÂ¡c phÃƒÂ¢n cÃ¡ÂºÂ£nh, hÃ¡Â»â„¢i thoÃ¡ÂºÂ¡i vÃƒÂ  kÃ¡ÂºÂ¿t thÃƒÂºc chÃ†Â°Ã†Â¡ng mÃ¡Â»â„¢t cÃƒÂ¡ch trÃ¡Â»Ân vÃ¡ÂºÂ¹n bÃ¡ÂºÂ±ng dÃ¡ÂºÂ¥u chÃ¡ÂºÂ¥m cÃƒÂ¢u."
+                    "\n\n**CÃƒÂ¡Ã‚ÂºÃ‚Â¢NH BÃƒÆ’Ã‚ÂO CÃƒÂ¡Ã‚Â»Ã‚Â°C KÃƒÂ¡Ã‚Â»Ã‚Â² QUAN TRÃƒÂ¡Ã‚Â»Ã…â€™NG**: BÃƒÂ¡Ã‚ÂºÃ‚Â£n thÃƒÂ¡Ã‚ÂºÃ‚Â£o trÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºc cÃƒÂ¡Ã‚Â»Ã‚Â§a bÃƒÂ¡Ã‚ÂºÃ‚Â¡n bÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ cÃƒÂ¡Ã‚ÂºÃ‚Â¯t cÃƒÂ¡Ã‚Â»Ã‚Â¥t Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢t ngÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢t ÃƒÂ¡Ã‚Â»Ã…Â¸ cuÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi (chÃƒâ€ Ã‚Â°a hÃƒÂ¡Ã‚ÂºÃ‚Â¿t cÃƒÆ’Ã‚Â¢u, chÃƒâ€ Ã‚Â°a cÃƒÆ’Ã‚Â³ dÃƒÂ¡Ã‚ÂºÃ‚Â¥u chÃƒÂ¡Ã‚ÂºÃ‚Â¥m cÃƒÆ’Ã‚Â¢u kÃƒÂ¡Ã‚ÂºÃ‚Â¿t thÃƒÆ’Ã‚Âºc). "
+                    "BÃƒÂ¡Ã‚ÂºÃ‚Â¡n BÃƒÂ¡Ã‚ÂºÃ‚Â®T BUÃƒÂ¡Ã‚Â»Ã‹Å“C phÃƒÂ¡Ã‚ÂºÃ‚Â£i viÃƒÂ¡Ã‚ÂºÃ‚Â¿t trÃƒÂ¡Ã‚Â»Ã‚Ân vÃƒÂ¡Ã‚ÂºÃ‚Â¹n cÃƒÆ’Ã‚Â¢u chuyÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n, mÃƒÂ¡Ã‚Â»Ã…Â¸ rÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ng chi tiÃƒÂ¡Ã‚ÂºÃ‚Â¿t cÃƒÆ’Ã‚Â¡c phÃƒÆ’Ã‚Â¢n cÃƒÂ¡Ã‚ÂºÃ‚Â£nh, hÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢i thoÃƒÂ¡Ã‚ÂºÃ‚Â¡i vÃƒÆ’Ã‚Â  kÃƒÂ¡Ã‚ÂºÃ‚Â¿t thÃƒÆ’Ã‚Âºc chÃƒâ€ Ã‚Â°Ãƒâ€ Ã‚Â¡ng mÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢t cÃƒÆ’Ã‚Â¡ch trÃƒÂ¡Ã‚Â»Ã‚Ân vÃƒÂ¡Ã‚ÂºÃ‚Â¹n bÃƒÂ¡Ã‚ÂºÃ‚Â±ng dÃƒÂ¡Ã‚ÂºÃ‚Â¥u chÃƒÂ¡Ã‚ÂºÃ‚Â¥m cÃƒÆ’Ã‚Â¢u."
                 )
             else:
                 print(f"[WARNING] Draft too short ({word_count} words). Requesting longer expansion (Attempt {draft_attempt}/3)...")
                 current_prompt = prompt + (
-                    f"\n\n**CÃ¡ÂºÂ¢NH BÃƒÂO CÃ¡Â»Â°C KÃ¡Â»Â² QUAN TRÃ¡Â»Å’NG VÃ¡Â»â‚¬ Ã„ÂÃ¡Â»Ëœ DÃƒâ‚¬I (BÃ¡ÂºÂ®T BUÃ¡Â»ËœC)**:\n"
-                    f"BÃ¡ÂºÂ£n thÃ¡ÂºÂ£o bÃ¡ÂºÂ¡n vÃ¡Â»Â«a viÃ¡ÂºÂ¿t quÃƒÂ¡ ngÃ¡ÂºÂ¯n (chÃ¡Â»â€° cÃƒÂ³ {word_count} tÃ¡Â»Â«), trong khi yÃƒÂªu cÃ¡ÂºÂ§u tÃ¡Â»â€˜i thiÃ¡Â»Æ’u lÃƒÂ  2200 tÃ¡Â»Â« Ã„â€˜Ã¡Â»Æ’ Ã„â€˜Ã¡ÂºÂ¡t 10 phÃƒÂºt nÃƒÂ³i.\n"
-                    f"Ã„ÂÃ¡Â»Æ’ sÃ¡Â»Â­a lÃ¡Â»â€”i nÃƒÂ y, bÃ¡ÂºÂ¡n phÃ¡ÂºÂ£i viÃ¡ÂºÂ¿t cÃ¡Â»Â±c kÃ¡Â»Â³ chi tiÃ¡ÂºÂ¿t theo hÃ†Â°Ã¡Â»â€ºng dÃ¡ÂºÂ«n sau:\n"
-                    f"1. Chia chÃ†Â°Ã†Â¡ng truyÃ¡Â»â€¡n thÃƒÂ nh ÃƒÂ­t nhÃ¡ÂºÂ¥t 5 phÃƒÂ¢n cÃ¡ÂºÂ£nh lÃ¡Â»â€ºn riÃƒÂªng biÃ¡Â»â€¡t (MÃ¡Â»â€”i phÃƒÂ¢n cÃ¡ÂºÂ£nh viÃ¡ÂºÂ¿t tÃ¡Â»â€˜i thiÃ¡Â»Æ’u 5-6 Ã„â€˜oÃ¡ÂºÂ¡n vÃ„Æ’n dÃƒÂ i).\n"
-                    f"2. Ã„Âi sÃƒÂ¢u miÃƒÂªu tÃ¡ÂºÂ£ cÃ¡Â»Â±c kÃ¡Â»Â³ tÃ¡Â»â€° mÃ¡Â»â€°: cÃ¡ÂºÂ£nh sÃ¡ÂºÂ¯c khÃƒÂ´ng gian hÃ¡Â»Âc viÃ¡Â»â€¡n, thÃ¡Â»Âi tiÃ¡ÂºÂ¿t, ÃƒÂ¢m thanh giÃƒÂ³ thÃ¡Â»â€¢i, biÃ¡Â»Æ’u cÃ¡ÂºÂ£m nÃƒÂ©t mÃ¡ÂºÂ·t tÃ¡Â»Â«ng nhÃƒÂ¢n vÃ¡ÂºÂ­t, cÃ¡Â»Â­ chÃ¡Â»â€° tay chÃƒÂ¢n, vÃƒÂ  dÃƒÂ²ng suy nghÃ„Â© nÃ¡Â»â„¢i tÃƒÂ¢m kÃƒÂ©o dÃƒÂ i.\n"
-                    f"3. ViÃ¡ÂºÂ¿t cÃƒÂ¡c Ã„â€˜oÃ¡ÂºÂ¡n Ã„â€˜Ã¡Â»â€˜i thoÃ¡ÂºÂ¡i dÃƒÂ i, thÃ¡Â»Â±c tÃ¡ÂºÂ¿ vÃƒÂ  sÃƒÂ¢u sÃ¡ÂºÂ¯c giÃ¡Â»Â¯a cÃƒÂ¡c nhÃƒÂ¢n vÃ¡ÂºÂ­t (TrÃ¡ÂºÂ§n Lam, Linh Vy, Minh Ã„ÂÃ¡Â»Â©c, v.v.). KhÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c viÃ¡ÂºÂ¿t lÃ†Â°Ã¡Â»â€ºt qua.\n"
-                    f"4. TUYÃ¡Â»â€ T Ã„ÂÃ¡Â»ÂI khÃƒÂ´ng tÃƒÂ³m tÃ¡ÂºÂ¯t hay kÃ¡ÂºÂ¿t thÃƒÂºc chÃ†Â°Ã†Â¡ng truyÃ¡Â»â€¡n sÃ¡Â»â€ºm khi chÃ†Â°a Ã„â€˜Ã¡Â»Â§ Ã„â€˜Ã¡Â»â„¢ dÃƒÂ i yÃƒÂªu cÃ¡ÂºÂ§u."
+                    f"\n\n**CÃƒÂ¡Ã‚ÂºÃ‚Â¢NH BÃƒÆ’Ã‚ÂO CÃƒÂ¡Ã‚Â»Ã‚Â°C KÃƒÂ¡Ã‚Â»Ã‚Â² QUAN TRÃƒÂ¡Ã‚Â»Ã…â€™NG VÃƒÂ¡Ã‚Â»Ã¢â€šÂ¬ Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚Â»Ã‹Å“ DÃƒÆ’Ã¢â€šÂ¬I (BÃƒÂ¡Ã‚ÂºÃ‚Â®T BUÃƒÂ¡Ã‚Â»Ã‹Å“C)**:\n"
+                    f"BÃƒÂ¡Ã‚ÂºÃ‚Â£n thÃƒÂ¡Ã‚ÂºÃ‚Â£o bÃƒÂ¡Ã‚ÂºÃ‚Â¡n vÃƒÂ¡Ã‚Â»Ã‚Â«a viÃƒÂ¡Ã‚ÂºÃ‚Â¿t quÃƒÆ’Ã‚Â¡ ngÃƒÂ¡Ã‚ÂºÃ‚Â¯n (chÃƒÂ¡Ã‚Â»Ã¢â‚¬Â° cÃƒÆ’Ã‚Â³ {word_count} tÃƒÂ¡Ã‚Â»Ã‚Â«), trong khi yÃƒÆ’Ã‚Âªu cÃƒÂ¡Ã‚ÂºÃ‚Â§u tÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi thiÃƒÂ¡Ã‚Â»Ã†â€™u lÃƒÆ’Ã‚Â  2200 tÃƒÂ¡Ã‚Â»Ã‚Â« Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚ÂºÃ‚Â¡t 10 phÃƒÆ’Ã‚Âºt nÃƒÆ’Ã‚Â³i.\n"
+                    f"Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚Â»Ã†â€™ sÃƒÂ¡Ã‚Â»Ã‚Â­a lÃƒÂ¡Ã‚Â»Ã¢â‚¬â€i nÃƒÆ’Ã‚Â y, bÃƒÂ¡Ã‚ÂºÃ‚Â¡n phÃƒÂ¡Ã‚ÂºÃ‚Â£i viÃƒÂ¡Ã‚ÂºÃ‚Â¿t cÃƒÂ¡Ã‚Â»Ã‚Â±c kÃƒÂ¡Ã‚Â»Ã‚Â³ chi tiÃƒÂ¡Ã‚ÂºÃ‚Â¿t theo hÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºng dÃƒÂ¡Ã‚ÂºÃ‚Â«n sau:\n"
+                    f"1. Chia chÃƒâ€ Ã‚Â°Ãƒâ€ Ã‚Â¡ng truyÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n thÃƒÆ’Ã‚Â nh ÃƒÆ’Ã‚Â­t nhÃƒÂ¡Ã‚ÂºÃ‚Â¥t 5 phÃƒÆ’Ã‚Â¢n cÃƒÂ¡Ã‚ÂºÃ‚Â£nh lÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºn riÃƒÆ’Ã‚Âªng biÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡t (MÃƒÂ¡Ã‚Â»Ã¢â‚¬â€i phÃƒÆ’Ã‚Â¢n cÃƒÂ¡Ã‚ÂºÃ‚Â£nh viÃƒÂ¡Ã‚ÂºÃ‚Â¿t tÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi thiÃƒÂ¡Ã‚Â»Ã†â€™u 5-6 Ãƒâ€žÃ¢â‚¬ËœoÃƒÂ¡Ã‚ÂºÃ‚Â¡n vÃƒâ€žÃ†â€™n dÃƒÆ’Ã‚Â i).\n"
+                    f"2. Ãƒâ€žÃ‚Âi sÃƒÆ’Ã‚Â¢u miÃƒÆ’Ã‚Âªu tÃƒÂ¡Ã‚ÂºÃ‚Â£ cÃƒÂ¡Ã‚Â»Ã‚Â±c kÃƒÂ¡Ã‚Â»Ã‚Â³ tÃƒÂ¡Ã‚Â»Ã¢â‚¬Â° mÃƒÂ¡Ã‚Â»Ã¢â‚¬Â°: cÃƒÂ¡Ã‚ÂºÃ‚Â£nh sÃƒÂ¡Ã‚ÂºÃ‚Â¯c khÃƒÆ’Ã‚Â´ng gian hÃƒÂ¡Ã‚Â»Ã‚Âc viÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n, thÃƒÂ¡Ã‚Â»Ã‚Âi tiÃƒÂ¡Ã‚ÂºÃ‚Â¿t, ÃƒÆ’Ã‚Â¢m thanh giÃƒÆ’Ã‚Â³ thÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¢i, biÃƒÂ¡Ã‚Â»Ã†â€™u cÃƒÂ¡Ã‚ÂºÃ‚Â£m nÃƒÆ’Ã‚Â©t mÃƒÂ¡Ã‚ÂºÃ‚Â·t tÃƒÂ¡Ã‚Â»Ã‚Â«ng nhÃƒÆ’Ã‚Â¢n vÃƒÂ¡Ã‚ÂºÃ‚Â­t, cÃƒÂ¡Ã‚Â»Ã‚Â­ chÃƒÂ¡Ã‚Â»Ã¢â‚¬Â° tay chÃƒÆ’Ã‚Â¢n, vÃƒÆ’Ã‚Â  dÃƒÆ’Ã‚Â²ng suy nghÃƒâ€žÃ‚Â© nÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢i tÃƒÆ’Ã‚Â¢m kÃƒÆ’Ã‚Â©o dÃƒÆ’Ã‚Â i.\n"
+                    f"3. ViÃƒÂ¡Ã‚ÂºÃ‚Â¿t cÃƒÆ’Ã‚Â¡c Ãƒâ€žÃ¢â‚¬ËœoÃƒÂ¡Ã‚ÂºÃ‚Â¡n Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi thoÃƒÂ¡Ã‚ÂºÃ‚Â¡i dÃƒÆ’Ã‚Â i, thÃƒÂ¡Ã‚Â»Ã‚Â±c tÃƒÂ¡Ã‚ÂºÃ‚Â¿ vÃƒÆ’Ã‚Â  sÃƒÆ’Ã‚Â¢u sÃƒÂ¡Ã‚ÂºÃ‚Â¯c giÃƒÂ¡Ã‚Â»Ã‚Â¯a cÃƒÆ’Ã‚Â¡c nhÃƒÆ’Ã‚Â¢n vÃƒÂ¡Ã‚ÂºÃ‚Â­t (TrÃƒÂ¡Ã‚ÂºÃ‚Â§n Lam, Linh Vy, Minh Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚Â»Ã‚Â©c, v.v.). KhÃƒÆ’Ã‚Â´ng Ãƒâ€žÃ¢â‚¬ËœÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã‚Â£c viÃƒÂ¡Ã‚ÂºÃ‚Â¿t lÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºt qua.\n"
+                    f"4. TUYÃƒÂ¡Ã‚Â»Ã¢â‚¬Â T Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚Â»Ã‚ÂI khÃƒÆ’Ã‚Â´ng tÃƒÆ’Ã‚Â³m tÃƒÂ¡Ã‚ÂºÃ‚Â¯t hay kÃƒÂ¡Ã‚ÂºÃ‚Â¿t thÃƒÆ’Ã‚Âºc chÃƒâ€ Ã‚Â°Ãƒâ€ Ã‚Â¡ng truyÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n sÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºm khi chÃƒâ€ Ã‚Â°a Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã‚Â§ Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ dÃƒÆ’Ã‚Â i yÃƒÆ’Ã‚Âªu cÃƒÂ¡Ã‚ÂºÃ‚Â§u."
                 )
             
         review_prompt = prompts.REVIEW_PROMPT.format(
@@ -870,20 +870,20 @@ def write_next_chapter(novel_id: str) -> dict:
             break
             
     cleaned_content = clean_chapter_content(final_content)
-    # Ã„ÂÃ¡Â»ËœNG CÃ†Â  DÃ¡Â»Å CH THUÃ¡ÂºÂ¬T TIÃ¡ÂºÂ¾NG VIÃ¡Â»â€ T GEMINI API: Ã„ÂÃ¡ÂºÂ£m bÃ¡ÂºÂ£o 100% kÃ¡Â»â€¹ch bÃ¡ÂºÂ£n tiÃ¡Â»Æ’u thuyÃ¡ÂºÂ¿t chuÃ¡ÂºÂ©n TiÃ¡ÂºÂ¿ng ViÃ¡Â»â€¡t mÃ†Â°Ã¡Â»Â£t mÃƒÂ 
+    # Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚Â»Ã‹Å“NG CÃƒâ€ Ã‚Â  DÃƒÂ¡Ã‚Â»Ã…Â CH THUÃƒÂ¡Ã‚ÂºÃ‚Â¬T TIÃƒÂ¡Ã‚ÂºÃ‚Â¾NG VIÃƒÂ¡Ã‚Â»Ã¢â‚¬Â T GEMINI API: Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚ÂºÃ‚Â£m bÃƒÂ¡Ã‚ÂºÃ‚Â£o 100% kÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ch bÃƒÂ¡Ã‚ÂºÃ‚Â£n tiÃƒÂ¡Ã‚Â»Ã†â€™u thuyÃƒÂ¡Ã‚ÂºÃ‚Â¿t chuÃƒÂ¡Ã‚ÂºÃ‚Â©n TiÃƒÂ¡Ã‚ÂºÃ‚Â¿ng ViÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡t mÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã‚Â£t mÃƒÆ’Ã‚Â 
     cleaned_content = translate_to_vietnamese_with_gemini(cleaned_content)
     
-    # Ã„ÂÃ¡ÂºÂ£m bÃ¡ÂºÂ£o tiÃƒÂªu Ã„â€˜Ã¡Â»Â chÃ†Â°Ã†Â¡ng khÃƒÂ´ng bÃ¡Â»â€¹ trÃƒÂ¹ng lÃ¡ÂºÂ·p placeholder
+    # Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚ÂºÃ‚Â£m bÃƒÂ¡Ã‚ÂºÃ‚Â£o tiÃƒÆ’Ã‚Âªu Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã‚Â chÃƒâ€ Ã‚Â°Ãƒâ€ Ã‚Â¡ng khÃƒÆ’Ã‚Â´ng bÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ trÃƒÆ’Ã‚Â¹ng lÃƒÂ¡Ã‚ÂºÃ‚Â·p placeholder
     cur_title = chapter_record.get("title", "")
-    if "HÃƒÂ nh TrÃƒÂ¬nh MÃ¡Â»â€ºi" in cur_title or not cur_title or cur_title == f"ChÃ†Â°Ã†Â¡ng {next_ch_number}":
+    if "HÃƒÆ’Ã‚Â nh TrÃƒÆ’Ã‚Â¬nh MÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi" in cur_title or not cur_title or cur_title == f"ChÃƒâ€ Ã‚Â°Ãƒâ€ Ã‚Â¡ng {next_ch_number}":
         EPIC_TITLES = [
-            "TrÃƒÂ¹ng Sinh VÃ¡ÂºÂ¡n CÃ¡Â»â€¢, ThÃƒÂ´n PhÃ¡Â»â€¡ VÃƒÂ´ TÃ¡ÂºÂ­n", "ThÃ¡Â»Â©c TÃ¡Â»â€°nh ThÃ¡ÂºÂ§n ThÃ¡Â»Æ’, NÃƒÂ©n Ãƒâ€°p ThÃ¡ÂºÂ§n Ma", "HuyÃ¡ÂºÂ¿t MÃ¡ÂºÂ¡ch ThÃƒÂ´n ThiÃƒÂªn, TrÃ¡ÂºÂ¥n TÃƒÂ¡m PhÃ†Â°Ã†Â¡ng",
-            "QuyÃ¡Â»Ân TrÃ¡ÂºÂ¥n SÃ†Â¡n HÃƒÂ , Uy ChÃ¡ÂºÂ¥n ChÃ†Â° ThiÃƒÂªn", "VÃƒÂ´ Ã„ÂÃ¡Â»â€¹ch TrÃƒÂ¹ng Sinh, HÃ¡Â»â€”n Ã„ÂÃ¡Â»â„¢n LuyÃ¡Â»â€¡n KhÃƒÂ­", "NghÃ¡Â»â€¹ch ThiÃƒÂªn Ã„ÂÃ¡Â»â„¢c TÃƒÂ´n, LuyÃ¡Â»â€¡n HÃƒÂ³a ThÃ¡ÂºÂ§n ThÃ¡ÂºÂ¡ch",
-            "ThÃƒÂ´n PhÃ¡Â»â€¡ NguyÃƒÂªn KhÃƒÂ­, PhÃƒÂ¡ Tam CÃ¡ÂºÂ£nh", "VÃ¡ÂºÂ¡n GiÃ¡Â»â€ºi QuÃ¡Â»Â³ BÃƒÂ¡i, TiÃƒÂªu ViÃƒÂªm XuÃ¡ÂºÂ¥t ThÃ¡ÂºÂ¿", "ThÃƒÂ´n PhÃ¡Â»â€¡ Ma NhÃ¡ÂºÂ«n, Khai MÃ¡Â»Å¸ ThÃ¡ÂºÂ§n ThÃƒÂ´ng",
-            "VÃƒÂ´ Song KiÃ¡ÂºÂ¿m KhÃƒÂ­, TrÃ¡ÂºÂ£m DiÃ¡Â»â€¡t CÃ†Â°Ã¡Â»Âng Ã„ÂÃ¡Â»â€¹ch", "HÃ¡Â»â€¡ ThÃ¡Â»â€˜ng ThÃ¡ÂºÂ§n CÃ¡ÂºÂ¥p, ThÃƒÂ´n PhÃ¡Â»â€¡ VÃ¡ÂºÂ¡n VÃ¡ÂºÂ­t", "BÃƒÂ¡ ThÃ¡ÂºÂ§n XuÃ¡ÂºÂ¥t ThÃ¡ÂºÂ¿, NgÃ„Æ’n CÃ¡ÂºÂ£n VÃ¡ÂºÂ¡n QuÃƒÂ¢n"
+            "TrÃƒÆ’Ã‚Â¹ng Sinh VÃƒÂ¡Ã‚ÂºÃ‚Â¡n CÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¢, ThÃƒÆ’Ã‚Â´n PhÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡ VÃƒÆ’Ã‚Â´ TÃƒÂ¡Ã‚ÂºÃ‚Â­n", "ThÃƒÂ¡Ã‚Â»Ã‚Â©c TÃƒÂ¡Ã‚Â»Ã¢â‚¬Â°nh ThÃƒÂ¡Ã‚ÂºÃ‚Â§n ThÃƒÂ¡Ã‚Â»Ã†â€™, NÃƒÆ’Ã‚Â©n ÃƒÆ’Ã¢â‚¬Â°p ThÃƒÂ¡Ã‚ÂºÃ‚Â§n Ma", "HuyÃƒÂ¡Ã‚ÂºÃ‚Â¿t MÃƒÂ¡Ã‚ÂºÃ‚Â¡ch ThÃƒÆ’Ã‚Â´n ThiÃƒÆ’Ã‚Âªn, TrÃƒÂ¡Ã‚ÂºÃ‚Â¥n TÃƒÆ’Ã‚Â¡m PhÃƒâ€ Ã‚Â°Ãƒâ€ Ã‚Â¡ng",
+            "QuyÃƒÂ¡Ã‚Â»Ã‚Ân TrÃƒÂ¡Ã‚ÂºÃ‚Â¥n SÃƒâ€ Ã‚Â¡n HÃƒÆ’Ã‚Â , Uy ChÃƒÂ¡Ã‚ÂºÃ‚Â¥n ChÃƒâ€ Ã‚Â° ThiÃƒÆ’Ã‚Âªn", "VÃƒÆ’Ã‚Â´ Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ch TrÃƒÆ’Ã‚Â¹ng Sinh, HÃƒÂ¡Ã‚Â»Ã¢â‚¬â€n Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢n LuyÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n KhÃƒÆ’Ã‚Â­", "NghÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ch ThiÃƒÆ’Ã‚Âªn Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢c TÃƒÆ’Ã‚Â´n, LuyÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n HÃƒÆ’Ã‚Â³a ThÃƒÂ¡Ã‚ÂºÃ‚Â§n ThÃƒÂ¡Ã‚ÂºÃ‚Â¡ch",
+            "ThÃƒÆ’Ã‚Â´n PhÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡ NguyÃƒÆ’Ã‚Âªn KhÃƒÆ’Ã‚Â­, PhÃƒÆ’Ã‚Â¡ Tam CÃƒÂ¡Ã‚ÂºÃ‚Â£nh", "VÃƒÂ¡Ã‚ÂºÃ‚Â¡n GiÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi QuÃƒÂ¡Ã‚Â»Ã‚Â³ BÃƒÆ’Ã‚Â¡i, TiÃƒÆ’Ã‚Âªu ViÃƒÆ’Ã‚Âªm XuÃƒÂ¡Ã‚ÂºÃ‚Â¥t ThÃƒÂ¡Ã‚ÂºÃ‚Â¿", "ThÃƒÆ’Ã‚Â´n PhÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡ Ma NhÃƒÂ¡Ã‚ÂºÃ‚Â«n, Khai MÃƒÂ¡Ã‚Â»Ã…Â¸ ThÃƒÂ¡Ã‚ÂºÃ‚Â§n ThÃƒÆ’Ã‚Â´ng",
+            "VÃƒÆ’Ã‚Â´ Song KiÃƒÂ¡Ã‚ÂºÃ‚Â¿m KhÃƒÆ’Ã‚Â­, TrÃƒÂ¡Ã‚ÂºÃ‚Â£m DiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡t CÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã‚Âng Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ch", "HÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡ ThÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœng ThÃƒÂ¡Ã‚ÂºÃ‚Â§n CÃƒÂ¡Ã‚ÂºÃ‚Â¥p, ThÃƒÆ’Ã‚Â´n PhÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡ VÃƒÂ¡Ã‚ÂºÃ‚Â¡n VÃƒÂ¡Ã‚ÂºÃ‚Â­t", "BÃƒÆ’Ã‚Â¡ ThÃƒÂ¡Ã‚ÂºÃ‚Â§n XuÃƒÂ¡Ã‚ÂºÃ‚Â¥t ThÃƒÂ¡Ã‚ÂºÃ‚Â¿, NgÃƒâ€žÃ†â€™n CÃƒÂ¡Ã‚ÂºÃ‚Â£n VÃƒÂ¡Ã‚ÂºÃ‚Â¡n QuÃƒÆ’Ã‚Â¢n"
         ]
         epic_name = EPIC_TITLES[(next_ch_number - 1) % len(EPIC_TITLES)]
-        cur_title = f"{epic_name} (TÃ¡ÂºÂ­p {next_ch_number})"
+        cur_title = f"{epic_name} (TÃƒÂ¡Ã‚ÂºÃ‚Â­p {next_ch_number})"
 
     client = database.get_client()
     response = client.table("chapters")\
@@ -909,18 +909,18 @@ def sync_story_bible(novel_id: str, chapter: dict, current_chars: list):
     try:
         data = safe_loads(extract_json)
         
-        # 1. TÃ¡Â»Â° Ã„ÂÃ¡Â»ËœNG LÃ†Â¯U CÃƒÂC NHÃƒâ€šN VÃ¡ÂºÂ¬T MÃ¡Â»Å¡I SÃƒÂNG TÃ¡ÂºÂ O VÃƒâ‚¬O CSDL SUPABASE
+        # 1. TÃƒÂ¡Ã‚Â»Ã‚Â° Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚Â»Ã‹Å“NG LÃƒâ€ Ã‚Â¯U CÃƒÆ’Ã‚ÂC NHÃƒÆ’Ã¢â‚¬Å¡N VÃƒÂ¡Ã‚ÂºÃ‚Â¬T MÃƒÂ¡Ã‚Â»Ã…Â¡I SÃƒÆ’Ã‚ÂNG TÃƒÂ¡Ã‚ÂºÃ‚Â O VÃƒÆ’Ã¢â€šÂ¬O CSDL SUPABASE
         new_chars = data.get("new_characters", [])
         if new_chars:
-            print(f"[INFO] Ã°Å¸Å’Å¸ Ã„ÂÃƒÂ£ phÃƒÂ¡t hiÃ¡Â»â€¡n {len(new_chars)} nhÃƒÂ¢n vÃ¡ÂºÂ­t MÃ¡Â»Å¡I Ã„â€˜Ã†Â°Ã¡Â»Â£c AI sÃƒÂ¡ng tÃ¡ÂºÂ¡o trong chÃ†Â°Ã†Â¡ng!")
+            print(f"[INFO] ÃƒÂ°Ã…Â¸Ã…â€™Ã…Â¸ Ãƒâ€žÃ‚ÂÃƒÆ’Ã‚Â£ phÃƒÆ’Ã‚Â¡t hiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n {len(new_chars)} nhÃƒÆ’Ã‚Â¢n vÃƒÂ¡Ã‚ÂºÃ‚Â­t MÃƒÂ¡Ã‚Â»Ã…Â¡I Ãƒâ€žÃ¢â‚¬ËœÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã‚Â£c AI sÃƒÆ’Ã‚Â¡ng tÃƒÂ¡Ã‚ÂºÃ‚Â¡o trong chÃƒâ€ Ã‚Â°Ãƒâ€ Ã‚Â¡ng!")
             for n_char in new_chars:
                 n_name = n_char.get("name")
                 if n_name and n_name.strip():
                     database.upsert_character(
                         novel_id=novel_id,
                         name=n_name.strip(),
-                        description=n_char.get("description", "NhÃƒÂ¢n vÃ¡ÂºÂ­t mÃ¡Â»â€ºi xuÃ¡ÂºÂ¥t hiÃ¡Â»â€¡n trong kÃ¡Â»â€¹ch bÃ¡ÂºÂ£n"),
-                        power_tier=n_char.get("power_tier", "Cao ThÃ¡Â»Â§ MÃ¡Â»â€ºi"),
+                        description=n_char.get("description", "NhÃƒÆ’Ã‚Â¢n vÃƒÂ¡Ã‚ÂºÃ‚Â­t mÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi xuÃƒÂ¡Ã‚ÂºÃ‚Â¥t hiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n trong kÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ch bÃƒÂ¡Ã‚ÂºÃ‚Â£n"),
+                        power_tier=n_char.get("power_tier", "Cao ThÃƒÂ¡Ã‚Â»Ã‚Â§ MÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi"),
                         combat_stats=n_char.get("combat_stats", {}),
                         relationships=n_char.get("relationships", {}),
                         failure_flag=False,
@@ -928,7 +928,7 @@ def sync_story_bible(novel_id: str, chapter: dict, current_chars: list):
                     )
                     print(f"   [SUPABASE] + Da tu dong nhat Nhan Vat MOI: {n_name} ({n_char.get('power_tier')})")
 
-        # 2. CÃ¡ÂºÂ¬P NHÃ¡ÂºÂ¬T TRÃ¡ÂºÂ NG THÃƒÂI CÃƒÂC NHÃƒâ€šN VÃ¡ÂºÂ¬T CÃ…Â¨
+        # 2. CÃƒÂ¡Ã‚ÂºÃ‚Â¬P NHÃƒÂ¡Ã‚ÂºÃ‚Â¬T TRÃƒÂ¡Ã‚ÂºÃ‚Â NG THÃƒÆ’Ã‚ÂI CÃƒÆ’Ã‚ÂC NHÃƒÆ’Ã¢â‚¬Å¡N VÃƒÂ¡Ã‚ÂºÃ‚Â¬T CÃƒâ€¦Ã‚Â¨
         for char_up in data.get("character_updates", []):
             name = char_up["name"]
             exist = database.get_character_by_name(novel_id, name)
@@ -990,5 +990,6 @@ def sync_story_bible(novel_id: str, chapter: dict, current_chars: list):
         
     except Exception as e:
         print(f"[ERROR] Story bible sync failed: {e}. Raw JSON: {extract_json}")
+
 
 
