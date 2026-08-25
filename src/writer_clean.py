@@ -1,5 +1,3 @@
-import os
-from gradio_client import Client
 ﻿import json
 import time
 import re
@@ -207,24 +205,6 @@ def translate_to_vietnamese_with_gemini(text: str) -> str:
         return cleaned_res
     return text
 
-
-def call_inkos_cloud(prompt: str) -> str:
-    print("[INFO] Gửi yêu cầu sáng tác tới Inkos (Hugging Face Cloud)...")
-    try:
-        hf_token = os.environ.get("HF_TOKEN")
-        client = Client("AnLee-ai/truyen24h-video-ai", hf_token=hf_token)
-        result = client.predict(
-            prompt=prompt,
-            api_name="/generate_story"
-        )
-        if "Lỗi" in result:
-            print(f"[WARNING] Inkos trả về lỗi: {result}")
-            return ""
-        return str(result)
-    except Exception as e:
-        print(f"[ERROR] Lỗi gọi Inkos Cloud: {e}")
-        return ""
-
 @cached(ttl_seconds=86400)
 def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
     """
@@ -234,7 +214,7 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
     # =========================================================================
     # Ã„ÂÃ¡Â»ËœNG CÃ†Â  Ã†Â¯U TIÃƒÅ N 1: InkOS Gemini 2.0 Flash Engine (Google API vÃ¡Â»â€ºi Key Rotator)
     # =========================================================================
-    gemini_models = ["gemini-3.6-flash", "gemini-3.5-flash-lite"]
+    gemini_models = ["gemini-2.0-flash", "gemini-2.0-flash-lite"]
     for attempt in range(min(retries, 4)):
         g_key = key_rotator.get_gemini_key() or config.GEMINI_API_KEY
         if not g_key:
@@ -361,7 +341,7 @@ def call_openrouter_free_llm(prompt: str) -> str:
         headers["Authorization"] = f"Bearer {or_key}"
     
     free_models = [
-        "google/gemini-3.6-flash-exp:free",
+        "google/gemini-2.0-flash-exp:free",
         "meta-llama/llama-3.3-70b-instruct:free",
         "deepseek/deepseek-r1:free",
         "qwen/qwen-2.5-coder-32b-instruct:free",
@@ -752,9 +732,7 @@ def write_next_chapter(novel_id: str) -> dict:
         final_content = ""
         while draft_attempt < 3:
             draft_attempt += 1
-            final_content = call_inkos_cloud(current_prompt)
-                if not final_content or len(final_content.strip()) < 10:
-                    final_content = call_gemini(current_prompt)
+            final_content = call_gemini(current_prompt)
             word_count = len(final_content.split()) if final_content else 0
             print(f"[INFO] Generated draft length: {word_count} words.")
             
