@@ -205,7 +205,6 @@ def translate_to_vietnamese_with_gemini(text: str) -> str:
         return cleaned_res
     return text
 
-@cached(ttl_seconds=86400)
 from gradio_client import Client
 
 def call_inkos_cloud(prompt: str) -> str:
@@ -225,6 +224,7 @@ def call_inkos_cloud(prompt: str) -> str:
         print(f"[ERROR] Lỗi gọi Inkos Cloud: {e}")
         return ""
 
+@cached(ttl_seconds=86400)
 def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
     """
     Ã†Â¯U TIÃƒÅ N 100% HÃƒâ‚¬NG Ã„ÂÃ¡ÂºÂ¦U: InkOS Multi-Agent Engine (Google Gemini 2.0 Flash API vÃ¡Â»â€ºi Key Rotator).
@@ -989,6 +989,7 @@ def sync_story_bible(novel_id: str, chapter: dict, current_chars: list):
         
     except Exception as e:
         print(f"[ERROR] Story bible sync failed: {e}. Raw JSON: {extract_json}")
+
 
 
 
