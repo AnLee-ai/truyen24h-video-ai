@@ -389,7 +389,26 @@ def get_pending_video_chapter(novel_id: str = "") -> Any:
 
 _created_buckets = set()
 
-def upload_file_to_supabase(file_path: str, bucket_name: str = "media", destination_path: str = None) -> str:
+def upload_to_gofile_fallback(file_path: str) -> str:
+    import requests
+    print(f"[INFO] Chuyển hướng upload {os.path.basename(file_path)} sang GoFile (Bypass 50MB limit)...")
+    try:
+        servers_res = requests.get('https://api.gofile.io/servers', timeout=15).json()
+        if servers_res.get('status') == 'ok':
+            server = servers_res['data']['servers'][0]['name']
+            url = f'https://{server}.gofile.io/contents/uploadfile'
+            with open(file_path, 'rb') as f_obj:
+                res = requests.post(url, files={'file': (os.path.basename(file_path), f_obj)}, timeout=600).json()
+                if res.get('status') == 'ok':
+                    dlink = res['data']['downloadPage']
+                    print(f"[SUCCESS] Upload GoFile thành công! Link: {dlink}")
+                    return dlink
+    except Exception as e:
+        print(f"[ERROR] GoFile fallback failed: {e}")
+    return ""
+
+def upload_file_to_supabase(
+file_path: str, bucket_name: str = "media", destination_path: str = None) -> str:
     """Nâng cấp Supabase Storage Engine: Tự nhận diện Content-Type (MP4/MP3/JPG), Retry 3 lần & Tự động sinh Public CDN URL."""
     import os
     import time
@@ -448,7 +467,9 @@ def upload_file_to_supabase(file_path: str, bucket_name: str = "media", destinat
         except Exception as e:
             if attempt == max_retries - 1:
                 print(f"[ERROR] Thất bại khi upload {file_path} lên Supabase Storage: {e}")
-                return ""
+                # KÍCH HOẠT FALLBACK GOFILE KHI SUPABASE THẤT BẠI
+                gofile_link = upload_to_gofile_fallback(file_path)
+                return gofile_link
             time.sleep(2 * (attempt + 1))
             
     return ""
