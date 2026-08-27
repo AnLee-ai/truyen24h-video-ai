@@ -161,10 +161,7 @@ def send_video_to_telegram(video_path: str, caption: str, public_url: str = "") 
     
     # 1. BẢO ĐẢM TẠO CHUẨN ĐƯỜNG LINK SUPABASE CDN (Không bị lọc mất link)
     final_cdn_url = public_url.strip() if (public_url and public_url.startswith("http")) else ""
-    if not final_cdn_url and config.SUPABASE_URL and video_path:
-        supabase_base = config.SUPABASE_URL.rstrip('/')
-        filename_rel = os.path.basename(video_path)
-        final_cdn_url = f"{supabase_base}/storage/v1/object/public/media/videos/full/{filename_rel}"
+    
         
     print(f"[INFO] Initial Video MP4 Size: {file_size_mb:.2f} MB | Direct CDN URL: {final_cdn_url}")
     

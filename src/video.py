@@ -237,7 +237,7 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
             f.write(f"file '{last_img_clean}'\n")
             
     # 6. Äá»‹nh dáº¡ng bá»™ lá»c Phá»¥ Äá» Kinetic Ná»•i Báº­t 4K (Chá»¯ VÃ ng Nháº¡t & Khung Ná»n Bo GÃ³c Má» MÆ°á»£t Chá»‘ng ChÃ³i 100%)
-    subtitle_style = "Fontname=DejaVu Sans,FontSize=28,PrimaryColour=&H0099FFFF&,OutlineColour=&H00000000&,BackColour=&H90080A14&,BorderStyle=3,Outline=3,Shadow=2,Alignment=2,MarginV=55,MarginL=80,MarginR=80,WrapStyle=2"
+    subtitle_style = "Fontname=Arial,FontSize=24,PrimaryColour=&H00FFFFFF&,OutlineColour=&H00000000&,BackColour=&H00000000&,BorderStyle=1,Outline=2,Shadow=0,Alignment=2,MarginV=25,MarginL=60,MarginR=60,WrapStyle=2"
     
     srt_escaped = ""
     if srt_path and os.path.exists(srt_path):

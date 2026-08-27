@@ -21,226 +21,36 @@ from src import video
 from src import thumbnail_generator
 from src.queue_manager import job_queue
 from src.thumbnail_agent.pipeline import run_thumbnail_pipeline
-# Reconfigure stdout to utf-8 safely instead of monkey-patching print
-if hasattr(sys.stdout, 'reconfigure'):
-    try:
-        sys.stdout.reconfigure(encoding='utf-8')
-    except Exception:
-        pass
 
-# Initialize FastAPI App
-app = FastAPI(title="Truyện 24h Audio Engine", version="1.0.0")
-templates = Jinja2Templates(directory="src/templates")
-app.mount("/static", StaticFiles(directory="templates"), name="static")
-
-from src.api.routers import novels, pipelines, settings, tts as tts_router
-
-app.include_router(novels.router, prefix="/api", tags=["Novels"])
-app.include_router(pipelines.router, prefix="/api", tags=["Pipelines"])
-app.include_router(settings.router, prefix="/api", tags=["Settings"])
-app.include_router(tts_router.router, prefix="/api", tags=["TTS"])
-
-
-
-class CallbackStream:
-    def __init__(self, original_stream, callback):
-        self.original_stream = original_stream
-        self.callback = callback
-        
-    def write(self, data):
-        self.original_stream.write(data)
-        if data.strip():
-            self.callback(data.strip())
-            
-    def flush(self):
-        self.original_stream.flush()
-
-def audit_chapter_quality(ch: dict) -> tuple:
-    """
-    BỘ BẢO VỆ & RÀ SOÁT TIÊU CHUẨN TỰ ĐỘNG (Quality Auditor Engine):
-    Rà soát Tiêu chuẩn chất lượng cho mỗi chương truyện:
-    1. Kịch bản văn bản đầy đủ ≥ 1,000 từ (chuẩn audio > 10 phút).
-    2. Không chứa tên nhân vật cũ rác (Trần Lam, Linh Vy, Minh Đức).
-    """
-    ch_num = ch.get("chapter_number", 0)
-    ch_content = str(ch.get("content", ""))
-    word_count = len(ch_content.split()) if ch_content else 0
-    
-    # 1. Tiêu chuẩn 1: Kịch bản text ngắn (<1000 từ) hoặc còn là BLUEPRINT
-    if not ch_content or ch_content.startswith("BLUEPRINT:") or word_count < 1000:
-        return False, f"Chương {ch_num}: Kịch bản quá ngắn ({word_count} từ < 1000 từ tiêu chuẩn)"
-        
-    # 2. Tiêu chuẩn 2: Chứa tên nhân vật rác cũ
-    for old_name in ["Trần Lam", "Linh Vy", "Minh Đức", "Thùy Linh", "Cao Bá"]:
-        if old_name in ch_content:
-            return False, f"Kịch bản chứa tên nhân vật cũ rác '{old_name}'"
-            
-    return True, "PASSED"
-
-def find_chapter_needing_video(novel_id: str) -> dict:
-    """
-    TỰ ĐỘNG PHÁT HIỆN TẬP CHƯA XỬ LÝ (CHỐNG LẶP CHƯƠNG 100%):
-    1. Lấy danh sách 100% tập ĐÃ XONG từ Supabase + data/ + output/ + RAM.
-    2. Nếu Tập ch_num đã nằm trong completed_set -> BỎ QUA HOÀN TOÀN.
-    3. Trả về tập đầu tiên thực sự chưa hoàn thành.
-    """
-    completed_set = database.get_completed_chapters_set(novel_id)
-
-    try:
-        # Fetch only the uncompleted chapters directly from DB if possible, or reverse iterate the last few.
-        # But since Supabase requires REST API, we fetch all ordered by chapter_number
-        all_chapters = database.get_all_chapters(novel_id)
-        # Limit the search to the last 50 chapters to avoid O(N) on 2000+ chapter novels
-        recent_chapters = all_chapters[-50:] if len(all_chapters) > 50 else all_chapters
-        
-        for ch in recent_chapters:
-            ch_id = str(ch.get("id", ""))
-            ch_num = int(ch.get("chapter_number", 0)) if str(ch.get("chapter_number", "")).isdigit() else 0
-            
-            # Kiểm tra xem Tập ch_num đã xong Media chưa
-            is_done = (ch_num in completed_set) or (str(ch_num) in completed_set) or (ch_id in completed_set)
-            
-            if is_done:
-                print(f"[QUALITY AUDITOR] 🟢 Tập {ch_num} (ID: {ch_id}) ĐÃ HOÀN THÀNH MEDIA. Bỏ qua hoàn toàn để làm tập tiếp theo!")
-                continue
-
-            # Rà soát kịch bản của Tập ch_num chưa hoàn thành
-            passed, reason = audit_chapter_quality(ch)
-            if not passed:
-                print(f"[QUALITY AUDITOR] ⚠️ TẬP {ch_num} (ID: {ch_id}) KHÔNG ĐẠT TIÊU CHUẨN KỊCH BẢN ({reason}). Dành cho writer.write_next_chapter viết mới đủ 2500+ từ!")
-                continue
-                
-            print(f"[QUALITY AUDITOR] 🎯 PHÁT HIỆN TẬP CHƯA XONG MEDIA: Tập {ch_num} (ID: {ch_id}). Tiến hành sản xuất Video!")
-            return ch
-            
-    except Exception as e:
-        print(f"[WARNING] Lỗi quét kiểm tra tiêu chuẩn chất lượng: {e}")
-        
-    return {}
-
-def run_chapter_pipeline(novel_id: str, log_callback=None):
-    """Executes the full pipeline for writing a chapter and uploading audio."""
-    if log_callback:
-        stream = CallbackStream(sys.stdout, log_callback)
-        with contextlib.redirect_stdout(stream):
-            _run_chapter_pipeline_impl(novel_id)
-    else:
-        _run_chapter_pipeline_impl(novel_id)
-
-def _run_chapter_pipeline_impl(novel_id: str):
-    """Internal implementation of the pipeline."""
-    if not config.validate_config():
-        print("[ERROR] Configuration validation failed. Aborting pipeline.")
-        return
-        
-    try:
-        # 0. TỰ ĐỘNG PHÁT HIỆN CHƯƠNG ĐÃ CÓ AUDIO NHƯNG CHƯA CÓ VIDEO (ƯU TIÊN RENDER VIDEO NGAY)
-        pending_video_ch = find_chapter_needing_video(novel_id)
-        is_resuming_video = False
-        if pending_video_ch:
-            chapter = pending_video_ch
-            chapter_id = chapter["id"]
-            chapter_num = chapter["chapter_number"]
-            chapter_title = chapter["title"]
-            chapter_content = chapter["content"]
-            is_resuming_video = True
-            print(f"[INFO] TRỰC TIẾP BỎ QUA BƯỚC VIẾT CHƯƠNG MỚI! Tập trung render Video ngay cho Chương {chapter_num}: '{chapter_title}' (Words: {len(chapter_content.split())})...")
-        else:
-            # 1. Viết chương tiếp theo nếu tất cả các chương cũ đã có video đầy đủ
-            chapter = writer.write_next_chapter(novel_id)
-            if not chapter or "id" not in chapter:
-                if log_callback: log_callback("[ERROR] Không thể viết chương mới.")
-                return
-            chapter_id = chapter["id"]
-            chapter_num = chapter["chapter_number"]
-            chapter_title = chapter["title"]
-            chapter_content = chapter["content"]
-            print(f"[INFO] Chapter {chapter_num} written successfully: '{chapter_title}' (Words: {len(chapter_content.split())})")
-        
-        # BỘ KIỂM DUYỆT BẢO VỆ TUYỆT ĐỐI (Strict Quality Guardrail cho chương VIẾT MỚI):
-        # Khi viết chương mới, NẾU NỘI DUNG CHƯƠNG CHƯA ĐẠT MỐC >2500 TỪ thì dừng.
-        # Nhưng khi DÙNG LẠI CHƯƠNG CŨ ĐÃ CÓ AUDIO (is_resuming_video=True), CHO PHÉP TẠO VIDEO TRỰC TIẾP!
-        if not is_resuming_video and (not chapter_content or len(chapter_content.split()) < 2500):
-            print(f"[WARNING] Nội dung chương viết mới chưa đạt tiêu chuẩn BẮT BUỘC (>2500 từ). Độ dài thực tế: {len(chapter_content.split()) if chapter_content else 0} từ. Tự động dừng tiến trình an toàn.")
-            return
-            
-        # 2. CHẾ ĐỘ TỰ ĐỘNG LÀM LẠI BẮT BUỘC: Ép thời lượng Audio & Video kéo dài > 10 PHÚT (Tối thiểu 600 giây)
-        final_audio_path = ""
-        srt_path = ""
-        max_duration_attempts = 3
-        
-        for duration_attempt in range(max_duration_attempts):
-            if duration_attempt > 0:
-                print(f"\n[WARNING] ⚡ KÍCH HOẠT CHẾ ĐỘ LÀM LẠI (Lượt {duration_attempt + 1}/{max_duration_attempts}): "
-                      f"Thời lượng audio cũ chưa đạt >10 phút. Tự động gọi AI viết nối dài phân cảnh kịch tính...")
-                chapter_content = writer.expand_chapter_content(chapter_content, target_words=2800)
-                database.create_chapter(novel_id, chapter_num, chapter_title, chapter_content)
-                
-            # Convert chapter text to raw speech audio & subtitles
-            raw_audio_path, srt_path = tts.generate_voice_and_subs(chapter_content, chapter_id)
-            if not raw_audio_path:
-                if log_callback: log_callback("[ERROR] TTS thất bại.")
-                return
-            
-            # Mix speech audio with background music
-            final_audio_path = audio.mix_bgm_with_voice(raw_audio_path, chapter_id)
-            if not final_audio_path:
-                if log_callback: log_callback("[ERROR] Mix audio thất bại.")
-                return
-                
-            # Đo chính xác thời lượng thực tế của file Audio
-            current_duration = video.get_audio_duration_seconds(final_audio_path)
-            print(f"[INFO] ⏱️ Thời lượng Audio thực tế của Tập {chapter_num}: {current_duration:.1f} giây ({current_duration/60:.2f} phút).")
-            
-            if current_duration >= 600.0:
-                print(f"[SUCCESS] 🟢 THỜI LƯỢNG ĐẠT CHUẨN > 10 PHÚT! ({current_duration/60:.2f} phút >= 10.0 phút). Tiến hành render Video...")
-                break
-            else:
-                print(f"[WARNING] 🔴 CHẾ ĐỘ LÀM LẠI: Thời lượng {current_duration/60:.2f} phút CHƯA ĐẠT MỐC >10 PHÚT (<600s). Đang chuẩn bị gọi AI làm lại & mở rộng kịch bản...")
-                # Gọi AI mở rộng kịch bản chương truyện lên ~2800 từ (13-15 phút)
-                chapter_content = writer.expand_chapter_content(chapter_content, target_words=2800)
-                database.create_chapter(novel_id, chapter_num, chapter_title, chapter_content)
-                if duration_attempt == max_duration_attempts - 1:
-                    print(f"[INFO] Đã thử làm lại {max_duration_attempts} lần. Tiếp tục tiến trình với thời lượng hiện tại.")
-        
-        # Tự động tìm lại file SRT phụ đề nếu bị thiếu
-        if not srt_path or not os.path.exists(srt_path):
-            possible_srt_paths = [
-                os.path.join("output", chapter_id, f"{chapter_id}.srt"),
-                os.path.join("output", chapter_id, "subtitles.srt"),
-                os.path.join("output", chapter_id, "chapter.srt")
-            ]
-            for p_srt in possible_srt_paths:
-                if os.path.exists(p_srt):
-                    srt_path = p_srt
-                    print(f"[INFO] 🎯 Đã tự động khôi phục file SRT phụ đề tại: {srt_path}")
-                    break
-
-        # 4. Render Video Dài (16:9) qua AI-auto-generate-video / FFmpeg
-        print(f"[INFO] Bắt đầu render video dài (16:9) cho Chương {chapter_num}...")
-        video_path = video.render_novel_video(final_audio_path, srt_path, chapter_title, chapter_id)
-        video_public_url = ""
-        if video_path:
-            file_mb = os.path.getsize(video_path) / (1024 * 1024) if os.path.exists(video_path) else 0
-            print(f"[INFO] 🎬 Video dài đã được tạo tại: {video_path} (Kích thước: {file_mb:.1f} MB)")
-            print(f"[INFO] 📤 Đang đẩy Video MP4 ({file_mb:.1f} MB) lên Supabase Storage CDN tốc độ cao...")
-            video_public_url = database.upload_file_to_supabase(video_path, bucket_name="media", destination_path=f"videos/full/{chapter_id}_16_9.mp4")
-            database.update_chapter_video_status(chapter_id, status="completed", video_url=video_public_url or video_path)
-            
-        # Đảm bảo video_public_url luôn chứa link CDN trực tiếp 100% không bao giờ bị rỗng
-        if not video_public_url and config.SUPABASE_URL:
-            video_public_url = f"{config.SUPABASE_URL.rstrip('/')}/storage/v1/object/public/media/videos/full/{chapter_id}_16_9.mp4"
             
         # 4b. Tự động thiết kế Ảnh Bìa Thumbnail 16:9 YouTube 4K siêu bắt mắt (Xóa cache cũ tránh lỗi viền xanh)
-        scene_img_p = os.path.join("output", chapter_id, "images", "scene_001.jpg")
+        # Generate one unique badass base thumbnail per novel
+        novel_base_thumb = os.path.join("output", novel_id, "base_thumbnail.jpg")
+        if not os.path.exists(novel_base_thumb):
+            print("[INFO] Tạo 1 ảnh Thumbnail gốc duy nhất siêu ngầu cho cả bộ truyện...")
+            from src import image_generator
+            prompt = "Masterpiece, best quality, 1boy, main character, badass, epic pose, glowing eyes, dark fantasy, highly detailed, 8k resolution, cinematic lighting, 16:9 wallpaper"
+            try:
+                image_generator.generate_image(prompt, novel_base_thumb, width=1920, height=1080, base_seed=12345)
+            except Exception as e:
+                print(f"[ERROR] Failed to generate base thumbnail: {e}")
+                # Fallback to scene_001 if generation fails
+                scene_img_p = os.path.join("output", chapter_id, "images", "scene_001.jpg")
+                if os.path.exists(scene_img_p):
+                    import shutil
+                    shutil.copy(scene_img_p, novel_base_thumb)
+
+        if not os.path.exists(novel_base_thumb):
+             novel_base_thumb = os.path.join("output", chapter_id, "images", "scene_001.jpg")
+
         thumb_out_p = os.path.join("output", chapter_id, "thumbnail.jpg")
         if os.path.exists(thumb_out_p):
             try:
                 os.remove(thumb_out_p)
             except Exception:
                 pass
-        print(f"[INFO] Bắt đầu tự động thiết kế Thumbnail YouTube 16:9 cho Tập {chapter_num}...")
-        thumbnail_path = thumbnail_generator.generate_youtube_thumbnail(chapter_num, chapter_title, scene_img_p, thumb_out_p)
+        print(f"[INFO] Bắt đầu tự động thiết kế Thumbnail YouTube 16:9 cho Tập {chapter_num} (dùng base chung)...")
+        thumbnail_path = thumbnail_generator.generate_youtube_thumbnail(chapter_num, chapter_title, novel_base_thumb, thumb_out_p)
         if thumbnail_path and os.path.exists(thumbnail_path):
             database.upload_file_to_supabase(thumbnail_path, bucket_name="media", destination_path=f"thumbnails/{chapter_id}_thumbnail.jpg")
 

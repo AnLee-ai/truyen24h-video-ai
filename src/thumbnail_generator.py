@@ -180,7 +180,7 @@ def generate_youtube_thumbnail(chapter_num: int, chapter_title: str, scene_image
         badge_font = load_font(50)
         tag_font = load_font(36)
         title_font = load_font(64)
-        brand_font = load_font(42)
+        brand_font = load_font(60)
         
         # 4. Vẽ Huy hiệu 1: '🔥 TẬP X - BÁ CHỦ TRÙNG SINH' ở góc trái trên
         badge_text = f" 🔥 TẬP {chapter_num} - BÁ CHỦ TRÙNG SINH "
@@ -197,15 +197,7 @@ def generate_youtube_thumbnail(chapter_num: int, chapter_title: str, scene_image
         draw.text((bx + 18, by + 10), badge_text, fill=(255, 255, 255), font=badge_font)
 
         # 4b. Vẽ Huy hiệu 2: '4K ULTRA HD' ở góc phải trên (Giới hạn kích thước thẻ an toàn chống lỗi viền xanh)
-        tag_text = " 4K ULTRA HD "
-        tw_text, th_text = get_safe_text_size(tag_font, tag_text, 18, 35)
-        tw = min(max(tw_text + 24, 160), 280)
-        th = min(max(th_text + 16, 40), 70)
-        tx_tag = width - tw - 70
-        ty_tag = 70
-        draw.rectangle([tx_tag-3, ty_tag-3, tx_tag + tw + 3, ty_tag + th + 3], fill=(0, 230, 118))
-        draw.rectangle([tx_tag, ty_tag, tx_tag + tw, ty_tag + th], fill=(12, 28, 20))
-        draw.text((tx_tag + 12, ty_tag + 6), tag_text, fill=(0, 230, 118), font=tag_font)
+        
 
         # 5. Vẽ Tiêu Đề Chương (Chapter Title) Chữ Vàng 3D cực kỳ quyến rũ
         clean_title = re.sub(r"[^\w\s\-\:]", "", chapter_title)
