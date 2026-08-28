@@ -18,6 +18,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy source code and templates
 COPY src/ ./src/
 COPY templates/ ./templates/
+COPY app.py .
 
 # Create runtime directories
 RUN mkdir -p output bgm data
