@@ -26,4 +26,4 @@ RUN mkdir -p output bgm data
 EXPOSE 7860
 
 # Run FastAPI server
-CMD ["python", "-m", "src.main", "--action", "serve"]
+CMD ["python", "app.py"]
