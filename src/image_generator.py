@@ -9,7 +9,7 @@ def call_huggingface_space(prompt: str, output_path: str) -> bool:
         
         print(f"[INFO] Gửi lệnh sang Hugging Face Space (my-story-diffusion)...")
         # Initialize client with token
-        client = Client("AnLee-ai/my-story-diffusion", hf_token=os.environ.get("HF_TOKEN"))
+        client = Client("AnLee-ai/my-story-diffusion", token=os.environ.get("HF_TOKEN"))
         
         # The Gradio API accepts script_text and returns [Gallery, Log]
         result = client.predict(
