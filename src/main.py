@@ -191,6 +191,12 @@ def _run_chapter_pipeline_impl(novel_id: str):
                 if duration_attempt == max_duration_attempts - 1:
                     print(f"[INFO] Đã thử làm lại {max_duration_attempts} lần. Tiếp tục tiến trình với thời lượng hiện tại.")
         
+        # Cập nhật ngay trạng thái Audio để Dashboard không bị lỗi hiển thị "Pending"
+        try:
+            database.update_chapter_audio(chapter_id, audio_url="completed")
+        except Exception:
+            pass
+        
         # Tự động tìm lại file SRT phụ đề nếu bị thiếu
         if not srt_path or not os.path.exists(srt_path):
             possible_srt_paths = [
