@@ -10,14 +10,14 @@ from src.writer import remove_repetitive_sentences, clean_chapter_content
 class TestWriterCleaning(unittest.TestCase):
     
     def test_remove_repetitive_sentences_consecutive_dup(self):
-        text = "Trần Lam đi quét lá thông. Trần Lam đi quét lá thông. Cậu cảm thấy mỏi mệt."
-        expected = "Trần Lam đi quét lá thông. Cậu cảm thấy mỏi mệt."
+        text = "Trần Lam đi qua. Trần Lam đi qua. Cậu cảm thấy mỏi mắt."
+        expected = "Trần Lam đi qua. Cậu cảm thấy mỏi mắt."
         result = remove_repetitive_sentences(text)
         self.assertEqual(result.strip(), expected.strip())
         
     def test_remove_repetitive_sentences_case_insensitive(self):
-        text = "Trần Lam đi quét lá thông. trần lam đi quét lá thông. Cậu cảm thấy mỏi mệt."
-        expected = "Trần Lam đi quét lá thông. Cậu cảm thấy mỏi mệt."
+        text = "Trần Lam đi qua. trần lam đi qua. Cậu cảm thấy mỏi mắt."
+        expected = "Trần Lam đi qua. Cậu cảm thấy mỏi mắt."
         result = remove_repetitive_sentences(text)
         self.assertEqual(result.strip(), expected.strip())
 

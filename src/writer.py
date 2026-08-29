@@ -1,4 +1,4 @@
-﻿import os
+import os
 from gradio_client import Client
 import json
 import time
@@ -114,7 +114,7 @@ def remove_repetitive_sentences(text: str) -> str:
 def clean_chapter_content(text: str) -> str:
     """Clean draft content, stripping markdown and prefix headers like 'DÃ¡ÂºÂ«n lÃ†Â°Ã¡Â»Â£c:', 'ChÃ†Â°Ã†Â¡ng X:', etc."""
     cleaned = text.strip()
-    pattern = r"(?im)^\s*[*_]*\s*(?:DÃ¡ÂºÂ«n lÃ†Â°Ã¡Â»Â£c|GiÃ¡Â»â€ºi thiÃ¡Â»â€¡u|PhÃ¡ÂºÂ§n dÃ¡ÂºÂ«n lÃ†Â°Ã¡Â»Â£c|TÃƒÂ³m tÃ¡ÂºÂ¯t bÃ¡Â»â€˜i cÃ¡ÂºÂ£nh|Prologue|Introduction|GiÃ¡Â»â€ºi thiÃ¡Â»â€¡u bÃ¡Â»â€˜i cÃ¡ÂºÂ£nh)\s*[:Ã¯Â¼Å¡\-Ã¢â‚¬â€œÃ¢â‚¬â€]*\s*[*_]*\s*[:Ã¯Â¼Å¡\-Ã¢â‚¬â€œÃ¢â‚¬â€]*\s*"
+    pattern = r"(?im)^\s*[*_]*\s*(?:Dẫn lược|Giới thiệu|Phần dẫn lược|Tóm tắt bối cảnh|Prologue|Introduction|Giới thiệu bối cảnh)\s*[:：\-\u2013\u2014]*\s*[*_]*\s*[:：\-\u2013\u2014]*\s*"
     cleaned = re.sub(pattern, "", cleaned).strip()
     cleaned = remove_repetitive_sentences(cleaned)
     return cleaned
