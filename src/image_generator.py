@@ -1,4 +1,4 @@
-﻿import shutil
+import shutil
 
 import shutil
 
@@ -7,17 +7,34 @@ def call_huggingface_space(prompt: str, output_path: str) -> bool:
         from gradio_client import Client
         import shutil
         
-        print(f"[INFO] Gửi lệnh sang Hugging Face Space (ZeroGPU)...")
+        print(f"[INFO] Gửi lệnh sang Hugging Face Space (my-story-diffusion)...")
         # Initialize client with token
-        client = Client("AnLee-ai/truyen24h-video-ai", hf_token=os.environ.get("HF_TOKEN"))
+        client = Client("AnLee-ai/my-story-diffusion", hf_token=os.environ.get("HF_TOKEN"))
         
         # The Gradio API accepts script_text and returns [Gallery, Log]
         result = client.predict(
-            script_text=prompt,
-            api_name="/predict"
+            _sd_type="Unstable",
+            _model_type="Only Using Textual Description",
+            _upload_images=[],
+            _num_steps=30,
+            style_name="Japanese Anime",
+            _ip_adapter_strength=0.5,
+            _style_strength_ratio=20,
+            guidance_scale=5,
+            seed_=0,
+            sa32_=0.7,
+            sa64_=0.7,
+            id_length_=2,
+            general_prompt="",
+            negative_prompt="bad anatomy, ugly, missing fingers, low res",
+            prompt_array=prompt,
+            g_height=1080,
+            g_width=1920,
+            _comic_type="No typesetting (default)",
+            api_name="/process_generation"
         )
         
-        if result and isinstance(result, (list, tuple)) and result[0]:
+        if result and isinstance(result, (list, tuple)) and len(result) > 0:
             gallery = result[0]
             if isinstance(gallery, list) and len(gallery) > 0:
                 first_img = gallery[0]
