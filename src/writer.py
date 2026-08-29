@@ -209,21 +209,7 @@ def translate_to_vietnamese_with_gemini(text: str) -> str:
 
 
 def call_inkos_cloud(prompt: str) -> str:
-    print("[INFO] Gá»­i yÃªu cáº§u sÃ¡ng tÃ¡c tá»›i Inkos (Hugging Face Cloud)...")
-    try:
-        hf_token = os.environ.get("HF_TOKEN")
-        client = Client("AnLee-ai/truyen24h-video-ai", token=hf_token)
-        result = client.predict(
-            prompt=prompt,
-            api_name="/generate_story"
-        )
-        if "Lá»—i" in result:
-            print(f"[WARNING] Inkos tráº£ vá» lá»—i: {result}")
-            return ""
-        return str(result)
-    except Exception as e:
-        print(f"[ERROR] Lá»—i gá»i Inkos Cloud: {e}")
-        return ""
+    return ""
 
 @cached(ttl_seconds=86400)
 def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
