@@ -210,16 +210,14 @@ def call_inkos_cloud(prompt: str) -> str:
     try:
         hf_token = os.environ.get("HF_TOKEN")
         # Tương thích cả gradio_client cũ (hf_token=) và mới (token=)
-        import inspect
         from gradio_client import Client
-        params = inspect.signature(Client.__init__).parameters
-        kwargs = {}
-        if "token" in params:
-            kwargs["token"] = hf_token
-        elif "hf_token" in params:
-            kwargs["hf_token"] = hf_token
-            
-        client = Client("AnLee-ai/truyen24h-video-ai", **kwargs)
+        try:
+            client = Client("AnLee-ai/truyen24h-video-ai", token=hf_token)
+        except TypeError as e:
+            if "unexpected keyword argument" in str(e):
+                client = Client("AnLee-ai/truyen24h-video-ai", hf_token=hf_token)
+            else:
+                raise
         result = client.predict(
             prompt=prompt,
             api_name="/generate_story"
