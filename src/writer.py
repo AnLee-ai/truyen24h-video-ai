@@ -134,7 +134,7 @@ def expand_chapter_content(content: str, target_words: int = 3200) -> str:
                     f"2. Đi sâu miêu tả cực kỳ tỉ mỉ: nội tâm nhân vật, chi tiết bối cảnh, từng động tác chiến đấu, từng luồng chân khí.\n"
                     f"3. Viết các đoạn đối thoại dài, tranh luận có chiều sâu.\n"
                     f"4. TUYỆT ĐỐI không tóm tắt hay kết thúc sớm. Hãy tiếp tục triển khai cốt truyện ở mức độ chi tiết cao nhất.\n"
-    
+                )    
     for _expand_attempt in range(3):
         part_next = call_gemini(continuation_prompt)
         if part_next and len(part_next.split()) > 200:
@@ -725,6 +725,7 @@ def write_next_chapter(novel_id: str) -> dict:
             f"TUYỆT ĐỐI KHÔNG liệt kê hay giới thiệu tràn lan các nhân vật phụ. Các nhân vật phụ sẽ chỉ xuất hiện tự nhiên khi có tình huống đối thoại trong câu chuyện.\n"
             f"- **CẢNH BÁO QUAN TRỌNG VỀ TIÊU ĐỀ**: TUYỆT ĐỐI KHÔNG VIẾT CHỮ 'Dẫn lược', 'Dẫn lược:', 'Giới thiệu:', hay 'Prologue:'. "
             f"Hãy bắt đầu viết nội dung truyện ngay lập tức. Câu đầu tiên phải là câu miêu tả hoặc hành động.\n"
+        )
         prompt = prompt.replace("Constraints:", f"Constraints:\n{prologue_instruction}")
     
     while attempt < max_attempts:
@@ -793,6 +794,7 @@ def write_next_chapter(novel_id: str) -> dict:
                     f"2. Đi sâu miêu tả cực kỳ tỉ mỉ: nội tâm nhân vật, chi tiết bối cảnh, từng động tác chiến đấu, từng luồng chân khí.\n"
                     f"3. Viết các đoạn đối thoại dài, tranh luận có chiều sâu.\n"
                     f"4. TUYỆT ĐỐI không tóm tắt hay kết thúc sớm. Hãy tiếp tục triển khai cốt truyện ở mức độ chi tiết cao nhất.\n"
+                )
                 
                 part_next = call_gemini(continuation_prompt)
                 if part_next and len(part_next.split()) > 100:
@@ -816,11 +818,12 @@ def write_next_chapter(novel_id: str) -> dict:
                 print(f"[WARNING] Draft ends abruptly (no punctuation at the end). Requesting completion (Attempt {draft_attempt}/3)...")
                 current_prompt = prompt + (
                     "\n\n**CẢNH BÁO CỰC KỲ QUAN TRỌNG**: Bản thảo của bạn bị ngắt quãng do giới hạn token. Bạn BẮT BUỘC phải viết trọn vẹn câu đang dở và tiếp tục viết tiếp từ đoạn cuối này: '{last_words}'."
+                )
             else:
                 print(f"[WARNING] Draft too short ({word_count} words). Requesting longer expansion (Attempt {draft_attempt}/3)...")
                 current_prompt = prompt + (
                     "\n\n**CẢNH BÁO CỰC KỲ QUAN TRỌNG**: Bản thảo của bạn bị ngắt quãng do giới hạn token. Bạn BẮT BUỘC phải viết trọn vẹn câu đang dở và tiếp tục viết tiếp từ đoạn cuối này: '{last_words}'."
-            
+                )
         review_prompt = prompts.REVIEW_PROMPT.format(
             chapter_number=next_ch_number,
             chapter_title=chapter_record["title"],
