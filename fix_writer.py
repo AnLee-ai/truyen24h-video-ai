@@ -1,49 +1,78 @@
-﻿import subprocess
-import os
-
-# Get pure bytes from git
-git_exe = r'C:\Users\david\AppData\Local\GitHubDesktop\app-3.6.3\resources\app\git\cmd\git.exe'
-pure_bytes = subprocess.check_output([git_exe, 'show', '1cac123:src/writer.py'])
-content = pure_bytes.decode('utf-8')
-
-# 1. Update gemini models
-content = content.replace('gemini-2.0-flash-lite', 'gemini-3.5-flash-lite')
-content = content.replace('gemini-2.0-flash', 'gemini-3.6-flash')
-
-# 2. Remove mangstoon hack
 import re
-content = re.sub(r'(?s)# =========================================================================\n\s*# ĐƯỜNG CƠ DỰ PHÒNG 2: Local Mangstoon_AI Engine.*?# =========================================================================\n\s*local_mangstoon = call_mangstoon_ai\(prompt\)\n\s*if local_mangstoon and len\(local_mangstoon.strip\(\).split\(\)\) > 10:\n\s*print\("\[SUCCESS\] Local Mangstoon_AI succeeded!"\)\n\s*return local_mangstoon.strip\(\)\n', '', content)
 
-# 3. Add imports
-content = "import os\nfrom gradio_client import Client\n" + content
+with open('d:/222/src/writer.py', 'r', encoding='utf-8') as f:
+    content = f.read()
 
-# 4. Inject call_inkos_cloud
-inkos_func = '''
-def call_inkos_cloud(prompt: str) -> str:
-    print("[INFO] Gửi yêu cầu sáng tác tới Inkos (Hugging Face Cloud)...")
-    try:
-        hf_token = os.environ.get("HF_TOKEN")
-        client = Client("AnLee-ai/truyen24h-video-ai", hf_token=hf_token)
-        result = client.predict(
-            prompt=prompt,
-            api_name="/generate_story"
+new_memory = '''previous_chapters = [c for c in all_chapters if c["chapter_number"] < next_ch_number and not str(c.get("content", "")).startswith("BLUEPRINT:")]
+    
+    # 1. Extract forbidden phrases (anti-repetition)
+    forbidden_phrases_list = []
+    for ch in previous_chapters[-3:]:
+        ch_content = str(ch.get('content', ''))
+        words = ch_content.split()[:50]
+        if words:
+            forbidden_phrases_list.append(" ".join(words))
+    forbidden_phrases = "\\n- ".join(forbidden_phrases_list) if forbidden_phrases_list else "Không có"
+
+    # 2. Smart Continuation Anchor
+    working_memory_text = ""
+    if previous_chapters:
+        last_ch = previous_chapters[-1]
+        ch_content = str(last_ch.get('content', ''))
+        last_words = " ".join(ch_content.split()[-1500:])
+        working_memory_text = f"\\n--- KẾT THÚC CỦA CHƯƠNG {last_ch['chapter_number']}: {last_ch['title']} ---\\n{last_words}\\n"
+    else:
+        working_memory_text = "Đây là chương mở đầu. Hãy viết hoàn toàn mới."'''
+
+match = re.search(r'previous_chapters = \[c for c in all_chapters if c\["chapter_number"\] < next_ch_number.*?working_memory_text \+= f"\\n--- .*?\\n"', content, re.DOTALL)
+if match:
+    content = content[:match.start()] + new_memory + content[match.end():]
+else:
+    print('Failed to replace memory logic')
+
+old_prompt_format = r'''prompt = prompts\.WRITING_PROMPT\.format\(
+        chapter_number=next_ch_number,
+        chapter_title=chapter_record\["title"\],
+        title="Truy.*?n 24h Audio",
+        blueprint=blueprint_text,
+        world_lore=world_lore_text,
+        characters=json\.dumps\(chars, ensure_ascii=False, indent=2\),
+        history=history_text,
+        previous_content=working_memory_text,
+        protagonist_name=protagonist_name,
+        protagonist_power=protagonist_power,
+        protagonist_stats=protagonist_stats,
+        failure_flag=str\(failure_flag\)
+    \)'''
+
+new_prompt_format = '''prompt = prompts.WRITING_PROMPT.format(
+        chapter_number=next_ch_number,
+        chapter_title=chapter_record["title"],
+        title="Truyen 24h Audio",
+        blueprint=blueprint_text,
+        world_lore=world_lore_text,
+        characters=json.dumps(chars, ensure_ascii=False, indent=2),
+        history=history_text,
+        previous_content=working_memory_text,
+        forbidden_phrases=forbidden_phrases,
+        protagonist_name=protagonist_name,
+        protagonist_power=protagonist_power,
+        protagonist_stats=protagonist_stats,
+        failure_flag=str(failure_flag)
+    )'''
+
+content = re.sub(old_prompt_format, new_prompt_format, content, flags=re.DOTALL)
+
+prologue_re = r'if next_ch_number == 1:.*?prompt = prompt\.replace\("Constraints:", f"Constraints:\\n\{prologue_instruction\}"\)'
+new_prologue = '''if next_ch_number == 1:
+        prologue_instruction = (
+            f"- CHÚ Ý: ĐÂY LÀ CHƯƠNG MỞ ĐẦU (PROLOGUE). Chỉ dành 1/4 dung lượng để miêu tả bối cảnh. Sau đó BẮT BUỘC phải chuyển cảnh (Time-skip/Location-skip) sang một tình huống có thật, đưa {protagonist_name} vào hành động!\\n"
+            f"- KHÔNG liệt kê nhân vật phụ tràn lan. Bắt đầu ngay lập tức.\\n"
         )
-        if "Lỗi" in result:
-            print(f"[WARNING] Inkos trả về lỗi: {result}")
-            return ""
-        return str(result)
-    except Exception as e:
-        print(f"[ERROR] Lỗi gọi Inkos Cloud: {e}")
-        return ""
-'''
-content = content.replace('@cached(ttl_seconds=86400)\ndef call_gemini', inkos_func + '\n@cached(ttl_seconds=86400)\ndef call_gemini')
+        prompt = prompt.replace("INKOS STRUCTURE DIRECTIVES:", f"INKOS STRUCTURE DIRECTIVES:\\n{prologue_instruction}")'''
 
-# 5. Route drafting to Inkos
-content = content.replace('final_content = call_gemini(current_prompt)', 
-    'final_content = call_inkos_cloud(current_prompt)\n                if not final_content or len(final_content.strip()) < 10:\n                    final_content = call_gemini(current_prompt)')
+content = re.sub(prologue_re, new_prologue, content, flags=re.DOTALL)
 
-# Write back purely
-with open(r'd:\222\src\writer.py', 'w', encoding='utf-8') as f:
+with open('d:/222/src/writer.py', 'w', encoding='utf-8') as f:
     f.write(content)
-
-print("SUCCESS")
+print('Updated writer.py')
