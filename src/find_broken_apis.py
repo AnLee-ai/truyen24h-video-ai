@@ -44,14 +44,14 @@ def run_api_audit():
         pass
 
     print("=" * 70)
-    print("ðŸ” AUDIT & DIAGNOSTIC: KIá»‚M TRA TOÃ€N Bá»˜ CÃC KHÃ“A API Há»† THá»NG")
+    print("[INFO] Processing...")
     print("=" * 70)
     
     # 1. Audit Gemini Keys
     gemini_keys = key_rotator.gemini_rotator.keys
-    print(f"\nðŸ“Œ [1] KIá»‚M TRA GEMINI API KEYS (Tá»•ng cá»™ng: {len(gemini_keys)} khÃ³a):")
+    print(f"\n📌 [1] KIỂM TRA GEMINI API KEYS (Tổng cộng: {len(gemini_keys)} khóa):")
     if not gemini_keys:
-        print("  âŒ KhÃ´ng tÃ¬m tháº¥y khÃ³a GEMINI_API_KEY / GEMINI_API_KEYS nÃ o trong mÃ´i trÆ°á»ng!")
+        print("[INFO] Processing...")
     else:
         for idx, k in enumerate(gemini_keys):
             mask = f"...{k[-6:]}" if len(k) >= 6 else k
@@ -61,9 +61,9 @@ def run_api_audit():
 
     # 2. Audit Groq Keys
     groq_keys = key_rotator.groq_rotator.keys
-    print(f"\nðŸ“Œ [2] KIá»‚M TRA GROQ API KEYS (Tá»•ng cá»™ng: {len(groq_keys)} khÃ³a):")
+    print(f"\n📌 [2] KIỂM TRA GROQ API KEYS (Tổng cộng: {len(groq_keys)} khóa):")
     if not groq_keys:
-        print("  âš ï¸ KhÃ´ng cáº¥u hÃ¬nh khÃ³a GROQ_API_KEY / GROQ_API_KEYS (Há»‡ thá»‘ng dÃ¹ng Gemini).")
+        print("[INFO] Processing...")
     else:
         for idx, k in enumerate(groq_keys):
             mask = f"...{k[-6:]}" if len(k) >= 6 else k
@@ -77,7 +77,7 @@ def run_api_audit():
         try:
             r = requests.get(f"{config.SUPABASE_URL}/rest/v1/", headers={"apikey": config.SUPABASE_KEY}, timeout=10)
             if r.status_code in (200, 404):
-                print("  âœ… Supabase URL & Key: HOáº T Äá»˜NG Tá»T (200 OK)")
+                print("[INFO] Processing...")
             else:
                 print(f"  âŒ Supabase Lá»—i: Status {r.status_code} - {r.text[:80]}")
         except Exception as e:
@@ -93,7 +93,7 @@ def run_api_audit():
             r = requests.get(url, timeout=10)
             if r.status_code == 200:
                 bot_name = r.json().get("result", {}).get("username", "Unknown")
-                print(f"  âœ… Telegram Bot: HOáº T Äá»˜NG Tá»T (@{bot_name}) | Channel: {config.TELEGRAM_CHAT_ID}")
+                print("[INFO] Processing...")
             else:
                 print(f"  âŒ Telegram Bot Token lá»—i: Status {r.status_code} - {r.text[:80]}")
         except Exception as e:
@@ -106,9 +106,9 @@ def run_api_audit():
     try:
         r = requests.get("https://image.pollinations.ai/prompt/test", timeout=10)
         if r.status_code == 200:
-            print("  âœ… Pollinations Image API: HOáº T Äá»˜NG Tá»T (200 OK)")
+            print("[INFO] Processing...")
         else:
-            print(f"  âš ï¸ Pollinations Image API Cáº£nh bÃ¡o: Status {r.status_code}")
+            print("[INFO] Processing...")
     except Exception as e:
         print(f"  âŒ Pollinations Lá»—i káº¿t ná»‘i: {e}")
 

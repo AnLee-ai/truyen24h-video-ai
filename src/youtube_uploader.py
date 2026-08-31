@@ -104,7 +104,7 @@ def upload_video_to_youtube(video_path: str, title: str, chapter_num: int = 1, c
             flow = InstalledAppFlow.from_client_secrets_file(client_secrets_file, SCOPES)
             creds = flow.run_local_server(port=0)
             os.makedirs(os.path.dirname(token_path) or ".", exist_ok=True)
-            with open(token_path, "w") as token_file:
+            with open(token_path, "w", encoding="utf-8") as token_file:
                 token_file.write(creds.to_json())
         else:
             print(f"[WARNING] Không thấy file {client_secrets_file}. Sử dụng chế độ giả lập upload.")

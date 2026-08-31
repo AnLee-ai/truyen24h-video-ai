@@ -43,7 +43,7 @@ async def api_update_settings(payload: SettingsUpdate):
     try:
         env_path = ".env"
         if not os.path.exists(env_path):
-            open(env_path, "w").close()
+            open(env_path, "w", encoding="utf-8").close()
             
         data = payload.dict(exclude_unset=True, exclude_none=True)
         for k, v in data.items():

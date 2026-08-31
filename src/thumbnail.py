@@ -8,7 +8,7 @@ def overlay_thumbnail_text(image_path: str, chapter_number: int, title: str) -> 
         return image_path
         
     try:
-        img = Image.open(image_path).convert("RGBA")
+        img = Image.open(image_path).convert("RGBA", encoding="utf-8")
         width, height = img.size
         
         # Tạo lớp overlay mờ mịt ở phần dưới để làm nổi chữ

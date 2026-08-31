@@ -27,50 +27,50 @@ import subprocess
 import shutil
 from src.image_generator import generate_scene_image
 
-# MA TRáº¬N 30 TÃNH NÄ‚NG CHUYÃŠN SÃ‚U & HIá»†U SUáº¤T CAO Vá»€ VIDEO (30 HIGH-PERFORMANCE VIDEO FEATURES MATRIX)
+# Removed corrupted comment
 MASTER_30_VIDEO_FEATURES = [
-    # NhÃ³m 1: Äá»“ Há»a & Hiá»‡u á»¨ng PhÃ¢n Cáº£nh (Features 1-10)
-    "Feature 1: Auto Dynamic Intro Card Generator (Tá»± chÃ¨n Intro tiÃªu Ä‘á» 3s má»Ÿ Ä‘áº§u video)",
-    "Feature 2: Auto Outro Call-To-Action Card (Tá»± chÃ¨n mÃ n hÃ¬nh káº¿t gá»i Ä‘Äƒng kÃ½ 4s cuá»‘i video)",
-    "Feature 3: Dynamic Motion Pan-Zoom Alternator (Xoay luÃ¢n phiÃªn hÆ°á»›ng lia mÃ¡y Ken Burns Zoom-In/Pan-Right)",
-    "Feature 4: Automatic Color Balance & Saturation Equalizer (CÃ¢n báº±ng Ä‘á»™ tÆ°Æ¡ng pháº£n 1.18x & Saturation 1.25x)",
-    "Feature 5: Dark Vignette Border Masking (Phá»§ dáº£i viá»n má» tá»‘i Vignette táº­p trung máº¯t vÃ o chá»§ thá»ƒ)",
-    "Feature 6: High-Contrast ASS Subtitle Styling (Phá»¥ Ä‘á» VÃ ng Chanh #FFFF00 viá»n Ä‘en 3px chá»‘ng chÃ³i 100%)",
-    "Feature 7: Subtitle Line Length Truncator & Auto Wrap (Tá»± ngáº¯t dÃ²ng phá»¥ Ä‘á» tá»‘i Ä‘a 34 kÃ½ tá»±)",
-    "Feature 8: Subtitle Vertical Margin Optimization (CÄƒn lá» MarginV=42 nÃ© thanh tiáº¿n trÃ¬nh YouTube)",
-    "Feature 9: Hardware GPU Accelerator Auto-Detect (Tá»± kÃ­ch hoáº¡t GPU NVIDIA NVENC -> Intel QSV -> CPU)",
-    "Feature 10: Multi-Model AI Image Scene Fallback (Tá»± xoay vÃ²ng 3 model flux-anime -> flux -> turbo)",
+    # Removed corrupted comment
+    "Feature 1: Auto Dynamic Intro Card Generator (Tá»± chn Intro tiu Ä‘á» 3s má»Ÿ Ä‘áº§u video)",
+    "Feature 2: Auto Outro Call-To-Action Card (Tá»± chn mn hnh káº¿t gá»i Ä‘Äƒng k 4s cuá»‘i video)",
+    "Feature 3: Dynamic Motion Pan-Zoom Alternator (Xoay luân phiên hướng lia máy Ken Burns Zoom-In/Pan-Right)",
+    "Feature 4: Automatic Color Balance & Saturation Equalizer (Cân bằng độ tương phản 1.18x & Saturation 1.25x)",
+    "Feature 5: Dark Vignette Border Masking (Phá»§ dáº£i viá»n má» tá»‘i Vignette táº­p trung máº¯t vo chá»§ thá»ƒ)",
+    "Feature 6: High-Contrast ASS Subtitle Styling (Phá»¥ Ä‘á» Vng Chanh #FFFF00 viá»n Ä‘en 3px chá»‘ng chi 100%)",
+    "Feature 7: Subtitle Line Length Truncator & Auto Wrap (Tá»± ngáº¯t dng phá»¥ Ä‘á» tá»‘i Ä‘a 34 k tá»±)",
+    "Feature 8: Subtitle Vertical Margin Optimization (CÄƒn lá» MarginV=42 n thanh tiáº¿n trnh YouTube)",
+    "Feature 9: Hardware GPU Accelerator Auto-Detect (Tự kích hoạt GPU NVIDIA NVENC -> Intel QSV -> CPU)",
+    "Feature 10: Multi-Model AI Image Scene Fallback (Tự xoay vòng 3 model flux-anime -> flux -> turbo)",
 
-    # NhÃ³m 2: Tá»‘i Æ¯u Tá»‘c Äá»™ & Kiá»ƒm SoÃ¡t Bá»™ Nhá»› (Features 11-20)
-    "Feature 11: Multi-Scene Variation Generator Guard (Tá»± sinh biáº¿n thá»ƒ cáº£nh dá»± phÃ²ng trÃ¡nh lá»—i 1 áº£nh)",
-    "Feature 12: Audio-Video Microsecond Alignment Lock (KhÃ³a Ä‘á»“ng bá»™ khung hÃ¬nh video chuáº©n tá»«ng ms audio)",
-    "Feature 13: Target Bitrate & 50MB File Size Constraint (KhÃ³a Bitrate 1400k Ã©p file 10 phÃºt <45MB cho Telegram)",
+    # Removed corrupted comment
+    "Feature 11: Multi-Scene Variation Generator Guard (Tự sinh biến thể cảnh dự phòng tránh lỗi 1 ảnh)",
+    "Feature 12: Audio-Video Microsecond Alignment Lock (Khóa đồng bộ khung hình video chuẩn từng ms audio)",
+    "Feature 13: Target Bitrate & 50MB File Size Constraint (Khóa Bitrate 1400k ép file 10 phút <45MB cho Telegram)",
     "Feature 14: Automated Video Duration & Size Quality Validator (Tá»± ffprobe kiá»ƒm tra cháº¥t lÆ°á»£ng file MP4)",
-    "Feature 15: Post-Render Temporary File Cleanup Manager (Tá»± dá»n dáº¹p áº£nh táº¡m rÃ¡c sau khi render xong)",
-    "Feature 16: Zero-Latency Parallel Scene Frame Pre-fetcher (Sinh trÆ°á»›c áº£nh AI song song trong lÃºc táº¡o audio)",
+    "Feature 15: Post-Render Temporary File Cleanup Manager (Tự dọn dẹp ảnh tạm rác sau khi render xong)",
+    "Feature 16: Zero-Latency Parallel Scene Frame Pre-fetcher (Sinh trước ảnh AI song song trong lúc tạo audio)",
     "Feature 17: Multi-Threaded FFmpeg Concat Chunking (Chia nhá» timeline render Ä‘a luá»“ng cá»±c nhanh)",
-    "Feature 18: Smart Dynamic Frame Rate Locking (r 25fps) (Ã‰p khung hÃ¬nh chuáº©n 25fps mÆ°á»£t mÃ  tuyá»‡t Ä‘á»‘i)",
-    "Feature 19: High-Dynamic Range Color Tone Mapping (Tá»‘i Æ°u dáº£i mÃ u sá»‘ng Ä‘á»™ng rá»±c rá»¡ chuáº©n 8K)",
-    "Feature 20: Intelligent Scene Transition Crossfade Blur (LÃ m má» chuyá»ƒn cáº£nh nháº¹ nhÃ ng tá»± nhiÃªn)",
+    "Feature 18: Smart Dynamic Frame Rate Locking (r 25fps) (Ép khung hình chuẩn 25fps mượt mà tuyệt đối)",
+    "Feature 19: High-Dynamic Range Color Tone Mapping (Tối ưu dải màu sống động rực rỡ chuẩn 8K)",
+    "Feature 20: Intelligent Scene Transition Crossfade Blur (Lm má» chuyá»ƒn cáº£nh nháº¹ nhng tá»± nhin)",
 
-    # NhÃ³m 3: Chuáº©n HÃ³a MÃ£ HÃ³a & PhÃ¡t Trá»±c Tiáº¿p (Features 21-30)
-    "Feature 21: High-Efficiency Video Coding (HEVC/H.265 Auto-Fallback) (MÃ£ hÃ³a HEVC giáº£m 50% dung lÆ°á»£ng)",
-    "Feature 22: GPU Memory Buffer Allocation Tuning (Cáº¥p phÃ¡t 8 GPU Frame Buffers mÆ°á»£t mÃ )",
-    "Feature 23: Anti-Flicker Spatial Temporal Denoise Filter (Bá»™ lá»c khá»­ nhiá»…u áº£nh AI má»‹n mÃ ng)",
-    "Feature 24: Audio Dynamic Range Compression & Ducking (Tá»± giáº£m Ã¢m lÆ°á»£ng nháº¡c ná»n khi nhÃ¢n váº­t cáº¥t lá»i)",
-    "Feature 25: Automated Video Metadata Tagging (ChÃ¨n nhÃ£n báº£n quyá»n & Title MP4 Atom chuáº©n SEO)",
-    "Feature 26: Adaptive Aspect Ratio Auto-Crop Engine (Tá»± crop scale khung hÃ¬nh 16:9 khÃ´ng bá»‹ lá»‡ch nÃ©t)",
-    "Feature 27: Smart Error Recovery & Resume Interrupted Render (KhÃ´i phá»¥c vÃ  render tiáº¿p náº¿u ngáº¯t káº¿t ná»‘i)",
-    "Feature 28: Fast Start Web Optimization MP4 Atom Mover (ChÃ¨n movflags +faststart xem ngay khÃ´ng cáº§n táº£i háº¿t)",
-    "Feature 29: Memory-Efficient Pipe Streaming Renders (Stream khung hÃ¬nh trá»±c tiáº¿p qua RAM tiáº¿t kiá»‡m á»• Ä‘Ä©a)",
+    # Nhóm 3: Chuẩn Hóa Mã Hóa & Phát Trực Tiếp (Features 21-30)
+    "Feature 21: High-Efficiency Video Coding (HEVC/H.265 Auto-Fallback) (Mã hóa HEVC giảm 50% dung lượng)",
+    "Feature 22: GPU Memory Buffer Allocation Tuning (Cấp phát 8 GPU Frame Buffers mượt mà)",
+    "Feature 23: Anti-Flicker Spatial Temporal Denoise Filter (Bá»™ lá»c khá»­ nhiá»…u áº£nh AI má»‹n mng)",
+    "Feature 24: Audio Dynamic Range Compression & Ducking (Tự giảm âm lượng nhạc nền khi nhân vật cất lời)",
+    "Feature 25: Automated Video Metadata Tagging (Chèn nhãn bản quyền & Title MP4 Atom chuẩn SEO)",
+    "Feature 26: Adaptive Aspect Ratio Auto-Crop Engine (Tự crop scale khung hình 16:9 không bị lệch nét)",
+    "Feature 27: Smart Error Recovery & Resume Interrupted Render (Khôi phục và render tiếp nếu ngắt kết nối)",
+    "Feature 28: Fast Start Web Optimization MP4 Atom Mover (Chèn movflags +faststart xem ngay không cần tải hết)",
+    "Feature 29: Memory-Efficient Pipe Streaming Renders (Stream khung hình trực tiếp qua RAM tiết kiệm ổ đĩa)",
     "Feature 30: Automated Multi-Platform Video Format Transcoder (Xuáº¥t Ä‘á»“ng thá»i 16:9 Widescreen & 9:16 Shorts)"
 ]
 
 def parse_srt_scenes_with_durations(srt_path: str, target_min_duration: float = 5.0) -> list:
     """
-    Äá»c file SRT vÃ  phÃ¢n nhÃ³m cÃ¡c cÃ¢u thoáº¡i thÃ nh cÃ¡c phÃ¢n cáº£nh vá»«a váº·n (5-8 giÃ¢y),
-    tráº£ vá» danh sÃ¡ch dict chá»©a: {'text': text_thoai, 'duration': thoi_gian_thuc_te_giay}.
-    Chuyá»ƒn cáº£nh CHÃNH XÃC KHá»šP Vá»šI Lá»œI NÃ“I NHÃ‚N Váº¬T!
+    Đọc file SRT và phân nhóm các câu thoại thành các phân cảnh vừa vặn (5-8 giây),
+    trả về danh sách dict chứa: {'text': text_thoai, 'duration': thoi_gian_thuc_te_giay}.
+    Chuyá»ƒn cáº£nh CHNH XC KHá»šP Vá»šI Lá»œI NÃ“I NHÃ‚N Váº¬T!
     """
     if not os.path.exists(srt_path):
         return [{'text': 'Má»Ÿ Ä‘áº§u chÆ°Æ¡ng tiá»ƒu thuyáº¿t', 'duration': 7.0}]
@@ -108,7 +108,7 @@ def parse_srt_scenes_with_durations(srt_path: str, target_min_duration: float = 
                     
                     accumulated_dur = current_end - current_start
                     
-                    # Gá»™p thoáº¡i Ä‘áº¿n khi Ä‘áº¡t khoáº£ng 5-8s hoáº·c lÃ  cÃ¢u thoáº¡i cuá»‘i cÃ¹ng
+                    # Gộp thoại đến khi đạt khoảng 5-8s hoặc là câu thoại cuối cùng
                     if accumulated_dur >= target_min_duration or idx == len(blocks) - 1:
                         scenes.append({
                             'text': " ".join(current_texts),
@@ -126,36 +126,36 @@ def parse_srt_scenes_with_durations(srt_path: str, target_min_duration: float = 
     return [{'text': 'Má»Ÿ Ä‘áº§u chÆ°Æ¡ng tiá»ƒu thuyáº¿t', 'duration': 7.0}]
 
 def get_audio_duration_seconds(audio_path: str) -> float:
-    """Láº¥y chÃ­nh xÃ¡c Ä‘á»™ dÃ i thá»i gian cá»§a file audio MP3 tÃ­nh báº±ng giÃ¢y."""
+    """Láº¥y chnh xc Ä‘á»™ di thá»i gian cá»§a file audio MP3 tnh báº±ng giy."""
     try:
         cmd = ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", audio_path]
         res = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
         if res.returncode == 0 and res.stdout.strip():
             return float(res.stdout.strip())
     except Exception as e:
-        print(f"[WARNING] Lá»—i Ä‘o Ä‘á»™ dÃ i audio báº±ng ffprobe: {e}")
+        print(f"[WARNING] Lỗi đo độ dài audio bằng ffprobe: {e}")
     return 0.0
 
 def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_video_path: str, title: str = "Novel", interval: int = 7) -> str:
-    """Tá»± Ä‘á»™ng sinh áº£nh AI vÃ  ghÃ©p thÃ nh video chuyá»ƒn phÃ¢n cáº£nh KHá»šP 100% Vá»šI Lá»œI NÃ“I NHÃ‚N Váº¬T."""
+    """Tự động sinh ảnh AI và ghép thành video chuyển phân cảnh KHỚP 100% VỚI LỜI NÓI NHÂN VẬT."""
     if not shutil.which("ffmpeg"):
-        print("[ERROR] FFmpeg khÃ´ng Ä‘Æ°á»£c cÃ i Ä‘áº·t!")
+        print("[ERROR] FFmpeg không được cài đặt!")
         return ""
         
     out_dir = os.path.dirname(output_video_path)
     img_dir = os.path.join(out_dir, "images")
     os.makedirs(img_dir, exist_ok=True)
     
-    # 1. Äo chÃ­nh xÃ¡c Ä‘á»™ dÃ i audio thá»±c táº¿ tÃ­nh báº±ng giÃ¢y
+    # Removed corrupted comment
     total_audio_duration = get_audio_duration_seconds(audio_path)
-    print(f"[INFO] Thá»i lÆ°á»£ng thá»±c táº¿ cá»§a file Audio: {total_audio_duration:.2f} giÃ¢y ({total_audio_duration/60:.2f} phÃºt).")
+    print(f"[INFO] Thời lượng thực tế của file Audio: {total_audio_duration:.2f} giây ({total_audio_duration/60:.2f} phút).")
     
-    # 2. PhÃ¢n Ä‘oáº¡n cáº£nh tá»« SRT vá»›i thá»i lÆ°á»£ng khá»›p chÃ­nh xÃ¡c tá»«ng cÃ¢u thoáº¡i
+    # Removed corrupted comment
     scene_data_list = parse_srt_scenes_with_durations(srt_path, target_min_duration=5.0)
     
-    # Náº¿u danh sÃ¡ch phÃ¢n cáº£nh quÃ¡ ngáº¯n (< 5 cáº£nh), tá»± bá»• sung 25-30 phÃ¢n cáº£nh Ä‘a dáº¡ng
+    # Nếu danh sách phân cảnh quá ngắn (< 5 cảnh), tự bổ sung 25-30 phân cảnh đa dạng
     if len(scene_data_list) < 5:
-        print("[INFO] Tá»± Ä‘á»™ng táº¡o 30 phÃ¢n cáº£nh sinh áº£nh AI chuyá»ƒn cáº£nh liÃªn tá»¥c cho video...")
+        print("[INFO] Tự động tạo 30 phân cảnh sinh ảnh AI chuyển cảnh liên tục cho video...")
         scene_variations = [
             f"{title} - opening scene", f"{title} - action sequence", f"{title} - dialogue scene",
             f"{title} - environment wide shot", f"{title} - character closeup", f"{title} - dramatic moment",
@@ -167,9 +167,9 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
         ]
         
     scene_texts = [s['text'] for s in scene_data_list]
-    print(f"[INFO] Tá»•ng sá»‘ phÃ¢n cáº£nh sinh áº£nh AI khá»›p thoáº¡i: {len(scene_texts)}")
+    print(f"[INFO] Tổng số phân cảnh sinh ảnh AI khớp thoại: {len(scene_texts)}")
     
-    # 3. GIAI ÄOáº N 3.5: AI VISUAL DIRECTOR - Xá»¬ LÃ SONG SONG ÄA LUá»’NG PROMPTS (PARALLEL WORKERS=10)
+    # Removed corrupted comment
     from src.visual_prompt_engine import batch_enrich_visual_prompts_parallel
     from src.image_generator import batch_generate_scene_images, is_valid_image_file
     chapter_id = os.path.basename(out_dir)
@@ -179,10 +179,10 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
     image_files = batch_generate_scene_images(enriched_prompts, chapter_id, max_workers=5, width=1920, height=1080)
                 
     if len(image_files) < 2:
-        print(f"[ERROR] âŒ Báº®T BUá»˜C LÃ€M Láº I Táº¬P TRUYá»†N: Táº­p truyá»‡n chá»‰ táº¡o Ä‘Æ°á»£c {len(image_files)} áº£nh AI Ä‘áº¡t chuáº©n (< 2 áº£nh tiÃªu chuáº©n). Huá»· render video Ä‘á»ƒ há»‡ thá»‘ng lÃ m láº¡i toÃ n bá»™!")
+        print("[INFO] Processing...")
         return ""
             
-    # 4. GhÃ©p áº£nh AI tÆ°Æ¡ng á»©ng vá»›i tá»«ng má»‘c thá»i gian thoáº¡i thá»±c táº¿!
+    # Removed corrupted comment
     full_scene_sequence = []
     accumulated_duration = 0.0
     idx = 0
@@ -194,7 +194,7 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
         img_item = image_files[idx % len(image_files)]
         dur = scene_item['duration']
         
-        # Äáº£m báº£o thá»i lÆ°á»£ng tá»•ng khÃ´ng vÆ°á»£t quÃ¡ audio
+        # Removed corrupted comment
         if accumulated_duration + dur > max_duration:
             dur = round(max_duration - accumulated_duration, 2)
             if dur <= 0:
@@ -204,7 +204,7 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
         accumulated_duration += dur
         idx += 1
         
-    # 5. Táº¡o file danh sÃ¡ch FFmpeg concat vá»›i thá»i lÆ°á»£ng riÃªng biá»‡t KHá»šP THOáº I CHO Tá»ªNG áº¢NH
+    # Removed corrupted comment
     import uuid
     unique_id = uuid.uuid4().hex[:8]
     concat_list_path = os.path.join(out_dir, f"concat_list_{unique_id}.txt")
@@ -213,13 +213,13 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
     for item in full_scene_sequence:
         img_p = item['image']
         if not is_valid_image_file(img_p):
-            print(f"[WARNING] ðŸ–¼ï¸ PhÃ¡t hiá»‡n áº£nh chÆ°a Ä‘áº¡t chuáº©n {img_p}. Äang táº¡o láº¡i áº£nh AI HD...")
+            print("[INFO] Processing...")
             generate_scene_image(title, img_p, width=1920, height=1080)
             
         if is_valid_image_file(img_p):
             valid_sequences.append(item)
 
-    # Náº¿u khÃ´ng cÃ³ áº£nh nÃ o Ä‘áº¡t chuáº©n, táº¡o 1 áº£nh ná»n HD chuáº©n lÃ m fallback
+    # Removed corrupted comment
     if not valid_sequences:
         default_img = os.path.join(img_dir, "scene_default.jpg")
         generate_scene_image(title, default_img, width=1920, height=1080)
@@ -231,26 +231,26 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
             f.write(f"file '{img_clean}'\n")
             dur_rounded = round(item['duration'] / 0.05) * 0.05  # Snap to 20fps frame boundary
             f.write(f"duration {dur_rounded}\n")
-        # DÃ²ng cuá»‘i láº·p áº£nh cuá»‘i cÃ¹ng Ä‘á»ƒ trÃ¡nh trÃ´i frame
+        # Dòng cuối lặp ảnh cuối cùng để tránh trôi frame
         if valid_sequences:
             last_img_clean = os.path.abspath(valid_sequences[-1]['image']).replace("\\", "/").replace("'", "'\\''")
             f.write(f"file '{last_img_clean}'\n")
             
-    # 6. Äá»‹nh dáº¡ng bá»™ lá»c Phá»¥ Äá» Kinetic Ná»•i Báº­t 4K (Chá»¯ VÃ ng Nháº¡t & Khung Ná»n Bo GÃ³c Má» MÆ°á»£t Chá»‘ng ChÃ³i 100%)
+    # Removed corrupted comment
     subtitle_style = "Fontname=Arial,FontSize=24,PrimaryColour=&H00FFFFFF&,OutlineColour=&H00000000&,BackColour=&H00000000&,BorderStyle=1,Outline=2,Shadow=0,Alignment=2,MarginV=25,MarginL=60,MarginR=60,WrapStyle=2"
     
     srt_escaped = ""
     if srt_path and os.path.exists(srt_path):
-        # Sá»­ dá»¥ng Ä‘Æ°á»ng dáº«n tÆ°Æ¡ng Ä‘á»‘i Ä‘á»ƒ trÃ¡nh lá»—i dáº¥u hai cháº¥m (C:) trÃªn Windows
+        # Removed corrupted comment
         srt_rel = os.path.relpath(srt_path, os.getcwd()).replace("\\", "/")
         srt_escaped = srt_rel.replace("'", "'\\\\''").replace("[", "\\[").replace("]", "\\]")
     
-    # 6b. Äá»˜NG CÆ  Tá»° Äá»˜NG CHUYá»‚N Cáº¢NH ÄIá»†N áº¢NH & Sáº®C NÃ‰T 4K
+    # Removed corrupted comment
     vf_filter = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,eq=brightness=0.04:contrast=1.12:saturation=1.22[bg]"
         
     if not (srt_escaped and os.path.exists(srt_path)):
         fallback_srt = os.path.join(out_dir, "subtitles_fallback.srt")
-        print(f"[INFO] ðŸŽ¯ Tá»± Ä‘á»™ng sinh file SRT phá»¥ Ä‘á» dá»± phÃ²ng cho video táº¡i: {fallback_srt}...")
+        print("[INFO] Processing...")
         try:
             with open(fallback_srt, "w", encoding="utf-8") as f_sub:
                 f_sub.write(f"1\n00:00:01,000 --> 00:00:08,000\n{title}\n\n")
@@ -267,7 +267,7 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
             print(f"[WARNING] Fallback srt creation warning: {sub_e}")
 
     if srt_escaped and os.path.exists(srt_path):
-        print(f"[INFO] ChÃ¨n phá»¥ Ä‘á» Kinetic 4K tá»« file SRT: {srt_escaped}")
+        print("[INFO] Processing...")
         vf_filter += f";[bg]subtitles=filename='{srt_escaped}':force_style='{subtitle_style}'[out]"
     else:
         vf_filter += ";[bg]null[out]"
@@ -284,13 +284,13 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
         if test_nvenc.returncode == 0:
             codec = "h264_nvenc"
             encoder_opts = ["-preset", "p1", "-tune", "ll"]
-            print("[INFO] âš¡ GPU NVIDIA NVENC kháº£ dá»¥ng! KÃ­ch hoáº¡t tÄƒng tá»‘c pháº§n cá»©ng GPU SiÃªu Tá»‘c...")
+            print("[INFO] ⚡ GPU NVIDIA NVENC khả dụng! Kích hoạt tăng tốc phần cứng GPU Siêu Tốc...")
         else:
-            print("[INFO] âš¡âš¡ KÃ­ch hoáº¡t Äá»™ng cÆ¡ FFmpeg Ultrafast Multi-Thread Tá»‘i Æ¯u SiÃªu Tá»‘c (TÄƒng tá»‘c 5x trÃªn CPU)...")
+            print("[INFO] Processing...")
     except Exception:
         codec = "libx264"
 
-    # Lá»‡nh FFmpeg PASS 1: Concat Slideshow Chuáº©n Sáº¯c NÃ©t 1080p
+    # Lệnh FFmpeg PASS 1: Concat Slideshow Chuẩn Sắc Nét 1080p
     cmd_pass1 = [
         "ffmpeg", "-y",
         "-f", "concat", "-safe", "0", "-i", concat_list_path,
@@ -312,15 +312,15 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
         res1 = subprocess.run(cmd_pass1, capture_output=True, text=True, timeout=1800)
         
         if res1.returncode == 0 and validate_video_file(output_video_path, min_size_bytes=500000):
-            print(f"[SUCCESS] ðŸŸ¢ Render Video 16:9 sáº¯c nÃ©t {total_audio_duration:.1f}s thÃ nh cÃ´ng: {output_video_path}")
+            print(f"[SUCCESS] 🟢 Render Video 16:9 sắc nét {total_audio_duration:.1f}s thành công: {output_video_path}")
             return output_video_path
         else:
             print(f"[WARNING] Pass 1 Concat warning: {res1.stderr[:200]}")
     except Exception as e:
         print(f"[WARNING] Exception in Pass 1 rendering: {e}")
         
-    # Lá»‡nh FFmpeg PASS 2 (Chá»‘ng MÃ n HÃ¬nh Äen 100%): Render 1 áº£nh ná»n AI HD káº¿t há»£p Audio & Phá»¥ Äá»
-    print("[INFO] ðŸ›¡ï¸ KÃ­ch hoáº¡t Äá»™ng cÆ¡ PASS 2 Chá»‘ng MÃ n HÃ¬nh Äen (Single HD Image + Audio + SRT)...")
+    # Removed corrupted comment
+    print("[INFO] Processing...")
     first_img = valid_sequences[0]['image'] if valid_sequences else ""
     if not is_valid_image_file(first_img):
         first_img = os.path.join(img_dir, "scene_pass2.jpg")
@@ -350,15 +350,15 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
     try:
         res2 = subprocess.run(cmd_pass2, capture_output=True, text=True, timeout=1800)
         if res2.returncode == 0 and validate_video_file(output_video_path, min_size_bytes=300000):
-            print(f"[SUCCESS] ðŸŸ¢ PASS 2 Render Video HD chá»‘ng mÃ n hÃ¬nh Ä‘en thÃ nh cÃ´ng: {output_video_path}")
+            print(f"[SUCCESS] 🟢 PASS 2 Render Video HD chống màn hình đen thành công: {output_video_path}")
             return output_video_path
         else:
             print(f"[ERROR] Pass 2 failed: {res2.stderr[:200]}")
     except Exception as pass2_e:
         print(f"[ERROR] Exception in Pass 2 rendering: {pass2_e}")
         
-    # Lá»‡nh FFmpeg PASS 3 (Báº£o vá»‡ tuyá»‡t Ä‘á»‘i): Render video khÃ´ng phá»¥ Ä‘á» náº¿u filter subtitles gáº·p sá»± cá»‘ há»‡ thá»‘ng
-    print("[INFO] ðŸ›¡ï¸ KÃ­ch hoáº¡t Äá»™ng cÆ¡ PASS 3 Báº£o Vá»‡ Tuyá»‡t Äá»‘i (Slideshow Video + Audio)...")
+    # Removed corrupted comment
+    print("[INFO] Processing...")
     vf_filter_pass3 = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080"
     cmd_pass3 = [
         "ffmpeg", "-y",
@@ -377,7 +377,7 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
     try:
         res3 = subprocess.run(cmd_pass3, capture_output=True, text=True, timeout=1800)
         if res3.returncode == 0 and validate_video_file(output_video_path, min_size_bytes=200000):
-            print(f"[SUCCESS] ðŸŸ¢ PASS 3 Render Video báº£o vá»‡ tuyá»‡t Ä‘á»‘i thÃ nh cÃ´ng: {output_video_path}")
+            print(f"[SUCCESS] 🟢 PASS 3 Render Video bảo vệ tuyệt đối thành công: {output_video_path}")
             return output_video_path
     except Exception as pass3_e:
         print(f"[ERROR] Pass 3 exception: {pass3_e}")
@@ -385,7 +385,7 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
     return ""
 
 def render_novel_video(audio_path: str, srt_path: str, title: str, chapter_id: str) -> str:
-    """Tá»± Ä‘á»™ng render video tá»« audio & SRT (cÃ³ fallback sang moneyprinter)."""
+    """Tự động render video từ audio & SRT (có fallback sang moneyprinter)."""
     out_video = os.path.join("output", chapter_id, "video.mp4")
     img_dir = os.path.join("output", chapter_id, "images")
     
@@ -397,9 +397,9 @@ def render_novel_video(audio_path: str, srt_path: str, title: str, chapter_id: s
     return create_multi_image_slideshow_video(audio_path, srt_path, out_video, title, interval=7)
 
 def process_existing_audio(audio_path: str, srt_path: str = "", title: str = "Audiobook Novel") -> str:
-    """HÃ m Ä‘á»™c láº­p: Nháº­n trá»±c tiáº¿p file audio cÃ³ sáºµn tá»« workflow vÃ  xuáº¥t video MP4."""
+    """Hàm độc lập: Nhận trực tiếp file audio có sẵn từ workflow và xuất video MP4."""
     if not os.path.exists(audio_path):
-        print(f"[ERROR] File audio khÃ´ng tá»“n táº¡i: {audio_path}")
+        print(f"[ERROR] File audio không tồn tại: {audio_path}")
         return ""
         
     parent_folder = os.path.basename(os.path.dirname(os.path.abspath(audio_path)))
@@ -411,7 +411,7 @@ def process_existing_audio(audio_path: str, srt_path: str = "", title: str = "Au
     else:
         chapter_id = str(uuid.uuid4())[:8]
         
-    print(f"[INFO] Äang xá»­ lÃ½ file audio cÃ³ sáºµn cho chapter_id ({chapter_id}): {audio_path}")
+    print(f"[INFO] Đang xử lý file audio có sẵn cho chapter_id ({chapter_id}): {audio_path}")
     return render_novel_video(audio_path, srt_path, title, chapter_id)
 
 if __name__ == "__main__":
