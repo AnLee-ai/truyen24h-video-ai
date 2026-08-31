@@ -1,3 +1,8 @@
+import sys
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+except:
+    pass
 import argparse
 import sys
 from src import checkpoint
