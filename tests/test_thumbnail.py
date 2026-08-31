@@ -20,10 +20,11 @@ class TestThumbnailGenerator(unittest.TestCase):
 
     def test_generate_youtube_thumbnail_fallback_canvas(self):
         """Test thumbnail generation creates a valid 16:9 1920x1080 image even with non-existent scene_image_path."""
+        fake_scene = os.path.join(self.test_dir, "non_existent_folder", "fake_scene.jpg")
         result = thumbnail_generator.generate_youtube_thumbnail(
             chapter_num=8,
             chapter_title="Trận Đấu Khốc Liệt",
-            scene_image_path="non_existent_folder/fake_scene.jpg",
+            scene_image_path=fake_scene,
             output_path=self.output_path,
             width=1920,
             height=1080
