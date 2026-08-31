@@ -302,7 +302,7 @@ if __name__ == "__main__":
     print(subtitles)
 
     script_file = f"{task_dir}/script.json"
-    with open(script_file, "r") as f:
+    with open(script_file, "r", encoding="utf-8") as f:
         script_content = f.read()
     s = json.loads(script_content)
     script = s.get("script")
