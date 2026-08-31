@@ -11,7 +11,7 @@ def draw_speech_bubble(image_path: str, text: str, output_path: str) -> bool:
         return False
 
     try:
-        with Image.open(image_path, encoding="utf-8") as img:
+        with Image.open(image_path) as img:
             img = img.convert("RGBA")
             width, height = img.size
             draw = ImageDraw.Draw(img)
@@ -79,7 +79,7 @@ def generate_webtoon_strip(image_paths: list, output_path: str) -> bool:
         for p in image_paths:
             if os.path.exists(p):
                 try:
-                    img = Image.open(p, encoding="utf-8")
+                    img = Image.open(p)
                     images.append(img)
                 except Exception:
                     pass

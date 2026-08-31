@@ -20,7 +20,7 @@ def generate_youtube_thumbnail(chapter_num: int, chapter_title: str, scene_image
         # A. Thử nạp trực tiếp scene_image_path
         if os.path.exists(scene_image_path) and os.path.getsize(scene_image_path) > 1000:
             try:
-                bg_img = Image.open(scene_image_path).convert('RGB', encoding="utf-8")
+                bg_img = Image.open(scene_image_path).convert('RGB')
                 bg_loaded = True
             except Exception:
                 pass
@@ -37,7 +37,7 @@ def generate_youtube_thumbnail(chapter_num: int, chapter_title: str, scene_image
                         and not any(bad_k in f.lower() for bad_k in ["thumbnail", "test", "synth", "sample", "fallback"])
                     ]
                     if candidates:
-                        bg_img = Image.open(candidates[0]).convert('RGB', encoding="utf-8")
+                        bg_img = Image.open(candidates[0]).convert('RGB')
                         bg_loaded = True
                         print(f"[INFO] 🖼️ Thumbnail dùng ảnh phân cảnh thực tế: {candidates[0]}")
                 except Exception:
@@ -54,7 +54,7 @@ def generate_youtube_thumbnail(chapter_num: int, chapter_title: str, scene_image
                 )
                 gen_p = generate_scene_image(prompt_tb, scene_image_path, width, height)
                 if gen_p and os.path.exists(gen_p) and os.path.getsize(gen_p) > 1000:
-                    bg_img = Image.open(gen_p).convert('RGB', encoding="utf-8")
+                    bg_img = Image.open(gen_p).convert('RGB')
                     bg_loaded = True
                     print(f"[INFO] Generated AI Hero Portrait for Thumbnail: {gen_p}")
             except Exception as gen_err:
