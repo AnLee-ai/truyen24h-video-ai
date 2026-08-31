@@ -83,7 +83,7 @@ def _enrich_single_scene(item: tuple, characters_data: list, world_lore_data: li
     positive_prompt = (
         f"masterpiece, best quality, 2D manhwa webtoon style, {scene_text}, "
         f"CHARACTER_LOCK: [{char_lock_str}], ENVIRONMENT_LOCK: [{env_lock_str}], "
-        f"camera: [{camera}], lighting: [{lighting}], cel shaded, sharp line art, 8k resolution"
+        f"camera: [{camera}], lighting: [{lighting}], cel shaded, sharp line art, ultra-detailed, razor sharp focus, high contrast, 8k resolution"
     )
 
     manifest_item = {

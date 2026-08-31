@@ -246,7 +246,7 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
         srt_escaped = srt_rel.replace("'", "'\\\\''").replace("[", "\\[").replace("]", "\\]")
     
     # Removed corrupted comment
-    vf_filter = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,eq=brightness=0.04:contrast=1.12:saturation=1.22[bg]"
+    vf_filter = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,unsharp=5:5:1.0:5:5:0.0,eq=brightness=0.04:contrast=1.12:saturation=1.22[bg]"
         
     if not (srt_escaped and os.path.exists(srt_path)):
         fallback_srt = os.path.join(out_dir, "subtitles_fallback.srt")
@@ -274,7 +274,7 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
         
     # 7. Tá»± Ä‘á»™ng kiá»ƒm tra pháº§n cá»©ng GPU Encoder (NVIDIA NVENC -> Intel QSV -> CPU Ultrafast Multi-Core 5x Speed)
     codec = "libx264"
-    encoder_opts = ["-preset", "ultrafast", "-tune", "zerolatency", "-threads", "0", "-crf", "26"]
+    encoder_opts = ["-preset", "medium", "-threads", "0", "-crf", "18"]
     
     try:
         test_nvenc = subprocess.run(
@@ -283,7 +283,7 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
         )
         if test_nvenc.returncode == 0:
             codec = "h264_nvenc"
-            encoder_opts = ["-preset", "p1", "-tune", "ll"]
+            encoder_opts = ["-preset", "p4", "-tune", "hq", "-rc", "vbr", "-cq", "19"]
             print("[INFO] ⚡ GPU NVIDIA NVENC khả dụng! Kích hoạt tăng tốc phần cứng GPU Siêu Tốc...")
         else:
             print("[INFO] Processing...")
@@ -300,7 +300,7 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
         "-vsync", "1", "-async", "1", "-r", "25",
         "-c:v", codec
     ] + encoder_opts + [
-        "-b:v", "1200k", "-maxrate", "1800k", "-bufsize", "2500k",
+        "-b:v", "8000k", "-maxrate", "12000k", "-bufsize", "16000k",
         "-c:a", "aac", "-b:a", "128k", "-pix_fmt", "yuv420p",
         "-movflags", "+faststart",
         "-shortest", output_video_path
@@ -326,7 +326,7 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
         first_img = os.path.join(img_dir, "scene_pass2.jpg")
         generate_scene_image(title, first_img, width=1920, height=1080)
 
-    vf_filter_pass2 = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,eq=brightness=0.04:contrast=1.12:saturation=1.22[bg]"
+    vf_filter_pass2 = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,unsharp=5:5:1.0:5:5:0.0,eq=brightness=0.04:contrast=1.12:saturation=1.22[bg]"
     if srt_escaped and os.path.exists(srt_path):
         vf_filter_pass2 += f";[bg]subtitles=filename='{srt_escaped}':force_style='{subtitle_style}'[out]"
     else:
@@ -341,7 +341,7 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
         "-r", "20",
         "-c:v", codec
     ] + encoder_opts + [
-        "-b:v", "1000k", "-maxrate", "1500k", "-bufsize", "2000k",
+        "-b:v", "8000k", "-maxrate", "12000k", "-bufsize", "16000k",
         "-c:a", "aac", "-b:a", "128k", "-pix_fmt", "yuv420p",
         "-movflags", "+faststart",
         "-shortest", output_video_path
@@ -359,7 +359,7 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
         
     # Removed corrupted comment
     print("[INFO] Processing...")
-    vf_filter_pass3 = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080"
+    vf_filter_pass3 = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,unsharp=5:5:1.0:5:5:0.0"
     cmd_pass3 = [
         "ffmpeg", "-y",
         "-f", "concat", "-safe", "0", "-i", concat_list_path,
@@ -369,7 +369,7 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
         "-r", "20",
         "-c:v", codec
     ] + encoder_opts + [
-        "-b:v", "1000k", "-maxrate", "1500k", "-bufsize", "2000k",
+        "-b:v", "8000k", "-maxrate", "12000k", "-bufsize", "16000k",
         "-c:a", "aac", "-b:a", "128k", "-pix_fmt", "yuv420p",
         "-movflags", "+faststart",
         "-shortest", output_video_path
