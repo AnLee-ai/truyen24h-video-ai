@@ -58,7 +58,7 @@ def is_valid_image_file(file_path: str) -> bool:
     if os.path.getsize(file_path) < 5000:
         return False
     try:
-        with Image.open(file_path, encoding="utf-8") as img:
+        with Image.open(file_path) as img:
             img.verify()
         return True
     except Exception:
