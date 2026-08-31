@@ -212,7 +212,11 @@ def call_inkos_cloud(prompt: str) -> str:
     print("[INFO] Gá»­i yÃªu cáº§u sÃ¡ng tÃ¡c tá»›i Inkos (Hugging Face Cloud)...")
     try:
         hf_token = os.environ.get("HF_TOKEN")
-        client = Client("AnLee-ai/truyen24h-video-ai", token=hf_token)
+        # Tương thích cả gradio_client cũ (hf_token=) và mới (token=)
+        try:
+            client = Client("AnLee-ai/truyen24h-video-ai", token=hf_token)
+        except TypeError:
+            client = Client("AnLee-ai/truyen24h-video-ai", hf_token=hf_token)
         result = client.predict(
             prompt=prompt,
             api_name="/generate_story"
