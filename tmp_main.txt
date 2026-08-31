@@ -1,0 +1,20 @@
+    """Executes the full pipeline for writing a chapter and uploading audio."""
+    if log_callback:
+        stream = CallbackStream(sys.stdout, log_callback)
+        with contextlib.redirect_stdout(stream):
+            _run_chapter_pipeline_impl(novel_id)
+    else:
+        _run_chapter_pipeline_impl(novel_id)
+
+def _run_chapter_pipeline_impl(novel_id: str):
+    """Internal implementation of the pipeline."""
+    if not config.validate_config():
+        print("[ERROR] Configuration validation failed. Aborting pipeline.")
+        return
+        
+    try:
+        # 0. TỰ ĐỘNG PHÁT HIỆN CHƯƠNG ĐÃ CÓ AUDIO NHƯNG CHƯA CÓ VIDEO (ƯU TIÊN RENDER VIDEO NGAY)
+        pending_video_ch = find_chapter_needing_video(novel_id)
+        is_resuming_video = False
+        if pending_video_ch:
+            chapter = pending_video_ch

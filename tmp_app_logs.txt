@@ -1,0 +1,1 @@
+108: '@fastapi_app.get("/api/run_pipeline")'\n109: 'async def api_run_pipeline(novel_id: str):'\n144: 'yield f"data: {json.dumps({\'msg\': f\'[ERROR] Không thể khởi tạo tiến trình: {e}\', \'done\': True})}\\n\\n"'\n147: 'yield f"data: {json.dumps({\'msg\': \'[INFO] Đang khởi động tiến trình...\'})}\\n\\n"'\n

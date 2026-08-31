@@ -1,0 +1,30 @@
+    async def event_generator():
+        import html
+        n_id = html.escape((novel_id or "").strip())
+        if not n_id:
+            yield f"data: {json.dumps({'msg': '[ERROR] Vui lòng điền Novel ID!', 'done': True})}\n\n"
+            return
+            
+        try:
+            val = uuid.UUID(n_id)
+            if str(val) != n_id:
+                raise ValueError()
+        except ValueError:
+            yield f"data: {json.dumps({'msg': '[ERROR] Novel ID không đúng định dạng UUID!', 'done': True})}\n\n"
+            return
+            
+        with pipeline_lock:
+            if n_id in active_pipelines:
+                yield f"data: {json.dumps({'msg': '[ERROR] Tiến trình cho bộ truyện này đang chạy, vui lòng không spam!', 'done': True})}\n\n"
+                return
+            active_pipelines.add(n_id)
+        try:
+            log_queue = queue.Queue()
+            def log_callback(msg):
+                log_queue.put(msg)
+                
+            try:
+                thread = threading.Thread(
+                    target=run_chapter_pipeline, 
+                    args=(n_id,), 
+                    kwargs={"log_callback": log_callback}

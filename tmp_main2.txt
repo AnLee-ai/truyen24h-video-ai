@@ -1,0 +1,16 @@
+class CallbackStream:
+    def __init__(self, original_stream, callback):
+        self.original_stream = original_stream
+        self.callback = callback
+        
+    def write(self, data):
+        self.original_stream.write(data)
+        if data.strip():
+            self.callback(data.strip())
+            
+    def flush(self):
+        self.original_stream.flush()
+
+def audit_chapter_quality(ch: dict) -> tuple:
+    """
+    BỘ BẢO VỆ & RÀ SOÁT TIÊU CHUẨN TỰ ĐỘNG (Quality Auditor Engine):
