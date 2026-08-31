@@ -692,12 +692,26 @@ def write_next_chapter(novel_id: str) -> dict:
     semantic_history = database.search_episodes(novel_id, query_embed, limit=7)
     history_text = "\n".join([f"- Chapter {h['chapter_id']}: {h['event_summary']}" for h in semantic_history])
     
-    previous_chapters = [c for c in all_chapters if c["chapter_number"] < next_ch_number and not c["content"].startswith("BLUEPRINT:")]
+    previous_chapters = [c for c in all_chapters if c["chapter_number"] < next_ch_number and not str(c.get("content", "")).startswith("BLUEPRINT:")]
+    
+    # 1. Extract forbidden phrases (anti-repetition)
+    forbidden_phrases_list = []
+    for ch in previous_chapters[-3:]:
+        ch_content = str(ch.get('content', ''))
+        words = ch_content.split()[:50]
+        if words:
+            forbidden_phrases_list.append(" ".join(words))
+    forbidden_phrases = "\n- ".join(forbidden_phrases_list) if forbidden_phrases_list else "Không có"
+
+    # 2. Smart Continuation Anchor
     working_memory_text = ""
-    # Tăng tham chiếu từ 2-3 chương lên 7 chương gần nhất (5 - 10 chương) để đảm bảo mạch truyện cực kỳ nhất quán
-    for ch in previous_chapters[-7:]:
-        ch_snippet = ch['content'][:600] + "\n...\n" + ch['content'][-600:] if len(ch['content']) > 1200 else ch['content']
-        working_memory_text += f"\n--- ChÃƒâ€ Ã‚Â°Ãƒâ€ Ã‚Â¡ng {ch['chapter_number']}: {ch['title']} ---\n{ch_snippet}\n"
+    if previous_chapters:
+        last_ch = previous_chapters[-1]
+        ch_content = str(last_ch.get('content', ''))
+        last_words = " ".join(ch_content.split()[-1500:])
+        working_memory_text = f"\n--- KẾT THÚC CỦA CHƯƠNG {last_ch['chapter_number']}: {last_ch['title']} ---\n{last_words}\n"
+    else:
+        working_memory_text = "Đây là chương mở đầu. Hãy viết hoàn toàn mới."
         
     attempt = 0
     max_attempts = 3
@@ -706,12 +720,13 @@ def write_next_chapter(novel_id: str) -> dict:
     prompt = prompts.WRITING_PROMPT.format(
         chapter_number=next_ch_number,
         chapter_title=chapter_record["title"],
-        title="Truyện 24h Audio",
+        title="Truyen 24h Audio",
         blueprint=blueprint_text,
         world_lore=world_lore_text,
         characters=json.dumps(chars, ensure_ascii=False, indent=2),
         history=history_text,
         previous_content=working_memory_text,
+        forbidden_phrases=forbidden_phrases,
         protagonist_name=protagonist_name,
         protagonist_power=protagonist_power,
         protagonist_stats=protagonist_stats,
@@ -720,13 +735,10 @@ def write_next_chapter(novel_id: str) -> dict:
     
     if next_ch_number == 1:
         prologue_instruction = (
-            f"- Phần mở đầu (Prologue): BẮT BUỘC mở đầu chương bằng một phân cảnh cuốn hút (khoảng 300 - 500 từ) miêu tả bối cảnh thế giới linh hồn, hệ thống Tinh Thần Ấn và bí mật chiếc hộp đồng Đông Sơn.\n"
-            f"- **CẢNH BÁO QUAN TRỌNG VỀ NHÂN VẬT**: Trong phần mở đầu này, CHỈ TẬP TRUNG duy nhất vào nhân vật chính ({protagonist_name}). "
-            f"TUYỆT ĐỐI KHÔNG liệt kê hay giới thiệu tràn lan các nhân vật phụ. Các nhân vật phụ sẽ chỉ xuất hiện tự nhiên khi có tình huống đối thoại trong câu chuyện.\n"
-            f"- **CẢNH BÁO QUAN TRỌNG VỀ TIÊU ĐỀ**: TUYỆT ĐỐI KHÔNG VIẾT CHỮ 'Dẫn lược', 'Dẫn lược:', 'Giới thiệu:', hay 'Prologue:'. "
-            f"Hãy bắt đầu viết nội dung truyện ngay lập tức. Câu đầu tiên phải là câu miêu tả hoặc hành động.\n"
+            f"- CHÚ Ý: ĐÂY LÀ CHƯƠNG MỞ ĐẦU (PROLOGUE). Chỉ dành 1/4 dung lượng để miêu tả bối cảnh. Sau đó BẮT BUỘC phải chuyển cảnh sang một tình huống có thật, đưa {protagonist_name} vào hành động!\n"
+            f"- KHÔNG liệt kê nhân vật phụ tràn lan. Bắt đầu ngay lập tức.\n"
         )
-        prompt = prompt.replace("Constraints:", f"Constraints:\n{prologue_instruction}")
+        prompt = prompt.replace("INKOS STRUCTURE DIRECTIVES:", f"INKOS STRUCTURE DIRECTIVES:\n{prologue_instruction}")
     
     while attempt < max_attempts:
         attempt += 1

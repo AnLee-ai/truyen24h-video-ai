@@ -61,7 +61,7 @@ def audit_chapter_quality(ch: dict) -> tuple:
     """
     BỘ BẢO VỆ & RÀ SOÁT TIÊU CHUẨN TỰ ĐỘNG (Quality Auditor Engine):
     Rà soát Tiêu chuẩn chất lượng cho mỗi chương truyện:
-    1. Kịch bản văn bản đầy đủ ≥ 1,000 từ (chuẩn audio > 10 phút).
+    1. Kịch bản văn bản đầy đủ ≥ 2,000 từ (chuẩn audio > 10 phút).
     2. Không chứa tên nhân vật cũ rác (Trần Lam, Linh Vy, Minh Đức).
     """
     ch_num = ch.get("chapter_number", 0)
@@ -69,8 +69,8 @@ def audit_chapter_quality(ch: dict) -> tuple:
     word_count = len(ch_content.split()) if ch_content else 0
     
     # 1. Tiêu chuẩn 1: Kịch bản text ngắn (<1000 từ) hoặc còn là BLUEPRINT
-    if not ch_content or ch_content.startswith("BLUEPRINT:") or word_count < 1000:
-        return False, f"Chương {ch_num}: Kịch bản quá ngắn ({word_count} từ < 1000 từ tiêu chuẩn)"
+    if not ch_content or ch_content.startswith("BLUEPRINT:") or word_count < 2000:
+        return False, f"Chương {ch_num}: Kịch bản quá ngắn ({word_count} từ < 2000 từ tiêu chuẩn)"
         
     # 2. Tiêu chuẩn 2: Chứa tên nhân vật rác cũ
     for old_name in ["Trần Lam", "Linh Vy", "Minh Đức", "Thùy Linh", "Cao Bá"]:
@@ -154,8 +154,8 @@ def _run_chapter_pipeline_impl(novel_id: str):
         # BỘ KIỂM DUYỆT BẢO VỆ TUYỆT ĐỐI (Strict Quality Guardrail cho chương VIẾT MỚI):
         # Khi viết chương mới, NẾU NỘI DUNG CHƯƠNG CHƯA ĐẠT MỐC >2500 TỪ thì dừng.
         # Nhưng khi DÙNG LẠI CHƯƠNG CŨ ĐÃ CÓ AUDIO (is_resuming_video=True), CHO PHÉP TẠO VIDEO TRỰC TIẾP!
-        if not is_resuming_video and (not chapter_content or len(chapter_content.split()) < 2500):
-            print(f"[WARNING] Nội dung chương viết mới chưa đạt tiêu chuẩn BẮT BUỘC (>2500 từ). Độ dài thực tế: {len(chapter_content.split()) if chapter_content else 0} từ. Tự động dừng tiến trình an toàn.")
+        if not chapter_content or len(chapter_content.split()) < 2000:
+            print(f"[WARNING] Nội dung chương chưa đạt tiêu chuẩn BẮT BUỘC (>2000 từ). Độ dài thực tế: {len(chapter_content.split()) if chapter_content else 0} từ. Tự động dừng tiến trình an toàn để AI viết lại.")
             return
             
         # 2. CHẾ ĐỘ TỰ ĐỘNG LÀM LẠI BẮT BUỘC: Ép thời lượng Audio & Video kéo dài > 10 PHÚT (Tối thiểu 600 giây)
