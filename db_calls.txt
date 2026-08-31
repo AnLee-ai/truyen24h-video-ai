@@ -1,0 +1,8 @@
+Line 645: completed_set = database.get_completed_chapters_set(novel_id)
+Line 648: all_chapters = database.get_all_chapters(novel_id)
+Line 670: all_chapters = database.get_all_chapters(novel_id)
+Line 673: chapter_record = database.create_chapter(novel_id=novel_id, chapter_number=next_ch_number, title=f"Chương {next_ch_number}", content=f"BLUEPRINT: Diễn biến tiếp theo.")
+Line 676: chars = database.get_characters(novel_id)
+Line 687: lores = database.get_world_lore(novel_id)
+Line 691: semantic_history = database.search_episodes(novel_id, query_embed, limit=7)
+Line 863: client = database.get_client()

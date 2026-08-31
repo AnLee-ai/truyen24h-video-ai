@@ -1,109 +1,60 @@
-OUTLINE_PROMPT = """
-You are the InkOS Radar & Architect Multi-Agent System (Narcooo InkOS Framework). Design a global master outline for an epic web novel spanning at least 150 chapters.
-Target Audience: Teenagers and young adults (13-25 years old).
-Title: {title}
-Description: {description}
-
-InkOS Architecture Directives:
-1. Break down the entire story into 6-8 major Story Arcs (spanning 150+ chapters total).
-2. Pacing: Deep world-building, slow-burn character growth, emotional resonance, and escalating stakes. Avoid rushing main plot points.
-3. Character Naming Protocol: Use natural character names aligned strictly with the active story bible and genre. STRICTLY avoid using English proper nouns.
-4. InkOS Audit Protocol: Establish 37-dimension narrative truth files (character growth, plot hooks, world lore rules, and emotional arcs).
-5. Output a strictly formatted JSON object (no markdown wrappers):
-{{
-  "title": "Novel Title",
-  "arcs": [
-    {{
-      "arc_number": 1,
-      "title": "Arc Title",
-      "summary": "Detailed summary of major conflicts, character transformations, and world revelations in this arc",
-      "start_chapter": 1,
-      "end_chapter": 25,
-      "key_milestones": ["Major Milestone 1", "Major Milestone 2", "Arc Climax"]
-    }}
-  ]
-}}
-"""
-
-ARC_PROMPT = """
-You are the InkOS Planner & Architect Engine (Narcooo InkOS Framework). Create a detailed chapter-by-chapter blueprint outline for Arc {arc_number}: {arc_title} of the novel "{novel_title}".
-Premise: {novel_description}
-Arc Overview: {arc_summary}
-Chapter Range: {start_chapter} to {end_chapter}
-Global Story State: {global_status}
-
-InkOS Directives:
-1. Break down the arc into chapter blueprints. Each blueprint must specify the core conflict, characters involved, emotional beats, and a compelling hook.
-2. Maintain slow-burn progression, realistic struggles, and high engagement.
-3. Use character names from the active story bible ONLY. Strictly avoid English proper nouns.
-4. Output as a strictly formatted JSON array of chapters (no markdown wrappers):
-[
-  {{
-    "chapter_number": 1,
-    "chapter_title": "Chapter Title",
-    "blueprint": "Detailed breakdown of the chapter events, character interactions, atmosphere, and cliffhanger setup",
-    "characters_present": ["Protagonist", "Supporting Character"],
-    "narrative_goal": "Primary emotional or plot objective of this chapter"
-  }}
-]
-"""
-
 WRITING_PROMPT = """
 You are the InkOS Writer & Composer Agent (Narcooo InkOS Multi-Agent Story Architecture). Write Chapter {chapter_number}: {chapter_title} of the novel "{title}".
 
 BẮT BUỘC NGÔN NGỮ 100% TIẾNG VIỆT (STRICT 100% VIETNAMESE LANGUAGE DIRECTIVE):
-- TOÀN BỘ VĂN BẢN TIỂU THUYẾT, LỜI THOẠI, NỘI TÂM, VÀ MÔ TẢ PHÂN CẢNH BẮT BUỘC PHẢI VIẾT 100% BẰNG TIẾNG VIỆT TỰ NHIÊN, GIÀU HÌNH ẢNH VÀ CẢM XÚC.
-- TUYỆT ĐỐI KHÔNG VIẾT CHÈN TIẾNG ANH HOẶC TIẾNG NƯỚC NGOÀI VÀO BẤT KỲ CÂU VĂN NÀO.
+- TOÀN BỘ VĂN BẢN, LỜI THOẠI, NỘI TÂM, VÀ MỌI PHÂN CẢNH BẮT BUỘC PHẢI VIẾT 100% BẰNG TIẾNG VIỆT, KHÔNG CHÈN TIẾNG ANH.
 
 INKOS TRUTH FILES & CONTEXT:
 - Chapter Blueprint: {blueprint}
 - World Lore & Rules: {world_lore}
-- Character Bible & Status: {characters}
-- Episodic History: {history}
-- Previous Chapters Context: {previous_content}
+- Character Bible & Status (Inventory, Stats): {characters}
+- Long-term Episodic History: {history}
 
-INKOS 10-AGENT CORE DIRECTIVES (MUST FOLLOW AT ALL COSTS):
-1. **WORD COUNT & EXPANSION**: Write a massive, immersive chapter exceeding 2500 - 3500 words (MUST BE >2200 WORDS minimum to yield 10+ minutes audio duration). Never summarize events. Write out every scene paragraph by paragraph in vivid detail.
-2. **INKOS DE-AI-IFICATION & STYLE FINGERPRINT**:
-   - STRICTLY ELIMINATE all AI clichés, filler phrases, and monotonous patterns (DO NOT write: 'Dẫn lược:', 'Tóm lại:', 'Bức tranh toàn cảnh', 'Minh chứng cho', 'Lời kết', 'Trong thế giới này').
-   - Write with raw human narrative texture, micro-expressions, heartbeat acceleration, breath pauses, and atmospheric tension.
-3. **SHOW, DON'T TELL & SENSORY GROUNDING**:
-   - Describe sensory details: sound of wind rustling bamboo leaves, scent of rain-soaked earth, heartbeat pounding in chest, reflections of light on polished blades, micro-facial expressions, and subtle body posture.
-   - Describe character internal monologues, doubts, strategic thoughts, and emotional weight in great depth.
-4. **INKOS 5-STAGE CINEMATIC SCENE STRUCTURE**:
-   - Stage 1: Atmospheric Opening & Environment Setup (300-500 words).
-   - Stage 2: Rising Tension & Dialogue Encounter (600-800 words).
-   - Stage 3: Core Confrontation or Mysterious Discovery (700-900 words).
-   - Stage 4: Emotional & Physical Aftermath / Realization (500-700 words).
-   - Stage 5: **HIGH-STAKES CLIFFHANGER**: End the chapter on a tense, unexpected twist or unresolved suspense that makes readers desperate for the next chapter!
-5. **PROTAGONIST PROGRESSION & CONSTRAINT**:
-   - Protagonist: {protagonist_name} | Current Power: {protagonist_power} | Stats: {protagonist_stats} | Failure Flag: {failure_flag}
-   - **CRITICAL RULE**: The protagonist CANNOT level up or obtain new powers unless failure_flag is TRUE. If failure_flag is False, they must face intense struggle, difficulty, or setback without a breakthrough.
-6. **NAMING & DIALOGUE STYLE**:
-   - Use character names aligned strictly with the active story bible and genre. NEVER use English proper nouns.
-   - **TẢI TRỌNG LỜI THOẠI ĐỐI THOẠI CỰC ĐẠI (70% - 80% DIRECT DIALOGUE RATIO)**: BẮT BUỘC câu chuyện phải chiếm từ 70% ĐẾN 80% LỜI NÓI TRỰC TIẾP và ĐỐI THOẠI giữa các nhân vật trong ngoặc kép ("..."). Mọi phân cảnh đều là sự đối đáp dồn dập, tranh luận gay gắt, khiêu khích, thì thầm, bàn chiến thuật và phản ứng bộc phát giữa nhân vật chính và các nhân vật xung quanh!
-7. **DYNAMIC CHARACTER CREATION DIRECTIVE**:
-   - BẠN ĐƯỢC HOÀN TOÀN TỰ DO SÁNG TẠO VÀ THÊM CÁC NHÂN VẬT MỚI CHUYÊN NGHIỆP (phản diện, cao thủ ẩn thế, tông chủ thế lực khác, sát thủ Hồn Điện, sư huynh, trưởng lão, nhân vật quần chúng...). TUYỆT ĐỐI KHÔNG BỊ GÒ BÓ hay giới hạn chỉ ở các nhân vật đã có sẵn!
- 
-Write the chapter in 100% natural, evocative Vietnamese. Output ONLY the raw story text without conversational intro/outro text, headers, or sections like 'Dẫn lược:' or 'Chương X:'. Write straight into the narrative.
+[ĐÂY LÀ KẾT THÚC CỦA CHƯƠNG TRƯỚC - MỎ NEO NỐI CẢNH]
+{previous_content}
+--------------------------------------------------
+
+INKOS 15-STAGE XIANXIA/XUANHUAN DIRECTIVES (ĐẠI THẦN TU TIÊN - BẮT BUỘC TUÂN THỦ):
+
+1. **Lệnh Viết Tiếp/Chuyển Cảnh**: KHÔNG ĐƯỢC tóm tắt chuyện đã xảy ra. Bắt buộc viết TIẾP DIỄN ngay lập tức từ tích tắc cuối cùng của [Mỏ Neo Nối Cảnh] trên. Nếu Blueprint yêu cầu địa điểm khác, hãy Time-skip/Location-skip mượt mà.
+2. **Hộp Từ Cấm (Anti-Repetition)**: {forbidden_phrases}. TUYỆT ĐỐI không dùng lại các câu miêu tả thời tiết, không gian, hay cụm từ mở đầu giống các chương trước.
+3. **Từ Vựng Tu Tiên**: Bắt buộc dùng chuẩn thuật ngữ (Uy áp, sát khí, thức hải, đan điền, linh lực, pháp bảo, tàn ảnh, xé rách hư không, tinh huyết, chân khí...).
+4. **Phản Ứng Đám Đông (Hype)**: Chèn các đoạn "quần chúng hít một ngụm khí lạnh", "ồ lên kinh ngạc", hoặc các "Lão cổ đổng" ẩn tu lẩm bẩm vuốt râu đánh giá để nâng tầm nhân vật chính.
+5. **Áp Chế Cảnh Giới**: Khắc họa rõ sự chênh lệch sinh tử giữa các cấp độ tu luyện. Kẻ mạnh tỏa uy áp khiến kẻ yếu "hai chân run rẩy, muốn quỳ rạp xuống".
+6. **Thời Gian Cổ Đại**: KHÔNG dùng "giây, phút". Thay bằng: Trong nháy mắt, thời gian một nén nhang, nửa nén hương, nhất tức (một hơi thở), cái búng tay...
+7. **Chiến Đấu Vi Mô**: Miêu tả chiến đấu qua 3 lớp: Va chạm pháp quyết -> Chấn động môi trường (đất nứt, không gian vặn vẹo) -> Tổn thương (kinh mạch đứt gãy, hộc máu mồm, sắc mặt tái nhợt).
+8. **Sát Khí & Khí Chất**: Trước khi động thủ phải đọ sát khí (ánh mắt sắc bén như kiếm, sát khí ngưng tụ thành thực thể, hàn quang lóe lên).
+9. **Luật Rừng (Cường giả vi tôn)**: Kẻ mạnh làm vua, nhổ cỏ tận gốc. Hành xử và lời thoại phải tàn khốc, không nương tay với kẻ thù.
+10. **Đạo Tâm Nghịch Thiên**: Nhân vật chính bị dồn vào đường cùng vẫn giữ đôi mắt kiên định, không khuất phục.
+11. **Dị Tượng & Pháp Bảo**: Tả chi tiết đan dược, vũ khí phát sáng, dị hương, dị hỏa, sấm sét ngưng tụ. Phải dùng đồ trong Character Status (Inventory), KHÔNG tự bịa đồ rác.
+12. **Tên Gọi Khí Phách**: Chiêu thức, bí cảnh phải có tên bá đạo (VD: Cửu Trọng Thiên Hỏa, Bát Hoang Lục Hợp).
+13. **Môi Trường Kỳ Vĩ**: Bí cảnh ngập sát khí, vực sâu vạn trượng, ngọn núi chọc trời, dung nham cuồn cuộn.
+14. **Mưu Trí & Giấu Tu Vi**: Nhân vật không đánh bừa. Phải che giấu tu vi, tính toán điểm yếu, dụ địch vào trận pháp hoặc dùng bài tẩy phút chót.
+15. **Xưng Hô Giang Hồ**: Dùng chuẩn: Bản tôn, lão phu, tại hạ, vãn bối, tiền bối, đạo hữu, tiểu tử, súc sinh...
+
+INKOS STRUCTURE DIRECTIVES:
+- **WORD COUNT**: Write a massive, immersive chapter (2500 - 3500 words). Never summarize.
+- **BEAT SHEET**: Implement at least 3 distinct scenes in this chapter. Do NOT stop abruptly after the Prologue.
+- **CLIFFHANGER**: End the chapter on a tense twist, a sudden appearance, or a massive cliffhanger!
+
+Write straight into the narrative in 100% natural, evocative Vietnamese.
 """
 
 INKOS_AUDITOR_PROMPT = """
-You are the InkOS Auditor & De-AI-ification Agent (Narcooo InkOS Framework). Analyze the following chapter draft and perform a 37-dimension quality audit.
+You are the InkOS Auditor & De-AI-ification Agent. Analyze the chapter draft.
 
 Chapter Content:
 {chapter_content}
 
 Audit Tasks:
-1. Ensure 100% strictly natural Vietnamese prose, stripping any English words or non-Vietnamese phrases.
-2. Strip all AI clichés (e.g., 'dẫn lược', 'tóm lại', 'tổng kết', 'bức tranh toàn cảnh', 'minh chứng').
-3. Verify narrative continuity, dialogue flow, character memory consistency, and cliffhanger intensity.
-4. If any non-Vietnamese text or AI clichés exist, rewrite and output the perfectly cleaned, enhanced chapter text in 100% Vietnamese.
-5. Output ONLY the cleaned story text in natural Vietnamese.
+1. Ensure 100% natural Vietnamese prose.
+2. Strip AI cliches ('Tóm lại', 'Bức tranh toàn cảnh', 'Minh chứng cho', 'Lời kết', 'Trong thế giới này').
+3. Verify narrative continuity and Xuanhuan/Xianxia tone.
+4. Output ONLY the cleaned story text in natural Vietnamese.
 """
 
 EXTRACT_ENTITIES_PROMPT = """
-Read the following chapter and extract all character status updates, newly introduced characters, world lore additions, and active narrative threads.
+Read the following chapter and extract all character status updates, new characters, and lore.
 
 Chapter Content:
 {chapter_content}
@@ -111,88 +62,70 @@ Chapter Content:
 Current Character States:
 {current_characters}
 
-Analyze the narrative and output a strictly formatted JSON object (no markdown wrappers):
+Analyze and output a strict JSON object:
 {{
   "new_characters": [
     {{
       "name": "Tên Nhân Vật Mới",
-      "description": "Mô tả ngoại hình, trang phục, khí chất và vũ khí của nhân vật mới",
-      "power_tier": "Cảnh giới tu luyện (VD: Đấu Hoàng / Đấu Tôn / Sát Thủ / Trưởng Lão)",
-      "combat_stats": {{ "element": "Thuộc tính", "role": "Phản diện / Đồng minh / Trưởng lão" }},
-      "relationships": {{ "Tiêu Viêm": "Đối đầu / Đồng minh" }}
+      "description": "Mô tả",
+      "power_tier": "Cảnh giới tu luyện",
+      "combat_stats": {{ "element": "Thuộc tính", "role": "Vai trò" }},
+      "relationships": {{ "Tiêu Viêm": "Đồng minh/Kẻ thù" }}
     }}
   ],
   "character_updates": [
     {{
       "name": "Tiêu Viêm",
-      "power_tier": "Bá Chủ Trùng Sinh (Đấu Vương)",
-      "combat_stats": {{ "level": "Đấu Vương" }},
+      "power_tier": "Cảnh giới hiện tại",
+      "combat_stats": {{ "inventory": ["Vũ khí 1"] }},
       "relationships": {{ "Vân Vận": "Bằng hữu" }},
       "failure_flag": true,
       "breakthrough_written": false
     }}
   ],
   "new_lore": [
-    {{ "keyword": "Từ Khóa Bối Cảnh Mới", "description": "Mô tả chi tiết bối cảnh thế giới hoặc bảo vật mới" }}
-  ],
-  "new_threads": [
-    {{ "thread_name": "Tên Tuyến Truyện Mới", "description": "Mô tả diễn biến tuyến truyện mới" }}
+    {{ "keyword": "Từ khóa", "description": "Mô tả chi tiết" }}
   ]
 }}
 """
 
 REVIEW_PROMPT = """
-You are a senior novel editor. Review Chapter {chapter_number}: {chapter_title} for literary quality, depth, and consistency.
+You are a senior Xuanhuan novel editor. Review Chapter {chapter_number}: {chapter_title}.
 
 Chapter Content:
 {chapter_content}
 
 Reference Lore: {world_lore}
 Reference Characters: {characters}
-Protagonist Failure Flag: {failure_flag} | Last Breakthrough: {last_breakthrough_chapter}
 
 Evaluation Standards:
-1. **Logic & Lore Consistency**: Zero lore contradictions or character continuity errors.
-2. **Pacing & Depth**: Deep slow-burn pacing with rich sensory details. No rushed plot points or skipped scenes.
-3. **Progression Check**: Did the protagonist level up without failure_flag = true? (If yes, fail review).
-4. **Vocabulary & Names**: 100% Vietnamese 2-word names. Zero 3-word full names, zero English proper nouns.
-5. **Cliffhanger & Engagement**: High-stakes ending that compels readers to continue.
+1. Logic & Lore Consistency.
+2. Pacing & Depth (No rushed scenes).
+3. Xuanhuan Tropes (Did it use cultivation terms? Was combat epic?).
+4. Cliffhanger ending.
 
-Output a strictly formatted JSON object:
+Output a strict JSON object:
 {{
-  "pass_review": true/false,
-  "score": 1-10,
-  "feedback": "Detailed editor feedback",
-  "violations": ["List of specific violations if any"]
+  "pass_review": true,
+  "score": 10,
+  "feedback": "Detailed feedback",
+  "violations": []
 }}
 """
 
 BRAINSTORM_PROMPT = """
-You are a creative content producer. Brainstorm a completely original, highly compelling novel title and description targeted at teenagers (13-19 years old).
-The genre can be Sci-Fi, High Fantasy, Cyberpunk, Isekai, or Magic Academy.
-
-Requirements:
-1. Brainstorm a cool and catchy title. Keep it in Vietnamese (e.g. "Kẻ Vô Năng Của Học Viện" or "Giao Thức Tĩnh Lặng").
-2. The description must detail:
-   - The world setting and its core magic/technology system.
-   - The main protagonist (a teenager, starting weak or with a major handicap, facing challenges, slow growth, not overpowered).
-   - The main conflict or driving force.
-3. Use Vietnamese names for all characters (e.g., Phong, Nam, Vy, Linh) and Vietnamese terms for organizations and places. Avoid English names.
-4. Output a JSON object with:
-{
-  "title": "Brainstormed Title",
-  "description": "Detailed premise description"
-}
-Ensure the JSON is strictly formatted and valid. Do not wrap in markdown quotes.
+You are a creative content producer. Brainstorm a Xianxia/Xuanhuan novel title and description.
+Keep it in Vietnamese. Use rich cultivation terminology.
+Output a JSON object:
+{{
+  "title": "Title",
+  "description": "Description"
+}}
 """
 
 PLOT_EXPANSION_PROMPT = """
-Dựa vào tiêu đề và tóm tắt ngắn dưới đây, hãy viết một cốt truyện chi tiết (khoảng 300-500 từ) bằng tiếng Việt cho tiểu thuyết này.
-Nêu rõ bối cảnh thế giới, mâu thuẫn chính, và hành trình phát triển của nhân vật chính. 
-Hạn chế sử dụng tên tiếng Anh hoặc danh từ riêng tiếng Anh. Hãy dùng tên thuần Việt (ví dụ: Trần Lam, Linh Vy...).
-
+Dựa vào tiêu đề và tóm tắt, hãy viết một cốt truyện chi tiết (300-500 từ) phong cách Tiên Hiệp/Huyền Huyễn.
+Hạn chế tên tiếng Anh, dùng tên thuần Việt hoặc Hán Việt.
 Tiêu đề: {title}
-Tóm tắt ngắn: {description}
-
-Cốt truyện chi tiết:
+Tóm tắt: {description}
 """
