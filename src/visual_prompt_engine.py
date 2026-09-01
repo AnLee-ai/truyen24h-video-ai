@@ -27,12 +27,19 @@ LIGHTING_STYLES = [
 MASTER_ENVIRONMENT_LOCKS = {}
 MASTER_CHARACTER_LOCKS = {}
 
-NEGATIVE_PROMPT_DEFAULT = "blurry, extra limbs, bad anatomy, deformed, distorted, 3d photorealistic, out of style, lowres, watermark, text, signature, bad proportions, bad hands"
+# Caching to prevent re-translating the exact same scene
+_PROMPT_CACHE = {}
 
 def _enrich_single_scene(item: tuple, characters_data: list, world_lore_data: list) -> tuple:
-    """Xử lý 1 phân cảnh bằng cách truyền Dữ liệu Khóa vào LLM để tạo Prompt Tiếng Anh tối ưu."""
-    idx, scene_text = item
+    """Xử lý 1 phân cảnh bằng cách truyền Dữ liệu Khóa và Ngữ cảnh trước/sau vào LLM."""
+    idx, scene_text, prev_scene, next_scene = item
     
+    # Kí tự cache để tăng tốc
+    cache_key = f"{scene_text}|{prev_scene}"
+    if cache_key in _PROMPT_CACHE:
+        print(f"[INFO] Scene {idx+1} hit Smart Cache. Thời gian xử lý: 0ms")
+        return idx, _PROMPT_CACHE[cache_key]["manifest"], _PROMPT_CACHE[cache_key]["positive_prompt"], _PROMPT_CACHE[cache_key]["negative_prompt"]
+
     # 1. Trích xuất Ngoại hình & Đặc điểm nhân vật (Character Visual Lock)
     detected_chars = []
     char_lock_prompts = []
@@ -45,7 +52,7 @@ def _enrich_single_scene(item: tuple, characters_data: list, world_lore_data: li
             else:
                 desc = c.get("description", "")
                 power = c.get("power_tier", "")
-                char_lock_prompts.append(f"{c_name}: {desc[:100]}, {power}")
+                char_lock_prompts.append(f"{c_name}: {desc[:150]}, {power}")
                 
     if not char_lock_prompts:
         char_lock_prompts.append("Cinematic focal character")
@@ -61,7 +68,7 @@ def _enrich_single_scene(item: tuple, characters_data: list, world_lore_data: li
                 env_lock_prompts.append(f"{kw}: {MASTER_ENVIRONMENT_LOCKS[kw]}")
             else:
                 desc = lore_item.get("description", "")
-                env_lock_prompts.append(f"{kw}: {desc[:100]}")
+                env_lock_prompts.append(f"{kw}: {desc[:150]}")
 
     for env_kw, env_anchor in MASTER_ENVIRONMENT_LOCKS.items():
         if re.search(rf'\b{re.escape(env_kw)}\b', scene_text) and env_anchor not in env_lock_prompts:
@@ -77,48 +84,70 @@ def _enrich_single_scene(item: tuple, characters_data: list, world_lore_data: li
     char_lock_str = " | ".join(char_lock_prompts)
     env_lock_str = " | ".join(env_lock_prompts)
 
-    # 4. GỌI LLM (Visual Prompt Engineer Agent)
+    # 4. GỌI LLM (Visual Prompt Engineer Agent) VỚI ĐỊNH DẠNG JSON
     prompt_engineer_instruction = f"""
 You are an elite AI Image Generation Prompt Engineer (expert in Midjourney v6, SDXL, and FLUX).
-Your task is to take a scene written in Vietnamese, along with the character and environment details, and output a SINGLE, highly optimized English image generation prompt.
+Your task is to take a scene written in Vietnamese, along with the character and environment details, and output a highly optimized English image generation prompt.
 
 Follow these strict rules:
-1. NO conversational text. Output ONLY the English prompt. DO NOT use markdown code blocks like ```. Just output the raw prompt.
-2. Structure the prompt clearly: [Subject & Action], [Setting & Environment], [Camera & Lighting], [Style & Rendering].
-3. CHARACTER ACCURACY IS PARAMOUNT: When a character is mentioned, DO NOT just use their name. You MUST replace or combine their name with their exact physical description provided in the CHARACTER LOCKS. For example, instead of "Xiao Yan is fighting", write "Xiao Yan, a young man with messy black hair, wearing a torn black robe, wielding a giant dark fire sword, is fighting".
+1. OUTPUT PURE JSON ONLY. Do not use markdown ```json blocks. Just output raw JSON.
+2. Structure the JSON with two keys: "positive_prompt" and "negative_prompt".
+3. CHARACTER ACCURACY IS PARAMOUNT: When a character is mentioned, DO NOT just use their name. You MUST replace or combine their name with their exact physical description provided in the CHARACTER LOCKS.
 4. ENVIRONMENT ACCURACY: Do the same for environments based on the ENVIRONMENT LOCKS.
-5. STYLE: Ensure the style is exactly "masterpiece, 2D manhwa webtoon style, cel shaded, vibrant colors, epic composition, ultra-detailed".
+5. STYLE: Ensure the style is exactly "masterpiece, best quality, 2D manhwa webtoon style, cel shaded, vibrant colors, epic composition, ultra-detailed".
+6. CONTINUITY: Use the Previous Scene context to maintain consistent lighting, clothing state, and camera angles if it makes sense.
+7. NEGATIVE PROMPT: Generate a custom negative prompt tailored to the scene (e.g. if it's a historical scene, add "modern, cars, phones"). Always include the base negative prompt: "blurry, extra limbs, bad anatomy, deformed, distorted, 3d photorealistic, out of style, lowres, watermark, text, signature, bad proportions, bad hands".
 
 INPUT:
-- Scene (Vietnamese): {scene_text}
+- Previous Scene (For Continuity): {prev_scene}
+- CURRENT SCENE TO DRAW (Vietnamese): {scene_text}
+- Next Scene (For Foreshadowing): {next_scene}
 - Character Locks: {char_lock_str}
 - Environment Locks: {env_lock_str}
-- Camera Angle: {camera}
-- Lighting: {lighting}
+- Suggested Camera Angle: {camera}
+- Suggested Lighting: {lighting}
 
-OUTPUT PURE ENGLISH PROMPT:
+OUTPUT FORMAT:
+{{
+  "positive_prompt": "...",
+  "negative_prompt": "..."
+}}
 """
 
     print(f"[INFO] Gửi Scene {idx+1} cho LLM Visual Prompt Engineer...")
-    # Thử gọi LLM, nếu lỗi sẽ dùng cách ghép chuỗi truyền thống (Fallback)
     enhanced_english_prompt = ""
+    dynamic_negative_prompt = "blurry, extra limbs, bad anatomy, deformed, distorted, 3d photorealistic, out of style, lowres, watermark, text, signature, bad proportions, bad hands"
+    
     try:
         raw_llm_response = call_gemini(prompt_engineer_instruction, retries=2)
-        if raw_llm_response and len(raw_llm_response.split()) > 10:
-            # Loại bỏ markdown nếu LLM cố tình trả về
-            cleaned_llm = raw_llm_response.replace("```", "").replace("markdown", "").replace("TEXT", "").strip()
-            enhanced_english_prompt = cleaned_llm
-            print(f"[SUCCESS] Đã dịch & tối ưu hóa Prompt Tiếng Anh cho Scene {idx+1}")
+        if raw_llm_response:
+            cleaned_llm = raw_llm_response.replace("```json", "").replace("```", "").strip()
+            # Find JSON object boundaries
+            start_idx = cleaned_llm.find("{")
+            end_idx = cleaned_llm.rfind("}")
+            if start_idx != -1 and end_idx != -1:
+                cleaned_llm = cleaned_llm[start_idx:end_idx+1]
+                data = json.loads(cleaned_llm)
+                enhanced_english_prompt = data.get("positive_prompt", "")
+                dynamic_negative_prompt = data.get("negative_prompt", dynamic_negative_prompt)
+                print(f"[SUCCESS] Đã dịch & phân tích JSON thành công cho Scene {idx+1}")
     except Exception as e:
-        print(f"[WARNING] LLM Visual Prompt Engineer failed for scene {idx+1}: {e}")
+        print(f"[WARNING] LLM Visual Prompt Engineer failed parsing JSON for scene {idx+1}: {e}")
 
-    # Fallback nếu LLM thất bại
+    # Fallback
     if not enhanced_english_prompt:
-        enhanced_english_prompt = (
-            f"masterpiece, best quality, 2D manhwa webtoon style, {scene_text}, "
-            f"CHARACTER_LOCK: [{char_lock_str}], ENVIRONMENT_LOCK: [{env_lock_str}], "
-            f"camera: [{camera}], lighting: [{lighting}], cel shaded, sharp line art, ultra-detailed, razor sharp focus, high contrast, 8k resolution"
-        )
+        import urllib.parse
+        try:
+            from deep_translator import GoogleTranslator
+            translated = GoogleTranslator(source='vi', target='en').translate(scene_text)
+            enhanced_english_prompt = f"masterpiece, best quality, 2D manhwa webtoon style, {translated}, {char_lock_str}, {env_lock_str}, {camera}, {lighting}"
+        except Exception as trans_e:
+            print(f"[WARNING] Fallback translation failed: {trans_e}")
+            enhanced_english_prompt = (
+                f"masterpiece, best quality, 2D manhwa webtoon style, {scene_text}, "
+                f"CHARACTER_LOCK: [{char_lock_str}], ENVIRONMENT_LOCK: [{env_lock_str}], "
+                f"camera: [{camera}], lighting: [{lighting}], cel shaded, sharp line art, ultra-detailed, razor sharp focus, high contrast, 8k resolution"
+            )
 
     manifest_item = {
         "scene_index": idx + 1,
@@ -130,14 +159,21 @@ OUTPUT PURE ENGLISH PROMPT:
         "camera_angle": camera,
         "lighting": lighting,
         "enhanced_english_prompt": enhanced_english_prompt,
-        "negative_prompt": NEGATIVE_PROMPT_DEFAULT
+        "negative_prompt": dynamic_negative_prompt
     }
     
-    return idx, manifest_item, enhanced_english_prompt
+    # Save to Cache
+    _PROMPT_CACHE[cache_key] = {
+        "manifest": manifest_item,
+        "positive_prompt": enhanced_english_prompt,
+        "negative_prompt": dynamic_negative_prompt
+    }
+    
+    return idx, manifest_item, enhanced_english_prompt, dynamic_negative_prompt
 
-def batch_enrich_visual_prompts_parallel(scenes: list, novel_id: str = "", chapter_id: str = "", max_workers: int = 3) -> tuple:
-    """Sinh toàn bộ Visual Prompts bằng LLM. Dùng max_workers=3 để tránh bị Rate Limit Gemini."""
-    print(f"[INFO] KÍCH HOẠT ĐỘNG CƠ VISUAL DIRECTOR LLM: Dịch và Tối ưu hóa song song {len(scenes)} phân cảnh (Workers={max_workers})...")
+def batch_enrich_visual_prompts_parallel(scenes: list, novel_id: str = "", chapter_id: str = "", max_workers: int = 5) -> tuple:
+    """Sinh toàn bộ Visual Prompts bằng LLM với Master Detail Locks và Continuity."""
+    print(f"[INFO] KÍCH HOẠT VISUAL DIRECTOR V2 (Continuity + JSON Output): Xử lý song song {len(scenes)} phân cảnh...")
     
     characters_data = []
     world_lore_data = []
@@ -145,19 +181,24 @@ def batch_enrich_visual_prompts_parallel(scenes: list, novel_id: str = "", chapt
         try:
             characters_data = database.get_characters(novel_id)
             world_lore_data = database.get_world_lore(novel_id)
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[WARNING] Failed to fetch character locks: {e}")
 
     manifest_list = [None] * len(scenes)
     enhanced_prompts_list = [None] * len(scenes)
+    
+    # Chuẩn bị items với ngữ cảnh (previous và next)
+    items = []
+    for i in range(len(scenes)):
+        prev_scene = scenes[i-1] if i > 0 else "None (Start of the chapter)"
+        next_scene = scenes[i+1] if i < len(scenes) - 1 else "None (End of the chapter)"
+        items.append((i, scenes[i], prev_scene, next_scene))
 
-    items = list(enumerate(scenes))
-    # Sử dụng luồng nhưng giới hạn tốc độ một chút để LLM không bị ngợp
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = {executor.submit(_enrich_single_scene, item, characters_data, world_lore_data): item for item in items}
         for future in concurrent.futures.as_completed(futures):
             try:
-                idx, manifest_item, pos_prompt = future.result()
+                idx, manifest_item, pos_prompt, neg_prompt = future.result()
                 manifest_list[idx] = manifest_item
                 enhanced_prompts_list[idx] = pos_prompt
             except Exception as e:
@@ -180,12 +221,12 @@ def batch_enrich_visual_prompts_parallel(scenes: list, novel_id: str = "", chapt
             sanitized = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', raw_json)
             safe_manifest_data = json.loads(sanitized)
             with open(manifest_path, "w", encoding="utf-8") as f:
-                json.dump({"chapter_id": chapter_id, "scenes_count": len(scenes), "llm_enhanced": True, "scenes": safe_manifest_data}, f, ensure_ascii=False, indent=2)
-            print(f"[SUCCESS] Đã xuất Visual Director Manifest với Prompt Tiếng Anh tại: {manifest_path}")
+                json.dump({"chapter_id": chapter_id, "novel_id": novel_id, "scenes_count": len(scenes), "llm_enhanced": True, "scenes": safe_manifest_data}, f, ensure_ascii=False, indent=2)
+            print(f"[SUCCESS] Đã xuất Visual Director Manifest V2 tại: {manifest_path}")
         except Exception as e:
             print(f"[WARNING] Không thể lưu manifest: {e}")
 
-    print(f"[SUCCESS] ĐÃ HOÀN THÀNH DỊCH VÀ TỐI ƯU HÓA LLM CHO {len(scenes)} VISUAL PROMPTS!")
+    print(f"[SUCCESS] ĐÃ HOÀN THÀNH VISUAL DIRECTOR V2 CHO {len(scenes)} CẢNH!")
     return manifest_list, enhanced_prompts_list
 
 if __name__ == "__main__":
