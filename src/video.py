@@ -1,4 +1,4 @@
-﻿import requests
+import requests
 
 def dispatch_to_moneyprinter(video_subject: str, images_path: str, tts_path: str) -> str:
     """
@@ -172,10 +172,11 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
     # Removed corrupted comment
     from src.visual_prompt_engine import batch_enrich_visual_prompts_parallel
     from src.image_generator import batch_generate_scene_images, is_valid_image_file
-    chapter_id = os.path.basename(out_dir)
-    target_scenes = scene_texts[:30]
+    # Fetch novel_id from database
+    import src.database as db
+    novel_id = db.get_novel_id_from_chapter(chapter_id)
     
-    _, enriched_prompts = batch_enrich_visual_prompts_parallel(target_scenes, novel_id="", chapter_id=chapter_id, max_workers=10)
+    _, enriched_prompts = batch_enrich_visual_prompts_parallel(target_scenes, novel_id=novel_id, chapter_id=chapter_id, max_workers=5)
     image_files = batch_generate_scene_images(enriched_prompts, chapter_id, max_workers=5, width=1920, height=1080)
                 
     if len(image_files) < 2:
