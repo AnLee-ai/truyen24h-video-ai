@@ -585,7 +585,7 @@ def generate_arc_blueprints(novel_id: str, arc: dict) -> list:
         except (ValueError, TypeError):
             end_num = start_num + 24
         
-        import os, json
+        import os
         titles_path = os.path.join(os.path.dirname(__file__), "config", "titles.json")
         with open(titles_path, "r", encoding="utf-8") as _f:
             EPIC_TITLES = json.load(_f)["epic_titles"]
@@ -596,7 +596,7 @@ def generate_arc_blueprints(novel_id: str, arc: dict) -> list:
                 epic_t = EPIC_TITLES[(ch_i - 1) % len(EPIC_TITLES)]
                 blueprints.append({
                     "chapter_number": ch_i,
-                    "chapter_title": f"{epic_t} (TÃƒÂ¡Ã‚ÂºÃ‚Â­p {ch_i})",
+                    "chapter_title": f"{epic_t} (Tập {ch_i})",
                     "blueprint": f"Diễn biến kịch tính tiếp theo của câu chuyện ở chương {ch_i}.",
                     "characters_present": [],
                     "narrative_goal": "Phát triển cốt truyện"
@@ -874,12 +874,12 @@ def write_next_chapter(novel_id: str) -> dict:
     # Cleaned comment
     cur_title = chapter_record.get("title", "")
     if "Hành Trình Mới" in cur_title or not cur_title or cur_title == f"Chương {next_ch_number}":
-        import os, json
+        import os
         titles_path = os.path.join(os.path.dirname(__file__), "config", "titles.json")
         with open(titles_path, "r", encoding="utf-8") as _f:
             EPIC_TITLES = json.load(_f)["epic_titles"]
         epic_name = EPIC_TITLES[(next_ch_number - 1) % len(EPIC_TITLES)]
-        cur_title = f"{epic_name} (TÃƒÂ¡Ã‚ÂºÃ‚Â­p {next_ch_number})"
+        cur_title = f"{epic_name} (Tập {next_ch_number})"
 
     client = database.get_client()
     response = client.table("chapters")\
