@@ -149,12 +149,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     const audioText = c.audio_url ? 'Done' : 'Pending';
                     const videoText = (c.video_status || 'Pending').toUpperCase();
                     
+                    const audioContent = c.audio_url ? `<a href="${c.audio_url}" target="_blank" style="text-decoration:none; color:inherit;">${audioText} ↗</a>` : audioText;
+                    const videoContent = c.video_url ? `<a href="${c.video_url}" target="_blank" style="text-decoration:none; color:inherit;">${videoText} ↗</a>` : videoText;
+                    
                     return `
                     <tr>
                         <td style="font-weight: 600">Chương ${escapeHTML(c.chapter_number)}</td>
                         <td>${escapeHTML(c.title || `Chương ${c.chapter_number}`)}</td>
-                        <td><span class="badge-status ${audioStatus}">${audioText}</span></td>
-                        <td><span class="badge-status ${videoStatus}">${videoText}</span></td>
+                        <td><span class="badge-status ${audioStatus}">${audioContent}</span></td>
+                        <td><span class="badge-status ${videoStatus}">${videoContent}</span></td>
                     </tr>
                 `}).join('');
             } else {
