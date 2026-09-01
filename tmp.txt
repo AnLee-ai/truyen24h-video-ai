@@ -1,0 +1,29 @@
+def write_next_chapter(novel_id: str) -> dict:
+    # Lấy tập hợp 100% tất cả các số chương đã xong từ Supabase + data/ + output/ + RAM
+    completed_set = database.get_completed_chapters_set(novel_id)
+    all_done_nums = {int(x) for x in completed_set if str(x).isdigit()}
+
+    all_chapters = database.get_all_chapters(novel_id)
+    
+    # Cleaned comment
+    unwritten_chapters = [
+        c for c in all_chapters 
+        if isinstance(c.get("chapter_number"), (int, str)) and str(c.get("chapter_number")).isdigit()
+        and int(c["chapter_number"]) not in all_done_nums
+        and (str(c.get("content", "")).startswith("BLUEPRINT:") or len(str(c.get("content", "")).split()) < 1200)
+    ]
+    
+    if unwritten_chapters:
+        unwritten_chapters.sort(key=lambda x: int(x["chapter_number"]))
+        next_ch_number = int(unwritten_chapters[0]["chapter_number"])
+    else:
+        existing_nums = [int(c["chapter_number"]) for c in all_chapters if str(c.get("chapter_number", "")).isdigit()] + list(all_done_nums)
+        next_ch_number = (max(existing_nums) + 1) if existing_nums else 1
+
+    print("[INFO] Processing...")
+    current_arc = get_current_arc(novel_id, next_ch_number)
+    chapter_record = next((c for c in all_chapters if c["chapter_number"] == next_ch_number), None)
+    if not chapter_record:
+        generate_arc_blueprints(novel_id, current_arc)
+        all_chapters = database.get_all_chapters(novel_id)
+        chapter_record = next((c for c in all_chapters if c["chapter_

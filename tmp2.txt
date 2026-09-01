@@ -1,0 +1,37 @@
+def generate_arc_blueprints(novel_id: str, arc: dict) -> list:
+    arc_num = arc.get("arc_number")
+    arc_title = arc.get("title")
+    start_ch = arc.get("start_chapter")
+    end_ch = arc.get("end_chapter")
+    arc_summary = arc.get("summary", "TiÃƒÂ¡Ã‚ÂºÃ‚Â¿p tÃƒÂ¡Ã‚Â»Ã‚Â¥c diÃƒÂ¡Ã‚Â»â‚¬Â¦n biÃƒÂ¡Ã‚ÂºÃ‚Â¿n cÃƒÂ¡Ã‚Â»Ã‚Â§a bÃƒÂ¡Ã‚Â»â‚¬Ëœi cÃƒÂ¡Ã‚ÂºÃ‚Â£nh hÃƒÂ¡Ã‚Â»Ã‚Âc viÃƒÂ¡Ã‚Â»â‚¬Â¡n.")
+    
+    print(f"[INFO] Generating blueprints for Arc {arc_num}: '{arc_title}' (Chapters {start_ch} - {end_ch})...")
+    
+    novel = database.get_novel(novel_id)
+    novel_title = novel.get("title", "Truyện mới")
+    novel_description = novel.get("description", "")
+    
+    existing_chapters = database.get_all_chapters(novel_id)
+    status_summary = f"Written {len(existing_chapters)} chapters."
+    if existing_chapters:
+        status_summary += f" Latest chapter was: {existing_chapters[-1]['title']}"
+        
+    prompt = prompts.ARC_PROMPT.format(
+        novel_title=novel_title,
+        novel_description=novel_description,
+        arc_summary=arc_summary,
+        arc_number=arc_num,
+        arc_title=arc_title,
+        start_chapter=start_ch,
+        end_chapter=end_ch,
+        global_status=status_summary
+    )
+    
+    blueprints_json = call_gemini(prompt, json_mode=True)
+    
+    try:
+        try:
+            blueprints_raw = safe_loads(blueprints_json)
+            if isinstance(blueprints_raw, list):
+                blueprints = blueprints_raw
+            elif isinstance(blueprints_r
