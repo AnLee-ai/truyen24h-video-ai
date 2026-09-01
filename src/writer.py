@@ -288,7 +288,11 @@ def call_gemini(prompt: str, json_mode: bool = False, retries: int = 12) -> str:
     # =========================================================================
     # Cleaned comment
     # =========================================================================
-    local_mangstoon = call_mangstoon_ai(prompt)
+    try:
+        local_mangstoon = call_mangstoon_ai(prompt)
+    except NameError:
+        local_mangstoon = ""
+        
     if local_mangstoon and len(local_mangstoon.strip().split()) > 10:
         print("[SUCCESS] Local Mangstoon_AI succeeded!")
         return local_mangstoon.strip()
