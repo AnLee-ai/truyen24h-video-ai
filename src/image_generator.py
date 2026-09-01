@@ -9,14 +9,13 @@ def call_huggingface_space(prompt: str, output_path: str) -> bool:
         
         print(f"[INFO] Gửi lệnh sang Hugging Face Space (my-story-diffusion)...")
         # Initialize client with token
-        import inspect
-        kwargs = {}
-        params = inspect.signature(Client.__init__).parameters
-        if "token" in params:
-            kwargs["token"] = os.environ.get("HF_TOKEN")
-        elif "hf_token" in params:
-            kwargs["hf_token"] = os.environ.get("HF_TOKEN")
-        client = Client("AnLee-ai/my-story-diffusion", **kwargs)
+        try:
+            client = Client("AnLee-ai/my-story-diffusion", token=os.environ.get("HF_TOKEN"))
+        except TypeError as e:
+            if "unexpected keyword argument" in str(e):
+                client = Client("AnLee-ai/my-story-diffusion", hf_token=os.environ.get("HF_TOKEN"))
+            else:
+                raise
         
         # The Gradio API accepts script_text and returns [Gallery, Log]
         result = client.predict(
