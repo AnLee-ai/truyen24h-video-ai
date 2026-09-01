@@ -11,6 +11,7 @@ import shutil
 # Global Circuit Breaker State
 _hf_consecutive_failures = 0
 _hf_circuit_open = False
+_hf_circuit_opened_at = 0.0
 _hf_lock = threading.Lock()
 
 def is_valid_image_file(file_path: str) -> bool:
@@ -26,12 +27,18 @@ def is_valid_image_file(file_path: str) -> bool:
         return False
 
 def call_huggingface_space(prompt: str, output_path: str) -> bool:
-    global _hf_consecutive_failures, _hf_circuit_open
+    global _hf_consecutive_failures, _hf_circuit_open, _hf_circuit_opened_at
     
-    # 1. Circuit Breaker Check
+    # 1. Circuit Breaker Check with 5-minute Cooldown (Half-Open state)
     if _hf_circuit_open:
-        print("[CIRCUIT BREAKER] 🔴 Engine 1 (Inkos HF) đang bị ngắt (đã sập quá 3 lần). Trực tiếp bỏ qua để chuyển tải sang FLUX...")
-        return False
+        if time.time() - _hf_circuit_opened_at > 300: # 5 minutes cooldown
+            print("[CIRCUIT BREAKER] 🟡 Thời gian làm mát (5 phút) đã hết. Thử kết nối lại với Engine 1 (Half-Open)...")
+            _hf_circuit_open = False
+            _hf_consecutive_failures = 2 # Allow exactly 1 failure to trip it again
+        else:
+            remaining = int(300 - (time.time() - _hf_circuit_opened_at))
+            print(f"[CIRCUIT BREAKER] 🔴 Engine 1 đang bị ngắt (Chờ {remaining}s nữa để thử lại). Chuyển tải sang FLUX...")
+            return False
 
     with _hf_lock:
         print(f"[ENGINE 1] 🚀 Bắt đầu gọi Inkos Hugging Face Space cho prompt (Bảo vệ bằng Lock tuần tự)...")
@@ -80,7 +87,8 @@ def call_huggingface_space(prompt: str, output_path: str) -> bool:
                     
                     if _hf_consecutive_failures >= 3:
                         _hf_circuit_open = True
-                        print("[CIRCUIT BREAKER] 💥 Ngưỡng chịu đựng đã vượt quá (3 lần fail). KÍCH HOẠT CẦU DAO CẮT HF! Mọi ảnh tiếp theo sẽ dồn qua FLUX.")
+                        _hf_circuit_opened_at = time.time()
+                        print("[CIRCUIT BREAKER] 💥 Ngưỡng chịu đựng đã vượt quá (3 lần fail). KÍCH HOẠT CẦU DAO CẮT HF! Sẽ thử lại sau 5 phút.")
         return False
 
 def call_colab_webhook(prompt: str, output_path: str, repo_name: str, width: int, height: int) -> bool:
