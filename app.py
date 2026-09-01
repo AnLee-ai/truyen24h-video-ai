@@ -152,13 +152,18 @@ async def api_run_pipeline(novel_id: str):
             yield f"data: {json.dumps({'msg': '[INFO] Đang khởi động tiến trình...'})}\n\n"
             
             has_error = False
+            last_ping_time = time.time()
             while thread.is_alive() or not log_queue.empty():
                 try:
                     msg = log_queue.get_nowait()
                     if "[ERROR]" in msg:
                         has_error = True
                     yield f"data: {json.dumps({'msg': msg})}\n\n"
+                    last_ping_time = time.time()
                 except queue.Empty:
+                    if time.time() - last_ping_time > 20:
+                        yield f"data: {json.dumps({'msg': '[HEARTBEAT] Hệ thống vẫn đang vẽ ảnh (có thể mất 30 phút), vui lòng giữ tab này...'})}\n\n"
+                        last_ping_time = time.time()
                     await asyncio.sleep(0.1)
                     
             if has_error:
