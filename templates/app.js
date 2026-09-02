@@ -149,8 +149,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     const audioText = c.audio_url ? 'Done' : 'Pending';
                     const videoText = (c.video_status || 'Pending').toUpperCase();
                     
-                    const audioContent = c.audio_url ? `<a href="${c.audio_url}" target="_blank" style="text-decoration:none; color:inherit;">${audioText} ↗</a>` : audioText;
-                    const videoContent = c.video_url ? `<a href="${c.video_url}" target="_blank" style="text-decoration:none; color:inherit;">${videoText} ↗</a>` : videoText;
+                    const isAudioLink = c.audio_url && (c.audio_url.startsWith('http') || c.audio_url.startsWith('/'));
+                    const audioContent = isAudioLink ? `<a href="${c.audio_url}" target="_blank" style="text-decoration:none; color:inherit;">${audioText} ↗</a>` : audioText;
+                    const isVideoLink = c.video_url && (c.video_url.startsWith('http') || c.video_url.startsWith('/'));
+                    const videoContent = isVideoLink ? `<a href="${c.video_url}" target="_blank" style="text-decoration:none; color:inherit;">${videoText} ↗</a>` : videoText;
                     
                     return `
                     <tr>

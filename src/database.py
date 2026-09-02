@@ -250,7 +250,7 @@ def get_completed_chapters_set(novel_id: str = "") -> set:
             v_url = str(ch.get("video_url") or "").strip()
             audio_url = str(ch.get("audio_url", "")).strip().lower()
             
-            if (v_status in ["completed", "published", "done", "true"]) or bool(v_url) or ("completed" in audio_url):
+            if (v_status in ["completed", "published", "done", "true"]) or bool(v_url) :
                 if ch_num > 0:
                     completed_set.add(ch_num)
                     completed_set.add(str(ch_num))
