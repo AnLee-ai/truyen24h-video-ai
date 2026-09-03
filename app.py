@@ -162,7 +162,7 @@ async def api_run_pipeline(novel_id: str):
                     last_ping_time = time.time()
                 except queue.Empty:
                     if time.time() - last_ping_time > 20:
-                        yield f"data: {json.dumps({'msg': '[HEARTBEAT] Hệ thống vẫn đang vẽ ảnh (có thể mất 30 phút), vui lòng giữ tab này...'})}\n\n"
+                        yield f"data: {json.dumps({'msg': '[HEARTBEAT] Hệ thống đang xử lý tác vụ nặng (vui lòng không đóng tab này)...'})}\n\n"
                         last_ping_time = time.time()
                     await asyncio.sleep(0.1)
                     
