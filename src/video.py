@@ -155,7 +155,7 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
     import src.database as db
     novel_id = db.get_novel_id_from_chapter(chapter_id)
     
-    _, enriched_prompts = batch_enrich_visual_prompts_parallel(target_scenes, novel_id=novel_id, chapter_id=chapter_id, max_workers=5)
+    _, enriched_prompts = batch_enrich_visual_prompts_parallel(scene_texts, novel_id=novel_id, chapter_id=chapter_id, max_workers=5)
     image_files = batch_generate_scene_images(enriched_prompts, chapter_id, max_workers=5, width=1920, height=1080)
                 
     if len(image_files) < 2:
