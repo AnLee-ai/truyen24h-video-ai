@@ -32,12 +32,9 @@ def mix_bgm_with_voice(voice_path: str, chapter_id: str) -> str:
                 except Exception as e:
                     print(f"[WARNING] Lỗi tải Suno/Udio Webhook: {e}")
             if not bgm_files:
-                print("[INFO] No BGM found, normalizing voice only...")
-                subprocess.run([
-                    "ffmpeg", "-y", "-i", voice_path, 
-                    "-af", "loudnorm=I=-16:TP=-1.5:LRA=11", 
-                    "-c:a", "libmp3lame", "-b:a", "192k", output_path
-                ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                print("[INFO] No BGM found, skipping BGM mix (fast copy)...")
+                import shutil
+                shutil.copy2(voice_path, output_path)
                 return output_path
         
         selected_bgm_name = random.choice(bgm_files)
@@ -46,12 +43,12 @@ def mix_bgm_with_voice(voice_path: str, chapter_id: str) -> str:
         print("[INFO] Mixing voice and background music...")
         
         filter_complex = (
-            "[0:a]loudnorm=I=-16:TP=-1.5:LRA=11[v];"
+            "[0:a]volume=1.2[v];"
             "[1:a]volume=0.15[b];"
             "[v][b]amix=inputs=2:duration=first:dropout_transition=3[outa]"
         )
         subprocess.run([
-            "ffmpeg", "-y", "-i", voice_path, "-stream_loop", "-1", "-i", bgm_path,
+            "ffmpeg", "-y", "-threads", "1", "-i", voice_path, "-stream_loop", "-1", "-i", bgm_path,
             "-filter_complex", filter_complex, "-map", "[outa]",
             "-c:a", "libmp3lame", "-b:a", "192k", output_path
         ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
