@@ -53,6 +53,49 @@ document.addEventListener('DOMContentLoaded', () => {
         return 'info';
     }
 
+
+// --- ANTI-SLEEP HACK ---
+let wakeLock = null;
+let audioCtx = null;
+let oscillator = null;
+
+async function keepTabAwake() {
+    try {
+        if ('wakeLock' in navigator) {
+            wakeLock = await navigator.wakeLock.request('screen');
+        }
+    } catch (err) {
+        console.log('WakeLock failed:', err);
+    }
+    try {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+            await audioCtx.resume();
+        }
+        oscillator = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        gain.gain.value = 0.001;
+        oscillator.connect(gain);
+        gain.connect(audioCtx.destination);
+        oscillator.start();
+    } catch (err) {
+        console.log('Audio API hack failed:', err);
+    }
+}
+
+function releaseTabAwake() {
+    if (wakeLock) {
+        wakeLock.release().then(() => { wakeLock = null; }).catch(e => {});
+    }
+    if (oscillator) {
+        oscillator.stop();
+        oscillator.disconnect();
+        oscillator = null;
+    }
+}
+
     function connectSSE(endpoint) {
         const novelId = inputNovelId.value.trim();
         if (!novelId) {
@@ -62,6 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         clearConsole();
         setButtonsState(true);
+        keepTabAwake();
         appendLog(`[INFO] Đang kết nối tới ${endpoint}...`, 'info');
 
         const url = `/api/${endpoint}?novel_id=${encodeURIComponent(novelId)}`;
@@ -74,6 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (data.done) {
                 eventSource.close();
+                releaseTabAwake();
                 setButtonsState(false);
                 appendLog('[INFO] Đã ngắt kết nối.', 'info');
             }
@@ -83,6 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('SSE Error:', err);
             appendLog('[ERROR] Mất kết nối hoặc lỗi server.', 'error');
             eventSource.close();
+            releaseTabAwake();
             setButtonsState(false);
         };
     }
