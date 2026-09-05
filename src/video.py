@@ -136,7 +136,7 @@ def get_audio_duration_seconds(audio_path: str) -> float:
         print(f"[WARNING] Lỗi đo độ dài audio bằng ffprobe: {e}")
     return 0.0
 
-def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_video_path: str, title: str = "Novel", interval: int = 7) -> str:
+def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_video_path: str, title: str = "Novel", interval: int = 7, chapter_id: str = "") -> str:
     """Tự động sinh ảnh AI và ghép thành video chuyển phân cảnh KHỚP 100% VỚI LỜI NÓI NHÂN VẬT."""
     if not shutil.which("ffmpeg"):
         print("[ERROR] FFmpeg không được cài đặt!")
@@ -395,7 +395,7 @@ def render_novel_video(audio_path: str, srt_path: str, title: str, chapter_id: s
     if moneyprinter_vid:
         return moneyprinter_vid
         
-    return create_multi_image_slideshow_video(audio_path, srt_path, out_video, title, interval=7)
+    return create_multi_image_slideshow_video(audio_path, srt_path, out_video, title, interval=7, chapter_id=chapter_id)
 
 def process_existing_audio(audio_path: str, srt_path: str = "", title: str = "Audiobook Novel") -> str:
     """Hàm độc lập: Nhận trực tiếp file audio có sẵn từ workflow và xuất video MP4."""
