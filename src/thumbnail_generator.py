@@ -4,7 +4,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 def generate_youtube_thumbnail(chapter_num: int, chapter_title: str, scene_image_path: str, output_path: str, width: int = 1920, height: int = 1080) -> str:
     """
-    Tự động thiết kế Ảnh Bìa Thumbnail YouTube (16:9 1920x1080) chuẩn MoneyPrinterTurbo / ComfyUI:
+    Tự động thiết kế Ảnh Bìa Thumbnail YouTube (16:9 1920x1080) chuẩn ComfyUI:
     - Nền: Bức ảnh phân cảnh AI rực rỡ + Phủ lớp Radial Vignette Manhwa 2D.
     - Huy hiệu 1: '🔥 TẬP X - BÁ CHỦ TRÙNG SINH' Nền Đỏ Ma Thuật, Viền Mạ Vàng góc trái trên.
     - Huy hiệu 2: '4K ULTRA HD' Nền Xanh Ngọc Emerald góc phải trên.
@@ -235,7 +235,7 @@ def generate_youtube_thumbnail(chapter_num: int, chapter_title: str, scene_image
         bg_img.close()
         overlay.close()
         
-        print(f"[SUCCESS] Generated 16:9 MoneyPrinter/ComfyUI YouTube Thumbnail at: {output_path}")
+        print(f"[SUCCESS] Generated 16:9 ComfyUI YouTube Thumbnail at: {output_path}")
         return output_path
     except Exception as e:
         print(f"[WARNING] Thumbnail generation failed: {e}")

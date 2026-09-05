@@ -83,7 +83,7 @@ def remove_repetitive_sentences(text: str) -> str:
         if not para.strip():
             cleaned_paragraphs.append("")
             continue
-        sentences = re.split(r'(?<=[.?!])\\s+(?=[A-Za-z0-9])', para)
+        sentences = re.split(r'(?<=[.?!])\s+(?=\S)', para)
         cleaned_sentences: list[str] = []
         for sentence in sentences:
             s_strip = sentence.strip()

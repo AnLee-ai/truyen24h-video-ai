@@ -1,26 +1,5 @@
 import requests
 
-def dispatch_to_moneyprinter(video_subject: str, images_path: str, tts_path: str) -> str:
-    """
-    Dispatch video rendering task to local moneyprinter backend.
-    """
-    print(f"[INFO] Dispatching video task to moneyprinter (http://localhost:8002/api/generate)...")
-    url = "http://localhost:8002/api/generate"
-    payload = {
-        "video_subject": video_subject,
-        "images_path": images_path,
-        "tts_path": tts_path
-    }
-    try:
-        resp = requests.post(url, json=payload, timeout=600)
-        if resp.status_code == 200:
-            print("[SUCCESS] moneyprinter generated video successfully.")
-            return resp.json().get("video_path", "")
-        else:
-            print(f"[ERROR] moneyprinter failed with status: {resp.status_code}")
-    except Exception as e:
-        print(f"[ERROR] Failed to connect to moneyprinter: {e}")
-    return ""
 import os
 import re
 import subprocess
@@ -247,7 +226,7 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
         srt_escaped = srt_rel.replace("'", "'\\\\''").replace("[", "\\[").replace("]", "\\]")
     
     # Removed corrupted comment
-    vf_filter = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,unsharp=5:5:1.0:5:5:0.0,eq=brightness=0.04:contrast=1.12:saturation=1.22[bg]"
+    vf_filter = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080[bg]"
         
     if not (srt_escaped and os.path.exists(srt_path)):
         fallback_srt = os.path.join(out_dir, "subtitles_fallback.srt")
@@ -275,7 +254,7 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
         
     # 7. Tá»± Ä‘á»™ng kiá»ƒm tra pháº§n cá»©ng GPU Encoder (NVIDIA NVENC -> Intel QSV -> CPU Ultrafast Multi-Core 5x Speed)
     codec = "libx264"
-    encoder_opts = ["-preset", "medium", "-threads", "0", "-crf", "18"]
+    encoder_opts = ["-preset", "ultrafast", "-tune", "stillimage", "-threads", "0", "-crf", "24"]
     
     try:
         test_nvenc = subprocess.run(
@@ -298,10 +277,10 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
         "-i", audio_path,
         "-filter_complex", vf_filter,
         "-map", "[out]", "-map", "1:a",
-        "-vsync", "1", "-async", "1", "-r", "25",
+        "-vsync", "1", "-async", "1", "-r", "15",
         "-c:v", codec
     ] + encoder_opts + [
-        "-b:v", "8000k", "-maxrate", "12000k", "-bufsize", "16000k",
+         
         "-c:a", "aac", "-b:a", "128k", "-pix_fmt", "yuv420p",
         "-movflags", "+faststart",
         "-shortest", output_video_path
@@ -327,7 +306,7 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
         first_img = os.path.join(img_dir, "scene_pass2.jpg")
         generate_scene_image(title, first_img, width=1920, height=1080)
 
-    vf_filter_pass2 = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,unsharp=5:5:1.0:5:5:0.0,eq=brightness=0.04:contrast=1.12:saturation=1.22[bg]"
+    vf_filter_pass2 = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080[bg]"
     if srt_escaped and os.path.exists(srt_path):
         vf_filter_pass2 += f";[bg]subtitles=filename='{srt_escaped}':force_style='{subtitle_style}'[out]"
     else:
@@ -339,10 +318,10 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
         "-i", audio_path,
         "-filter_complex", vf_filter_pass2,
         "-map", "[out]", "-map", "1:a",
-        "-r", "20",
+        "-r", "15",
         "-c:v", codec
     ] + encoder_opts + [
-        "-b:v", "8000k", "-maxrate", "12000k", "-bufsize", "16000k",
+         
         "-c:a", "aac", "-b:a", "128k", "-pix_fmt", "yuv420p",
         "-movflags", "+faststart",
         "-shortest", output_video_path
@@ -360,17 +339,17 @@ def create_multi_image_slideshow_video(audio_path: str, srt_path: str, output_vi
         
     # Removed corrupted comment
     print("[INFO] Processing...")
-    vf_filter_pass3 = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,unsharp=5:5:1.0:5:5:0.0"
+    vf_filter_pass3 = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080"
     cmd_pass3 = [
         "ffmpeg", "-y",
         "-f", "concat", "-safe", "0", "-i", concat_list_path,
         "-i", audio_path,
         "-vf", vf_filter_pass3,
         "-map", "0:v", "-map", "1:a",
-        "-r", "20",
+        "-r", "15",
         "-c:v", codec
     ] + encoder_opts + [
-        "-b:v", "8000k", "-maxrate", "12000k", "-bufsize", "16000k",
+         
         "-c:a", "aac", "-b:a", "128k", "-pix_fmt", "yuv420p",
         "-movflags", "+faststart",
         "-shortest", output_video_path
@@ -390,11 +369,6 @@ def render_novel_video(audio_path: str, srt_path: str, title: str, chapter_id: s
     out_video = os.path.join("output", chapter_id, "video.mp4")
     img_dir = os.path.join("output", chapter_id, "images")
     
-    # Try moneyprinter first
-    moneyprinter_vid = dispatch_to_moneyprinter(title, img_dir, audio_path)
-    if moneyprinter_vid:
-        return moneyprinter_vid
-        
     return create_multi_image_slideshow_video(audio_path, srt_path, out_video, title, interval=7, chapter_id=chapter_id)
 
 def process_existing_audio(audio_path: str, srt_path: str = "", title: str = "Audiobook Novel") -> str:

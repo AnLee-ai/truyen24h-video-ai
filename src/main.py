@@ -295,7 +295,7 @@ def _run_chapter_pipeline_impl(novel_id: str):
         # Gửi Ảnh Bìa Thumbnail 16:9 4K lên Telegram
         if thumbnail_path and os.path.exists(thumbnail_path):
             print(f"[INFO] Uploading 16:9 Thumbnail 4K to Telegram ({os.path.getsize(thumbnail_path)} bytes)...")
-            thumb_caption = f"🖼️ <b>Ảnh Bìa Thumbnail 16:9 4K - Tập {chapter_num}: {chapter_title}</b>\n🔥 Thiết kế tự động phong cách MoneyPrinter/ComfyUI 16:9"
+            thumb_caption = f"🖼️ <b>Ảnh Bìa Thumbnail 16:9 4K - Tập {chapter_num}: {chapter_title}</b>\n🔥 Thiết kế tự động phong cách ComfyUI 16:9"
             telegram_uploader.send_photo_to_telegram(thumbnail_path, thumb_caption)
 
         success = telegram_uploader.send_audio_to_telegram(
