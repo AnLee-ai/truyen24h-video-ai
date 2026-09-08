@@ -126,7 +126,7 @@ function releaseTabAwake() {
 
         eventSource.onerror = (err) => {
             console.error('SSE Error:', err);
-            appendLog('[ERROR] Mất kết nối hoặc lỗi server.', 'error');
+            appendLog('[INFO] Render đóng kết nối do quá 5 phút (Đây là giới hạn của Render). Tiến trình vẫn đang CHẠY NGẦM, vui lòng đợi tin nhắn Telegram!', 'error');
             eventSource.close();
             releaseTabAwake();
             setButtonsState(false);

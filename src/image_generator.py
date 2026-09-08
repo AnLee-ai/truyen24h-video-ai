@@ -198,6 +198,22 @@ def chunk_scene_prompts(prompts: list, size: int = 5):
     for i in range(0, len(prompts), size):
         yield prompts[i:i + size]
 
+_story_client = None
+
+def get_story_client():
+    global _story_client
+    if _story_client is None:
+        from gradio_client import Client
+        import os
+        try:
+            _story_client = Client("AnLee-ai/my-story-diffusion", hf_token=os.environ.get("HF_TOKEN"))
+        except TypeError as e:
+            if "unexpected keyword argument" in str(e):
+                _story_client = Client("AnLee-ai/my-story-diffusion", token=os.environ.get("HF_TOKEN"))
+            else:
+                raise
+    return _story_client
+
 def call_story_diffusion_batch(general_prompt: str, prompt_array_list: list, start_idx: int, base_dir: str, width: int = 768, height: int = 768) -> list:
     global _hf_consecutive_failures, _hf_circuit_open, _hf_circuit_opened_at
     
@@ -218,13 +234,7 @@ def call_story_diffusion_batch(general_prompt: str, prompt_array_list: list, sta
         max_retries = 3
         for attempt in range(1, max_retries + 1):
             try:
-                try:
-                    client = Client("AnLee-ai/my-story-diffusion", hf_token=os.environ.get("HF_TOKEN"))
-                except TypeError as e:
-                    if "unexpected keyword argument" in str(e):
-                        client = Client("AnLee-ai/my-story-diffusion", token=os.environ.get("HF_TOKEN"))
-                    else:
-                        raise
+                client = get_story_client()
                 
                 result = client.predict(
                     None,

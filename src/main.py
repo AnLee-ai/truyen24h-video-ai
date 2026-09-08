@@ -226,11 +226,7 @@ def _run_chapter_pipeline_impl(novel_id: str):
             video_public_url = database.upload_file_to_supabase(video_path, bucket_name="media", destination_path=f"videos/full/{chapter_id}_16_9.mp4")
             database.update_chapter_video_status(chapter_id, status="completed", video_url=video_public_url or video_path)
             
-        # Đảm bảo video_public_url luôn chứa link CDN trực tiếp 100% không bao giờ bị rỗng
-        if not video_public_url and config.SUPABASE_URL:
-            video_public_url = f"{config.SUPABASE_URL.rstrip('/')}/storage/v1/object/public/media/videos/full/{chapter_id}_16_9.mp4"
-            
-
+        # 5. Đăng tải tự động lên YouTube (Tùy chọn)
         # Generate one unique badass base thumbnail per novel
         novel_base_thumb = os.path.join("output", novel_id, "base_thumbnail.jpg")
         if not os.path.exists(novel_base_thumb):
