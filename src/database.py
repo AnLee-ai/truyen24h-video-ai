@@ -392,26 +392,24 @@ _created_buckets = set()
 def upload_to_gofile_fallback(file_path: str) -> str:
     import requests
     import os
-    print(f"[INFO] Chuyển hướng upload {os.path.basename(file_path)} sang GoFile (Bypass 50MB limit)...")
+    print(f"[INFO] Chuyển hướng upload {os.path.basename(file_path)} sang Catbox.moe (Bypass 50MB limit)...")
     try:
-        servers_res = requests.get('https://api.gofile.io/servers', timeout=15).json()
-        if servers_res.get('status') == 'ok':
-            server = servers_res['data']['servers'][0]['name']
-            url = f'https://{server}.gofile.io/contents/uploadfile'
-            with open(file_path, 'rb') as f_obj:
-                res = requests.post(url, files={'file': (os.path.basename(file_path), f_obj)}, timeout=600)
-                try:
-                    res_json = res.json()
-                    if res_json.get('status') == 'ok':
-                        dlink = res_json['data']['downloadPage']
-                        print(f"[SUCCESS] Upload GoFile thành công! Link: {dlink}")
-                        return dlink
-                    else:
-                        print(f"[ERROR] GoFile API error: {res_json}")
-                except Exception as json_err:
-                    print(f"[ERROR] GoFile returned non-JSON response (Status {res.status_code}): {res.text[:200]}")
+        url = 'https://catbox.moe/user/api.php'
+        with open(file_path, 'rb') as f_obj:
+            res = requests.post(
+                url, 
+                data={'reqtype': 'fileupload'}, 
+                files={'fileToUpload': (os.path.basename(file_path), f_obj)}, 
+                timeout=600
+            )
+            if res.status_code == 200 and res.text.startswith('http'):
+                dlink = res.text.strip()
+                print(f"[SUCCESS] Upload Catbox thành công! Link: {dlink}")
+                return dlink
+            else:
+                print(f"[ERROR] Catbox API error (Status {res.status_code}): {res.text[:200]}")
     except Exception as e:
-        print(f"[ERROR] GoFile fallback failed: {e}")
+        print(f"[ERROR] Catbox fallback failed: {e}")
     return ""
 
 def upload_file_to_supabase(
