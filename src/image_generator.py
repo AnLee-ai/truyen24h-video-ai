@@ -26,6 +26,22 @@ def is_valid_image_file(file_path: str) -> bool:
     except Exception:
         return False
 
+_flux_client = None
+
+def get_flux_client():
+    global _flux_client
+    if _flux_client is None:
+        from gradio_client import Client
+        import os
+        try:
+            _flux_client = Client("black-forest-labs/FLUX.1-schnell", hf_token=os.environ.get("HF_TOKEN"))
+        except TypeError as e:
+            if "unexpected keyword argument" in str(e):
+                _flux_client = Client("black-forest-labs/FLUX.1-schnell", token=os.environ.get("HF_TOKEN"))
+            else:
+                raise
+    return _flux_client
+
 def call_huggingface_space(prompt: str, output_path: str) -> bool:
     global _hf_consecutive_failures, _hf_circuit_open, _hf_circuit_opened_at
     
@@ -41,19 +57,12 @@ def call_huggingface_space(prompt: str, output_path: str) -> bool:
 
     with _hf_lock:
         print(f"[ENGINE 1] 🚀 Bắt đầu gọi FLUX.1-schnell trên Hugging Face Space...")
-        from gradio_client import Client
         import time, random
         
         max_retries = 3
         for attempt in range(1, max_retries + 1):
             try:
-                try:
-                    client = Client("black-forest-labs/FLUX.1-schnell", hf_token=os.environ.get("HF_TOKEN"))
-                except TypeError as e:
-                    if "unexpected keyword argument" in str(e):
-                        client = Client("black-forest-labs/FLUX.1-schnell", token=os.environ.get("HF_TOKEN"))
-                    else:
-                        raise
+                client = get_flux_client()
                 
                 result, _ = client.predict(
                     prompt=prompt,

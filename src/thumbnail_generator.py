@@ -12,7 +12,9 @@ def generate_youtube_thumbnail(chapter_num: int, chapter_title: str, scene_image
     - Watermark: Logo 'TRUYỆN 24H AUDIO STUDIO' mạ xanh kim ở góc dưới.
     """
     try:
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        out_dir = os.path.dirname(output_path)
+        if out_dir:
+            os.makedirs(out_dir, exist_ok=True)
         
         # 1. Khởi tạo ảnh nền (Load ảnh phân cảnh AI, tìm ảnh thay thế rộng hơn hoặc sinh ảnh AI/Canvas 16:9 HD)
         bg_loaded = False

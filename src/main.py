@@ -234,7 +234,7 @@ def _run_chapter_pipeline_impl(novel_id: str):
             from src import image_generator
             prompt = "Masterpiece, best quality, 1boy, main character, badass, epic pose, glowing eyes, dark fantasy, highly detailed, 8k resolution, cinematic lighting, 16:9 wallpaper"
             try:
-                image_generator.generate_image(prompt, novel_base_thumb, width=1920, height=1080, base_seed=12345)
+                image_generator.generate_scene_image(prompt, novel_base_thumb, width=1920, height=1080, base_seed=12345)
             except Exception as e:
                 print(f"[ERROR] Failed to generate base thumbnail: {e}")
                 scene_img_p = os.path.join("output", chapter_id, "images", "scene_001.jpg")
