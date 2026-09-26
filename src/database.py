@@ -467,12 +467,19 @@ file_path: str, bucket_name: str = "media", destination_path: str = None) -> str
                 )
             raw_pub = client.storage.from_(bucket_name).get_public_url(rel_path)
             public_url = raw_pub if isinstance(raw_pub, str) and raw_pub.startswith("http") else guaranteed_cdn_url
+            
+            # KIỂM TRA CHÉO: Xác minh xem Supabase có thực sự lưu file không (tránh lỗi 200 ảo hoặc 413 im lặng)
+            import requests
+            verify_res = requests.head(public_url, timeout=10)
+            if verify_res.status_code == 404:
+                raise Exception(f"File was not found on Supabase after upload (Status 404). Likely dropped due to 50MB limit.")
+                
             print(f"[SUCCESS] Supabase Storage CDN ({content_type}): {os.path.basename(file_path)} -> {public_url}")
             return public_url
         except Exception as e:
             if attempt == max_retries - 1:
                 print(f"[ERROR] Thất bại khi upload {file_path} lên Supabase Storage: {e}")
-                # KÍCH HOẠT FALLBACK GOFILE KHI SUPABASE THẤT BẠI
+                # KÍCH HOẠT FALLBACK CATBOX KHI SUPABASE THẤT BẠI
                 gofile_link = upload_to_gofile_fallback(file_path)
                 return gofile_link
             time.sleep(2 * (attempt + 1))
