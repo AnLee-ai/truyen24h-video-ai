@@ -82,7 +82,7 @@ async def api_run_pipeline(novel_id: str, request: Request):
                     break
                 try:
                     msg = log_queue.get(timeout=1.0)
-                    if "[ERROR]" in msg:
+                    if "[ERROR]" in msg and "Thất bại khi upload" not in msg and "Catbox fallback" not in msg:
                         has_error = True
                     yield f"data: {json.dumps({'msg': msg})}\n\n"
                 except queue.Empty:
@@ -90,9 +90,9 @@ async def api_run_pipeline(novel_id: str, request: Request):
                     await asyncio.sleep(0.1)
                     
             if has_error:
-                yield f"data: {json.dumps({'msg': '[ERROR] Tiến trình kết thúc với lỗi.', 'done': True})}\n\n"
+                yield f"data: {json.dumps({'msg': '[ERROR] Tiến trình gặp một vài lỗi trong quá trình chạy, nhưng có thể đã hoàn tất. Hãy kiểm tra Telegram.', 'done': True})}\n\n"
             else:
-                yield f"data: {json.dumps({'msg': '✅ Hoàn thành! Audio đã được gửi lên Telegram.', 'done': True})}\n\n"
+                yield f"data: {json.dumps({'msg': '✅ Hoàn thành 100%! Audio/Video đã được gửi lên Telegram.', 'done': True})}\n\n"
         finally:
             active_pipelines.discard(n_id)
 

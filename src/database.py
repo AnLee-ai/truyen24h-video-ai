@@ -392,24 +392,52 @@ _created_buckets = set()
 def upload_to_gofile_fallback(file_path: str) -> str:
     import requests
     import os
-    print(f"[INFO] Chuyển hướng upload {os.path.basename(file_path)} sang Catbox.moe (Bypass 50MB limit)...")
+    print(f"[INFO] Bắt đầu Upload {os.path.basename(file_path)} lên CDN...")
+    
+    # 1. Thử Catbox (Permanent, 200MB)
     try:
         url = 'https://catbox.moe/user/api.php'
         with open(file_path, 'rb') as f_obj:
-            res = requests.post(
-                url, 
-                data={'reqtype': 'fileupload'}, 
-                files={'fileToUpload': (os.path.basename(file_path), f_obj)}, 
-                timeout=600
-            )
+            res = requests.post(url, data={'reqtype': 'fileupload'}, files={'fileToUpload': f_obj}, timeout=600)
             if res.status_code == 200 and res.text.startswith('http'):
                 dlink = res.text.strip()
                 print(f"[SUCCESS] Upload Catbox thành công! Link: {dlink}")
                 return dlink
             else:
-                print(f"[ERROR] Catbox API error (Status {res.status_code}): {res.text[:200]}")
+                print(f"[WARNING] Catbox từ chối (Status {res.status_code}): {res.text[:100]}")
     except Exception as e:
-        print(f"[ERROR] Catbox fallback failed: {e}")
+        print(f"[WARNING] Catbox lỗi mạng: {e}")
+
+    # 2. Thử Litterbox (72 hours, 1GB)
+    try:
+        url = 'https://litterbox.catbox.moe/resources/internals/api.php'
+        with open(file_path, 'rb') as f_obj:
+            res = requests.post(url, data={'reqtype': 'fileupload', 'time': '72h'}, files={'fileToUpload': f_obj}, timeout=600)
+            if res.status_code == 200 and res.text.startswith('http'):
+                dlink = res.text.strip()
+                print(f"[SUCCESS] Upload Litterbox thành công (Link tồn tại 3 ngày)! Link: {dlink}")
+                return dlink
+            else:
+                print(f"[WARNING] Litterbox từ chối: {res.text[:100]}")
+    except Exception as e:
+        print(f"[WARNING] Litterbox lỗi mạng: {e}")
+
+    # 3. Thử tmpfiles.org (1 hour - 3 days depending on views, 1GB)
+    try:
+        url = 'https://tmpfiles.org/api/v1/upload'
+        with open(file_path, 'rb') as f_obj:
+            res = requests.post(url, files={'file': f_obj}, timeout=600)
+            if res.status_code == 200:
+                data = res.json()
+                if 'data' in data and 'url' in data['data']:
+                    # Chuyển đổi thành direct link (thêm /dl/)
+                    dlink = data['data']['url'].replace('tmpfiles.org/', 'tmpfiles.org/dl/')
+                    print(f"[SUCCESS] Upload Tmpfiles thành công! Link: {dlink}")
+                    return dlink
+    except Exception as e:
+        print(f"[WARNING] Tmpfiles lỗi mạng: {e}")
+
+    print("[ERROR] ❌ Tất cả các CDN (Catbox, Litterbox, Tmpfiles) đều thất bại.")
     return ""
 
 def upload_file_to_supabase(

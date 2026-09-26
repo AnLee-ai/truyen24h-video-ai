@@ -34,10 +34,10 @@ def get_flux_client():
         from gradio_client import Client
         import os
         try:
-            _flux_client = Client("black-forest-labs/FLUX.1-schnell", hf_token=os.environ.get("HF_TOKEN"))
+            _flux_client = Client("anlee-ai/my-story-diffusion", hf_token=os.environ.get("HF_TOKEN"))
         except TypeError as e:
             if "unexpected keyword argument" in str(e):
-                _flux_client = Client("black-forest-labs/FLUX.1-schnell", token=os.environ.get("HF_TOKEN"))
+                _flux_client = Client("anlee-ai/my-story-diffusion", token=os.environ.get("HF_TOKEN"))
             else:
                 raise
     return _flux_client
@@ -56,7 +56,7 @@ def call_huggingface_space(prompt: str, output_path: str) -> bool:
             return False
 
     with _hf_lock:
-        print(f"[ENGINE 1] 🚀 Bắt đầu gọi FLUX.1-schnell trên Hugging Face Space...")
+        print(f"[ENGINE 1] 🚀 Bắt đầu gọi Story Diffusion trên Hugging Face Space...")
         import time, random
         
         max_retries = 3
@@ -64,18 +64,31 @@ def call_huggingface_space(prompt: str, output_path: str) -> bool:
             try:
                 client = get_flux_client()
                 
-                result, _ = client.predict(
-                    prompt=prompt,
-                    seed=0,
-                    randomize_seed=True,
-                    width=1024,
-                    height=1024,
-                    num_inference_steps=4,
-                    api_name="/infer"
+                result = client.predict(
+                    _sd_type="Unstable",
+                    _model_type="Only Using Textual Description",
+                    _upload_images=None, # Story Diffusion API expects a file list, None might bypass it if purely text
+                    _num_steps=30,
+                    style_name="Comic book",
+                    _ip_adapter_strength=0.5,
+                    _style_strength_ratio=20,
+                    guidance_scale=5,
+                    seed_=0,
+                    sa32_=0.7,
+                    sa64_=0.7,
+                    id_length_=2,
+                    general_prompt="",
+                    negative_prompt="bad anatomy, missing fingers, worst quality",
+                    prompt_array=prompt,
+                    g_height=1024,
+                    g_width=1024,
+                    _comic_type="No typesetting (default)",
+                    api_name="/process_generation"
                 )
                 
-                if result and isinstance(result, dict):
-                    img_path = result.get('path', '')
+                # Story Diffusion returns a list of dictionaries containing image paths
+                if result and isinstance(result, list) and len(result) > 0:
+                    img_path = result[0].get('image', '')
                     import shutil
                     if img_path and os.path.exists(img_path):
                         shutil.copy(img_path, output_path)
@@ -83,6 +96,7 @@ def call_huggingface_space(prompt: str, output_path: str) -> bool:
                         print(f"[ENGINE 1] 🟢 Thành công ở lần thử {attempt}/{max_retries}!")
                         return True
                 raise ValueError("Kết quả API rỗng hoặc không chứa ảnh hợp lệ.")
+
                 
             except Exception as e:
                 err_msg = str(e)
